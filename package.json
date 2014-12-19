@@ -1,11 +1,11 @@
-{ "name": "MWERT",
-  "description": "Platform for running multiplayer experiments on the web",
-  "version": "1.2.0",
+{ "name": "couzin_replication",
+  "description": "Unofficial fork of MWERT, adapted to replicate sensing experiment",
+  "version": "0.0.0",
   "private": true,
   "dependencies": {
-      "express": "~4.0.0",
-      "socket.io": "~1.0.0",
-      "mysql": "2.0.0-rc2",
-      "node-uuid": "1.4.1"
+    "express": "~4.0.0",
+    "socket.io": "~1.0.0",
+    "node-uuid": "1.4.1",
+    "keyboardjs": "~0.4.2"
   }
 }
