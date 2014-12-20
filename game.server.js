@@ -111,32 +111,16 @@ game_server.createGame = function(player) {
 // we are requesting to kill a game in progress.
 // This gets called if someone disconnects
 game_server.endGame = function(gameid, userid) {
-    var thegame = this.games[gameid];
+    var thegame = this.game;
     if(thegame) {
         //stop the game updates immediately
         thegame.gamecore.stop_update();
 
         //if the game has two players, then one is leaving
         if(thegame.player_count > 1) {
-
-            //send the players the message the game is ending
-            if(userid == thegame.player_host.userid) {
-                //the host left, oh snap. Let's update the database and tell them.
-                if(thegame.player_client) {
-                    //tell them the game is over, and redirect to exit survey
-                    thegame.player_client.send('s.e');
-                }
-            } else {
-                //the other player left, we were hosting
-                if(thegame.player_host) {
-                    //tell the client the game is ended
-                    thegame.player_host.send('s.e');
-                    //i am no longer hosting, this game is going down
-                    thegame.player_host.hosting = false;
-                }
-            }
+            _.map(thegame.gamecore.get_others(userid), function(p) {p.instance.send('s.e')})
         }
-        delete this.games[gameid];
+        delete this.game;
         this.game_count--;
         this.log('game removed. there are now ' + this.game_count + ' games' );
     } else {

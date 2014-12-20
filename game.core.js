@@ -49,7 +49,7 @@ var game_core = function(game_instance){
     this.newgame_initiated_flag = false;
 
     //Dimensions of world -- Used in collision detection, etc.
-    this.world = {width : 720, height : 480};    
+    this.world = {width : 480, height : 480};  // 160cm * 3
 
     //We create a player set, passing them the game that is running
     //them, as well. Both the server and the clients need separate
@@ -68,14 +68,16 @@ var game_core = function(game_instance){
         }]
     }
     
+    //How often the players move forward <global_speed>px in ms.
+    this.tick_frequency = 250;
+
     //The speed at which the clients move (e.g. 10px/tick)
-    this.global_speed = 10;
+    this.min_speed = 7.5 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
+
+    this.max_speed = 25 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
 
     //Set to true if we want players to act under noise
     this.noise = false;
-
-    //How often the players move forward <global_speed>px in ms.
-    this.tick_frequency = 666;
 
     //Number of games left
     this.games_remaining = 50;
@@ -104,7 +106,7 @@ var game_player = function( game_instance, player_instance) {
     this.game = game_instance;
 
     //Set up initial values for our state information
-    this.size = { x:16, y:16, hx:8, hy:8 };
+    this.size = { x:16, y:16, hx:8, hy:8 }; // Approximately 5cm * 3 long
     this.state = 'not-connected';
     this.visible = "visible"; // Tracks whether client is watching game
     this.message = '';

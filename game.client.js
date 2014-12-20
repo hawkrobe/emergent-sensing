@@ -64,13 +64,13 @@ client_on_click = function(game, newX, newY ) {
 client_ondisconnect = function(data) {
     // Everything goes offline!
     var me = game.get_player(my_id)
-    var others = game.get_player_list
+    var others = game.get_others(my_id);
     me.info_color = 'rgba(255,255,255,0.1)';
     me.state = 'not-connected';
     me.online = false;
-    game.players.self.destination = null;
-    game.players.other.info_color = 'rgba(255,255,255,0.1)';
-    game.players.other.state = 'not-connected';
+    // game.players.self.destination = null;
+    // game.players.other.info_color = 'rgba(255,255,255,0.1)';
+    // game.players.other.state = 'not-connected';
     
     console.log("Disconnecting...");
 
@@ -83,7 +83,7 @@ client_ondisconnect = function(data) {
         // Otherwise, redirect them to a "we're sorry, the other
         // player disconnected" page
         URL = './static/disconnected.html'
-        URL += '?id=' + game.players.self.id;
+        URL += '?id=' + my_id;
         window.location.replace(URL);
     }
 };
@@ -347,34 +347,11 @@ client_reset_positions = function() {
 client_onjoingame = function(num_players) {
     // Need client to know how many players there are, so they can set up the appropriate data structure
     _.map(_.range(num_players - 1), function(i){game.players.unshift({id: null, player: new game_player(game)})});
+    // Set self color, leave others default white
     game.get_player(my_id).color = game.self_color;
-    _.map(game.get_others(my_id), function(p){p.color = game.other_color;})
-    game.get_player(my_id).speed = 5;
-    //Make sure the positions match servers and other clients
-    //client_reset_positions();
-
-}; //client_onjoingame
-
-
-
-// This function is triggered in a client when they first join and start a new game
-// client_onhostgame = function() {
-//     //Set the flag that we are hosting, this helps us position respawns correctly
-//     game.players.self.host = true;
-// 	game.players.self.pos = game.left_player_start_pos;
-// 	game.players.other.pos = game.right_player_start_pos;
-//     game.players.self.start_angle = game.left_player_start_angle;
-//     game.players.other.start_angle = game.right_player_start_angle;
-//     game.players.self.color = game.players.self.info_color = game.left_player_color;
-//     game.players.other.color = game.players.other.info_color = game.right_player_color;
-
-//     //Update tags below players to display state
-//     game.players.self.state = 'waiting for other player to join';
-//     game.players.other.state = 'not-connected';
-
-//     //Make sure we start in the correct place as the host.
-//     client_reset_positions();
-// };
+    // Start 'em moving
+    game.get_player(my_id).speed = game.min_speed;
+}; 
 
 // Automatically registers whether user has switched tabs...
 (function() {
