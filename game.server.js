@@ -37,13 +37,7 @@ game_server.server_onMessage = function(client,message) {
     var message_type = message_parts[0];
 
     //Extract important variables
-    if (client.game.player_host.userid == client.userid) {
-        var other_client = client.game.player_client;
-        var change_target = client.game.gamecore.players.self;
-    } else {
-        var other_client = client.game.player_host;
-        var change_target = client.game.gamecore.players.other;
-    }
+    var change_target = client.game.gamecore.get_player(client.userid);
 
     if(message_type == 'c') {    // Client clicked somewhere
         if(!change_target.targets_enabled) {
@@ -83,7 +77,7 @@ game_server.createGame = function(player) {
     //Create a new game instance
     this.game = {
         id : id,           //generate a new id for the game
-        player_instances: [{id: id, player: player}],     //store list of players in the game
+        player_instances: [{id: player.userid, player: player}],     //store list of players in the game
         player_count: 1             //for simple checking of state
     };
 
@@ -104,7 +98,7 @@ game_server.createGame = function(player) {
     // The client will parse this message in the "client_onMessage" function
     // in game.client.js, which redirects to other functions based on the command
     player.game = this.game;
-    player.send('s.j.')
+    player.send('s.j.' + this.game.gamecore.players.length)
     this.log('player ' + player.userid + ' created a game with id ' + player.game.id);
 
     //Start updating the game loop on the server
@@ -180,14 +174,19 @@ game_server.findGame = function(player) {
             id: player.userid, 
             player: player
         });
-        game.player_count++;
+        this.game.player_count++;
         // players are array of player objects
         this.game.gamecore.players.push({
             id: player.userid, 
-            player: new game_player(gamecore,player,game.player_count)
+            player: new game_player(gamecore,player)
         });
+        // Attach game to player so server can look at it later
+        player.game = this.game;
         console.log("player collection is now: " + this.game.gamecore.players)
-        player.send('s.j.')
+        player.send('s.j.' + this.game.gamecore.players.length)
+        _.map(gamecore.get_others(player.userid), function(p){p.instance.send( 's.n.' + player.userid)})
+        this.game.gamecore.server_send_update();
+
         // start the server update loop
         gamecore.update();
     } else { 

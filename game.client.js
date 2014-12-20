@@ -106,7 +106,7 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
-    console.log(data)
+//    console.log(data)
     if(data.pos) {
         _.map(_.zip(game.get_all_players(), data.pos),
               function(z) {z[0].pos = game.pos(z[1]); 
@@ -164,7 +164,11 @@ client_onMessage = function(data) {
             alert('You did not enter an ID'); 
             window.location.replace('http://nodejs.org'); break;
         case 'j' : //join a game requested
-            client_onjoingame(); break;
+            var num_players = commanddata;
+            client_onjoingame(num_players); break;
+        case 'n' : // New player joined... Need to add them to our list.
+            console.log("adding player")
+            game.players.push({id: commanddata, player: new game_player(game)})
         case 'b' : //blink title
             flashTitle("GO!");  break;
         case 'n' : //ready a game requested
@@ -237,10 +241,7 @@ client_update = function() {
 
     //draw help/information if required
     draw_info(game, "Instructions: Click where you want to go");
-
-    //Draw targets first, so in background
-//    draw_targets(game, game.players.self);
-
+    console.log(game.players)
     //Draw opponent next
     _.map(game.get_others(my_id), function(p){draw_player(game, p)});
 
@@ -343,8 +344,9 @@ client_reset_positions = function() {
     player_client.angle = game.right_player_start_angle;
 }; 
 
-client_onjoingame = function() {
-    //We are not the host
+client_onjoingame = function(num_players) {
+    // Need client to know how many players there are, so they can set up the appropriate data structure
+    _.map(_.range(num_players - 1), function(i){game.players.unshift({id: null, player: new game_player(game)})});
     game.get_player(my_id).color = game.self_color;
     _.map(game.get_others(my_id), function(p){p.color = game.other_color;})
     game.get_player(my_id).speed = 5;

@@ -29,7 +29,7 @@ var game_core = function(game_instance){
     // Define some variables specific to our game to avoid
     // 'magic numbers' elsewhere
     this.self_color = '#2288cc';
-    this.other_color = '#cc0000';
+    this.other_color = 'white';
     this.big_payoff = 4
     this.little_payoff = 1
     
@@ -147,6 +147,7 @@ var target = function(location) {
 // it can use it in other files (specifically, game.server.js)
 if('undefined' != typeof global) {
     module.exports = global.game_core = game_core;
+    module.exports = global.game_player = game_player;
 }
 
 get_random_position = function(world) {
@@ -162,13 +163,13 @@ get_random_angle = function() {
 
 // Method to easily look up player 
 game_core.prototype.get_player = function(id) {
-    var result = $.grep(this.players, function(e){ return e.id == id; });
-    return result[0].player
+    var result = _.find(this.players, function(e){ return e.id == id; });
+    return result.player
 };
 
 // Method to get whole list of players
 game_core.prototype.get_others = function(id) {
-    return _.map($.grep(this.players, function(e){return e.id != id}), 
+    return _.map(_.filter(this.players, function(e){return e.id != id}), 
         function(p){return p.player})
 };
 
