@@ -1,0 +1,17 @@
+TODO:
+
+* start game once threshold has been reached?
+* Allow more than 2 people to be in a room together
+* Integrate keyboard.js to collect user input
+* remove all the clicking functions
+* get turning to work
+* get space bar boost to work
+* keep track of how long the game has been going
+* give player feedback about how many minutes are remaining 
+* give player feedback about current bonus 
+
+COMPLETED:
+
+* Remove "separate rooms" feature, as everyone will be playing together
+* Initialize with random locations
+* Don't need separate function for 'host' and 'other', since players are identical

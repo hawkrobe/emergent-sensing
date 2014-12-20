@@ -15,6 +15,8 @@
 
 var visible;
 
+
+
 // This function is called whenever a player clicks. 
 // Input:
 //   * game = the current game object for extracting current state
@@ -61,9 +63,11 @@ client_on_click = function(game, newX, newY ) {
 // Function that gets called client-side when someone disconnects
 client_ondisconnect = function(data) {
     // Everything goes offline!
-    game.players.self.info_color = 'rgba(255,255,255,0.1)';
-    game.players.self.state = 'not-connected';
-    game.players.self.online = false;
+    var me = game.get_player(my_id)
+    var others = game.get_player_list
+    me.info_color = 'rgba(255,255,255,0.1)';
+    me.state = 'not-connected';
+    me.online = false;
     game.players.self.destination = null;
     game.players.other.info_color = 'rgba(255,255,255,0.1)';
     game.players.other.state = 'not-connected';
@@ -99,21 +103,27 @@ Explanation: This function is at the center of the problem of
   that they can update their variables to reflect changes.
 */
 client_onserverupdate_received = function(data){
-    var player_host  =this.players.self.host ? this.players.self : this.players.other;
-    var player_client=this.players.self.host ? this.players.other : this.players.self;
-    var game_player  =this.players.self;
-        
+
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
-    if(data.hpos) 
-        player_host.pos = this.pos(data.hpos); 
-    if(data.cpos) 
-        player_client.pos = this.pos(data.cpos);
-    
-    player_host.points_earned = data.hpoi;
-    player_client.points_earned = data.cpoi;
-    player_host.curr_distance_moved = data.hcdm;
-    player_client.curr_distance_moved = data.ccdm;
+    console.log(data)
+    if(data.pos) {
+        _.map(_.zip(game.get_all_players(), data.pos),
+              function(z) {z[0].pos = game.pos(z[1]); 
+              })
+    }
+    if(data.poi) {
+        _.map(_.zip(game.get_all_players(), data.poi),
+              function(z) {z[0].points_earned = z[1]; })
+    }
+    if(data.angle) {
+        _.map(_.zip(game.get_all_players(), data.angle),
+              function(z) {z[0].angle = z[1];  })
+    }
+    if(data.speed) {
+        _.map(_.zip(game.get_all_players(), data.speed),
+              function(z) {z[0].speed = z[1];  })
+    }
     this.targets.top.payoff = data.tcp;
     this.targets.bottom.payoff = data.bcp; 
     this.targets.top.color = data.tcc;
@@ -153,8 +163,6 @@ client_onMessage = function(data) {
         case 'alert' : // Not in database, so you can't play...
             alert('You did not enter an ID'); 
             window.location.replace('http://nodejs.org'); break;
-        case 'h' : //host a game requested
-            client_onhostgame(); break;
         case 'j' : //join a game requested
             client_onjoingame(); break;
         case 'b' : //blink title
@@ -231,17 +239,17 @@ client_update = function() {
     draw_info(game, "Instructions: Click where you want to go");
 
     //Draw targets first, so in background
-    draw_targets(game, game.players.self);
+//    draw_targets(game, game.players.self);
 
     //Draw opponent next
-    draw_player(game, game.players.other);
+    _.map(game.get_others(my_id), function(p){draw_player(game, p)});
 
     // Draw points scoreboard 
-    game.ctx.fillText("Money earned: $" + (game.players.self.points_earned / 100).fixed(2), 300, 15);
+    game.ctx.fillText("Money earned: $" + (game.get_player(my_id).points_earned / 100).fixed(2), 300, 15);
     game.ctx.fillText("Games remaining: " + game.games_remaining, 580, 15)
 
     //And then we draw ourself so we're always in front
-    draw_player(game, game.players.self);
+    draw_player(game, game.get_player(my_id));
 };
 
 
@@ -251,6 +259,8 @@ client_update = function() {
 
 // A window global for our game root variable.
 var game = {};
+// A window global for our id, which we can use to look ourselves up
+var my_id = null;
 
 // When loading the page, we store references to our
 // drawing canvases, and initiate a game instance.
@@ -293,14 +303,13 @@ window.onload = function(){
 
 // Associates callback functions corresponding to different socket messages
 client_connect_to_server = function(game) {
-    
     //Store a local reference to our connection to the server
     game.socket = io.connect();
 
     //When we connect, we are not 'connected' until we have a server id
     //and are placed in a game by the server. The server sends us a message for that.
     game.socket.on('connect', function(){
-        game.players.self.state = 'connecting';
+        game.state = 'connecting';
     }.bind(game));
 
     //Sent when we are disconnected (network, server down, etc)
@@ -315,9 +324,11 @@ client_connect_to_server = function(game) {
 
 client_onconnected = function(data) {
     //The server responded that we are now in a game,
-    //this lets us store the information about ourselves    
-    this.players.self.id = data.id;
-    this.players.self.online = true;
+    //this lets us store the information about ourselves  
+    // so that we remember who we are.  
+    my_id = data.id;
+    game.players[0].id = my_id;
+    game.get_player(my_id).online = true;
 };
 
 client_reset_positions = function() {
@@ -334,37 +345,34 @@ client_reset_positions = function() {
 
 client_onjoingame = function() {
     //We are not the host
-    game.players.self.host = false;
-	game.players.other.pos = game.left_player_start_pos;
-	game.players.self.pos = game.right_player_start_pos;
-    game.players.other.start_angle = game.left_player_start_angle;
-    game.players.self.start_angle = game.right_player_start_angle;
-    game.players.other.color = game.players.other.info_color = game.left_player_color;
-    game.players.self.color = game.players.self.info_color = game.right_player_color;
-
+    game.get_player(my_id).color = game.self_color;
+    _.map(game.get_others(my_id), function(p){p.color = game.other_color;})
+    game.get_player(my_id).speed = 5;
     //Make sure the positions match servers and other clients
-    client_reset_positions();
+    //client_reset_positions();
 
 }; //client_onjoingame
 
+
+
 // This function is triggered in a client when they first join and start a new game
-client_onhostgame = function() {
-    //Set the flag that we are hosting, this helps us position respawns correctly
-    game.players.self.host = true;
-	game.players.self.pos = game.left_player_start_pos;
-	game.players.other.pos = game.right_player_start_pos;
-    game.players.self.start_angle = game.left_player_start_angle;
-    game.players.other.start_angle = game.right_player_start_angle;
-    game.players.self.color = game.players.self.info_color = game.left_player_color;
-    game.players.other.color = game.players.other.info_color = game.right_player_color;
+// client_onhostgame = function() {
+//     //Set the flag that we are hosting, this helps us position respawns correctly
+//     game.players.self.host = true;
+// 	game.players.self.pos = game.left_player_start_pos;
+// 	game.players.other.pos = game.right_player_start_pos;
+//     game.players.self.start_angle = game.left_player_start_angle;
+//     game.players.other.start_angle = game.right_player_start_angle;
+//     game.players.self.color = game.players.self.info_color = game.left_player_color;
+//     game.players.other.color = game.players.other.info_color = game.right_player_color;
 
-    //Update tags below players to display state
-    game.players.self.state = 'waiting for other player to join';
-    game.players.other.state = 'not-connected';
+//     //Update tags below players to display state
+//     game.players.self.state = 'waiting for other player to join';
+//     game.players.other.state = 'not-connected';
 
-    //Make sure we start in the correct place as the host.
-    client_reset_positions();
-};
+//     //Make sure we start in the correct place as the host.
+//     client_reset_positions();
+// };
 
 // Automatically registers whether user has switched tabs...
 (function() {

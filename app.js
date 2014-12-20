@@ -13,6 +13,7 @@ var
     app             = require('express')(),
     server          = app.listen(gameport),
     io              = require('socket.io')(server),
+    _               = require('underscore'),
     UUID            = require('node-uuid');
 
 if (use_db) {
@@ -46,23 +47,9 @@ io.on('connection', function (client) {
     var query = require('url').parse(client.handshake.headers.referer, true).query;
     var id = (query.id) ? query.id : UUID(); // use id from query string if exists
     client.condition = query.condition;
-    if (use_db) {
-        // Only let a player join if they are already in the database.
-        // Otherwise, send an alert message
-        var q = 'SELECT EXISTS(SELECT * FROM game_participant WHERE workerId = ' + 
-            connection.escape(id) + ') AS b';
-        connection.query(q, function(err, results) {
-            player_exists = results[0].b;
-            if (id && player_exists) {
-                initialize(query, client, id);
-            } else {
-                client.userid = 'none';
-                client.send('s.alert');
-            }
-        });
-    } else {
-        initialize(query, client, id);
-    }});
+    console.log("user connecting...")
+    initialize(query, client, id);
+});
 
 var initialize = function(query, client, id) {                        
     client.userid = id;

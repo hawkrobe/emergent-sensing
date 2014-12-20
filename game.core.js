@@ -15,16 +15,21 @@
   client creates one for itself to play the game. When you set a
   variable, remember that it's only set in that instance.
 */
+var has_require = typeof require !== 'undefined'
+
+if( typeof _ === 'undefined' ) {
+    if( has_require ) {
+        _ = require('underscore')
+    }
+    else throw new Error('mymodule requires underscore, see http://underscorejs.org');
+}
+
 var game_core = function(game_instance){
 
     // Define some variables specific to our game to avoid
     // 'magic numbers' elsewhere
-    this.left_player_start_angle = 90;
-    this.right_player_start_angle = 270;
-    this.left_player_start_pos = { x:180, y:240 }
-    this.right_player_start_pos = { x:540, y:240 }
-    this.left_player_color = '#2288cc';
-    this.right_player_color = '#cc0000';
+    this.self_color = '#2288cc';
+    this.other_color = '#cc0000';
     this.big_payoff = 4
     this.little_payoff = 1
     
@@ -51,15 +56,16 @@ var game_core = function(game_instance){
     //instances of both players, but the server has more information
     //about who is who. Clients will be given this info later.
     if(this.server) {
-	    this.players = {
-	        self : new game_player(this,this.instance.player_host),
-	        other : new game_player(this,this.instance.player_client)};
+        this.players = [{
+            id: this.instance.player_instances[0].id, 
+            player: new game_player(this,this.instance.player_instances[0].player)
+        }];
 	    this.game_clock = 0;
-        
     } else {
-	    this.players = {
-	        self : new game_player(this),
-	        other : new game_player(this)};
+	    this.players = [{
+            id: null, 
+            player: new game_player(this)
+        }]
     }
     
     //The speed at which the clients move (e.g. 10px/tick)
@@ -92,11 +98,11 @@ var game_core = function(game_instance){
         A simple class to maintain state of a player on screen,
         as well as to draw that state when required.
 */
-var game_player = function( game_instance, player_instance ) {
+var game_player = function( game_instance, player_instance) {
     //Store the instance, if any
     this.instance = player_instance;
     this.game = game_instance;
-    
+
     //Set up initial values for our state information
     this.size = { x:16, y:16, hx:8, hy:8 };
     this.state = 'not-connected';
@@ -108,8 +114,6 @@ var game_player = function( game_instance, player_instance ) {
     this.targets_enabled = false; // If true, will display targets
     this.destination = null; // Last place client clicked
     this.points_earned = 0; // keep track of number of points
-    this.speed = 0; 
-    this.curr_distance_moved = 0;
 
     //These are used in moving us around later
     this.old_state = {pos:{x:0,y:0}};
@@ -123,17 +127,10 @@ var game_player = function( game_instance, player_instance ) {
 	    y_max: this.game.world.height - this.size.hy
     };
 
-    //For client instances, we'll set up these variables in client_onhostgame
-    // and client_onjoingame
-    if(player_instance) { // Host on left
-	    this.pos = this.game.left_player_start_pos;
-	    this.color = this.game.left_player_color;
-	    this.angle = this.start_angle = this.game.left_player_start_angle;
-    } else {             // other on right
-	    this.pos = this.game.right_player_start_pos;
-	    this.color = this.game.right_player_color;
-	    this.angle = this.start_angle = this.game.right_player_start_angle;
-    }    
+    this.pos = get_random_position(this.game.world);
+    this.angle = get_random_angle();
+    this.speed = 5;
+    this.color = 'white';
 }; 
 
 // The target is the payoff-bearing goal. We construct it with these properties
@@ -152,19 +149,39 @@ if('undefined' != typeof global) {
     module.exports = global.game_core = game_core;
 }
 
+get_random_position = function(world) {
+    return {
+        x: Math.floor((Math.random() * world.width) + 1),
+        y: Math.floor((Math.random() * world.height) + 1)
+    };
+};
+
+get_random_angle = function() {
+    return Math.floor((Math.random() * 360) + 1);
+};
+
+// Method to easily look up player 
+game_core.prototype.get_player = function(id) {
+    var result = $.grep(this.players, function(e){ return e.id == id; });
+    return result[0].player
+};
+
+// Method to get whole list of players
+game_core.prototype.get_others = function(id) {
+    return _.map($.grep(this.players, function(e){return e.id != id}), 
+        function(p){return p.player})
+};
+
+// Method to get whole list of players
+game_core.prototype.get_all_players = function() {
+    return _.map(this.players, function(p){return p.player})
+};
 
 // Notifies clients of changes on the server side. Server totally
 // handles position and points.
 game_core.prototype.server_send_update = function(){
-    
     //Make a snapshot of the current state, for updating the clients
     this.laststate = {
-        hpos: this.players.self.pos,                //'host position', the game creators position
-        cpos: this.players.other.pos,               //'client position', the person that joined, their position
-        hpoi: this.players.self.points_earned,      //'host points'
-        cpoi: this.players.other.points_earned,     //'client points'
-        hcdm: this.players.self.curr_distance_moved, //'host speed'
-        ccdm: this.players.other.curr_distance_moved,//'client speed'
         tcc : this.targets.top.color,                //'top target color'
         bcc : this.targets.bottom.color,             //'bottom target color'
         tcp : this.targets.top.payoff,               //'top target payoff'
@@ -173,191 +190,61 @@ game_core.prototype.server_send_update = function(){
         de  : this.draw_enabled,                    // true to see angle
         g2w : this.good2write,                      // true when game's started
     };
-    //Send the snapshot to the 'host' player
-    if(this.players.self.instance) 
-        this.players.self.instance.emit( 'onserverupdate', this.laststate );
-    
-    //Send the snapshot to the 'client' player
-    if(this.players.other.instance) 
-        this.players.other.instance.emit( 'onserverupdate', this.laststate );    
+    var players = this.get_all_players()
+//    console.log(players)
+    // Add info about all players
+    _.extend(this.laststate, {pos: _.map(players, function(p){return p.pos})})
+    _.extend(this.laststate, {poi: _.map(players, function(p){return p.points_earned})})
+    _.extend(this.laststate, {angle: _.map(players, function(p){return p.angle})})
+    _.extend(this.laststate, {speed: _.map(players, function(p){return p.speed})})
+
+    var local_laststate = this.laststate;
+    //Send the snapshot to the players
+    _.map(this.get_all_players(), function(p){p.instance.emit( 'onserverupdate', local_laststate)})
 };
 
 // This is called every 666ms and simulates the world state. This is
 // where we update positions and check whether targets have been reached.
 game_core.prototype.server_update_physics = function() {
+    var local_this = this;
+    _.map(this.get_all_players(), function(p){
+        // If a player has reached their destination, stop. Have to put
+        // other wrapper because destination is null until player clicks
+        // Must use distance from, since the player's position is at the
+        // center of the body, which is long. As long as any part of the
+        // body is where it should be, we want them to stop.
+        // if (p.destination) {
+        //     if (this.distance_between(p.pos,p.destination) < 8)
+        //         p.speed = 0;
+        // }
 
-    host_player = this.players.self;
-    other_player = this.players.other;
-    top_target = this.targets.top;
-    bottom_target = this.targets.bottom;
+        // Impose Gaussian noise on movement to create uncertainty
+        // Recall base speed is 10, so to avoid moving backward, need that to be rare.
+        // Set the standard deviation of the noise distribution.
+        // if (this.noise) {
+        //     var noise_sd = 4;
+        //     var nd = new NormalDistribution(noise_sd,0); 
+        //     // If a player isn't moving, no noise. Otherwise they'll wiggle in place.
+        //     // Use !good2write as a proxy for the 'waiting room' state
+        //     if (p.speed == 0 || !this.good2write) 
+        //         p.noise = 0;
+        //     else
+        //         p.noise = nd.sample();
+        // } else {
+        //     p.noise = 0;
+        // }
 
-    // If a player has reached their destination, stop. Have to put
-    // other wrapper because destination is null until player clicks
-    // Must use distance from, since the player's position is at the
-    // center of the body, which is long. As long as any part of the
-    // body is where it should be, we want them to stop.
-    if (host_player.destination) {
-        if (this.distance_between(host_player.pos,host_player.destination) < 8)
-            host_player.speed = 0;
-    }
-    if (other_player.destination) {
-        if (this.distance_between(other_player.pos,other_player.destination) < 8)
-            other_player.speed = 0;
-    }
-
-    // Impose Gaussian noise on movement to create uncertainty
-    // Recall base speed is 10, so to avoid moving backward, need that to be rare.
-    // Set the standard deviation of the noise distribution.
-    if (this.noise) {
-        var noise_sd = 4;
-        var nd = new NormalDistribution(noise_sd,0); 
-        
-        // If a player isn't moving, no noise. Otherwise they'll wiggle in place.
-        // Use !good2write as a proxy for the 'waiting room' state
-        if (host_player.speed == 0 || !this.good2write) 
-            host_player.noise = 0;
-        else
-            host_player.noise = nd.sample();
-        
-        if (other_player.speed == 0 || !this.good2write)
-            other_player.noise = 0;
-        else 
-            other_player.noise = nd.sample();
-    } else {
-        host_player.noise = 0;
-        other_player.noise = 0;
-    }
-    
-    //Handle player one movement (calculate using polar coordinates)
-    r1 = host_player.curr_distance_moved = host_player.speed + host_player.noise;
-    theta1 = (host_player.angle - 90) * Math.PI / 180;
-    host_player.old_state.pos = this.pos( host_player.pos );
-    var new_dir = {x : r1 * Math.cos(theta1), 
-                   y : r1 * Math.sin(theta1)};  
-    host_player.pos = this.v_add( host_player.old_state.pos, new_dir );
-    
-    //Handle player two movement
-    r2 = other_player.curr_distance_moved = other_player.speed + other_player.noise;
-    theta2 = (other_player.angle - 90) * Math.PI / 180;    
-    other_player.old_state.pos = this.pos( other_player.pos );
-    var other_new_dir = {x : r2 * Math.cos(theta2), 
-                         y : r2 * Math.sin(theta2)};  
-    other_player.pos = this.v_add( other_player.old_state.pos, other_new_dir);    
-    
-    //Keep the players in the world
-    this.check_collision( host_player );
-    this.check_collision( other_player );
-    
-    // Check whether either plays has reached a target
-    // Make sure this can't happen before both players have connected
-    if (this.good2write) {
-        this.server_check_for_payoff(host_player, other_player, 'host');
-        this.server_check_for_payoff(other_player, host_player, 'other');
-    }
-    
-    // For ballistic version, if game hasn't started yet, check whether destinations
-    // are valid. If so, start game!    
-    var condition1 = false;
-    var condition2 = false;
-    if (!this.good2write && this.instance.player_client && this.condition == 'ballistic') {
-        if (host_player.destination) {
-            condition1 = (this.distance_between(host_player.destination, 
-                                                top_target.location) < 10 ||
-                          this.distance_between(host_player.destination, 
-                                                bottom_target.location) < 10);
-        }
-        if (other_player.destination) {
-            condition2 = (this.distance_between(other_player.destination, 
-                                                top_target.location) < 10 ||
-                          this.distance_between(other_player.destination, 
-                                                bottom_target.location) < 10);
-        }
-        // define some situations once destinations have been set
-        if (condition1 && condition2) {
-            this.instance.player_host.send('s.m.               GO!');
-            this.instance.player_client.send('s.m.               GO!');
-            this.good2write = true;
-            this.draw_enabled = true;
-            this.players.self.speed = this.global_speed;
-            this.players.other.speed = this.global_speed;
-            this.game_clock = 0;
-        } else if (condition1 && !condition2) {
-            this.instance.player_host.send('s.p. Waiting for other player');
-            this.instance.player_client.send('s.p.      Choose a target.');
-        } else if (!condition1 && condition2) {
-            this.instance.player_client.send('s.p. Waiting for other player');
-            this.instance.player_host.send('s.p.      Choose a target.');
-        } else if (this.instance.player_client) {
-            this.instance.player_host.send('s.p.      Choose a target');
-            this.instance.player_client.send('s.p.      Choose a target');
-        }
-    }
-};
-
-// A lot of our specific game logic is buried in this function. The dictates when
-// players get payoffs (i.e. if they're close, the other player is far, and the
-// target hasn't been reached yet). If you want to change the "win" condition, it's here.
-game_core.prototype.server_check_for_payoff = function(player1, player2, whoisplayer1){    
-    // Check whether players have reached 
-    var top_target = this.targets.top;
-    var bottom_target = this.targets.bottom;
-
-    // Check whether either target has been reached
-    this.check_target_reached(top_target,bottom_target,player1,player2,whoisplayer1);
-    this.check_target_reached(bottom_target,top_target,player1,player2,whoisplayer1);
-    
-    // If both targets have been marked as visited, we tell the server
-    // we're ready to start a new game. But we only do it once, thus the flag.
-    if ((top_target.visited 
-         && bottom_target.visited
-         && !this.newgame_initiated_flag)) {
-        
-        console.log("Both targets visited...");
-        this.players.self.speed = 0;
-        this.players.other.speed = 0;
-        this.newgame_initiated_flag = true;
-        var local_this = this;        
-        // Need to wait a second before resetting so players can see what happened
-        setTimeout(function(){
-            // Keep track of which game we're on
-            local_this.game_number += 1;
-            local_this.newgame_initiated_flag = false;
-            local_this.server_newgame();
-        }, 1500);
-    }
-}; 
-
-// Messy helper function for our specific game -- implements 'end-game' logic
-game_core.prototype.check_target_reached = function(main_target, other_target,player1,player2,whoisplayer1) {
-    // If player1 reaches the top target before player2, reward them and
-    // end the game
-    if (this.distance_between(player1.pos,main_target.location) < main_target.radius + player1.size.hy
-        && !main_target.visited
-        && this.distance_between(player2.pos,main_target.location) > main_target.outer_radius + player2.size.hy) {
-        main_target.visited = true;
-        main_target.color = player1.color;
-        player1.points_earned += main_target.payoff;
-        other_target.visited = true;
-        other_target.color = player2.color;
-        player2.points_earned += other_target.payoff;
-        if (whoisplayer1 == 'host') { 
-            this.instance.player_host.send('s.m.    You earned ' + main_target.payoff + '\xA2');
-            this.instance.player_client.send('s.m.    You earned ' + other_target.payoff + '\xA2');
-        } else if (whoisplayer1 == 'other') {
-            this.instance.player_host.send('s.m.    You earned ' + other_target.payoff + '\xA2');
-            this.instance.player_client.send('s.m.    You earned ' + main_target.payoff + '\xA2');
-        }
-        // If it's a tie, no one wins and game over (i.e. set both targets to visited)
-    } else if(this.distance_between(player1.pos,main_target.location) < main_target.radius + player1.size.hy
-              && !main_target.visited
-              && this.distance_between(player2.pos, main_target.location) < main_target.outer_radius + player2.size.hy) {
-        // Let them know they tied...
-        this.instance.player_client.send('s.m.Tie! No money awarded!');
-        this.instance.player_host.send('s.m.Tie! No money awarded!');
-        main_target.visited = true;
-        other_target.visited = true;
-        main_target.color = 'black';
-    }    
+        //Handle player one movement (calculate using polar coordinates)
+        r1 = p.speed; //+ p.noise;
+        theta1 = (p.angle - 90) * Math.PI / 180;
+        p.old_state.pos = local_this.pos(p.pos) ;
+        var new_dir = {
+            x : r1 * Math.cos(theta1), 
+            y : r1 * Math.sin(theta1)
+        };  
+        p.pos = p.game.v_add( p.old_state.pos, new_dir );
+        p.game.check_collision( p );
+    })
 };
 
 // Every second, we print out a bunch of information to a file in a

@@ -76,58 +76,43 @@ game_server.server_onMessage = function(client,message) {
    The following functions should not need to be modified for most purposes
 */
 
+// Will run when first player connects
 game_server.createGame = function(player) {
     var id = UUID();
+
     //Create a new game instance
-    var thegame = {
-        id : id,                    //generate a new id for the game
-        player_host:player,         //so we know who initiated the game
-        player_client:null,         //nobody else joined yet, since its new
-        player_count:1              //for simple checking of state
+    this.game = {
+        id : id,           //generate a new id for the game
+        player_instances: [{id: id, player: player}],     //store list of players in the game
+        player_count: 1             //for simple checking of state
     };
 
-    //Store it in the list of game
-    this.games[ thegame.id ] = thegame;
-
-    //Keep track of how many there are total
-    this.game_count++;
-    
     //Create a new game core instance (defined in game.core.js)
-    thegame.gamecore = new game_core(thegame);
+    this.game.gamecore = new game_core(this.game);
 
     // Tell the game about its own id
-    thegame.gamecore.game_id = id;
+    this.game.gamecore.game_id = id;
 
     // Set up the filesystem variable we'll use to write later
-    thegame.gamecore.fs = fs;
+    this.game.gamecore.fs = fs;
 
     // When workers are directed to the page, they specify which
     // version of the task they're running. 
-    thegame.gamecore.condition = player.condition;
+    this.game.gamecore.condition = player.condition;
 
-    // Pass the database connection to the game
-    if (use_db) {
-        thegame.gamecore.mysql_conn = connection;
-	    thegame.gamecore.use_db = use_db;
-    }
-
-    //Start updating the game loop on the server
-    thegame.gamecore.update();
-
-    //tell the player that they are now the host
-    //The client will parse this message in the "client_onMessage" function
-    // in client.js, which redirects to other functions based on the command
-    player.send('s.h.')
-    player.game = thegame;
-
-    // Start 'em moving
-    thegame.gamecore.players.self.speed = thegame.gamecore.global_speed;
+    // tell the player that they have joined a game
+    // The client will parse this message in the "client_onMessage" function
+    // in game.client.js, which redirects to other functions based on the command
+    player.game = this.game;
+    player.send('s.j.')
     this.log('player ' + player.userid + ' created a game with id ' + player.game.id);
 
-    //return it
-    return thegame;
+    //Start updating the game loop on the server
+    this.game.gamecore.update();
 
-}; //game_server.createGame
+    //return it
+    return this.game;
+}; 
 
 // we are requesting to kill a game in progress.
 // This gets called if someone disconnects
@@ -187,33 +172,24 @@ game_server.startGame = function(game) {
 // all independent of one another.
 game_server.findGame = function(player) {
     this.log('looking for a game. We have : ' + this.game_count);
-
-    //if there are any games created, check if one needs another player
-    if(this.game_count) {
-        var joined_a_game = false;
-        //Check through the list of all games for an open game
-        for(var gameid in this.games) {
-            //only care about our own properties.
-            if(!this.games.hasOwnProperty(gameid)) continue;
-            //get the game we are checking against
-            var game_instance = this.games[gameid];
-            //If the game is a player short
-            if(game_instance.player_count < 2) {                
-                joined_a_game = true;
-                //increase the player count and store
-                //the player as the client of this game
-                game_instance.player_client = player;
-                game_instance.gamecore.players.other.instance = player;
-                game_instance.gamecore.players.other.id = player.userid;
-                game_instance.player_count++;
-                // start the server update loop
-                game_instance.gamecore.update();
-                this.startGame(game_instance);                
-            }
-        }
-        if(!joined_a_game) { // if we didn't join a game, we must create one
-            this.createGame(player);
-        } 
+    //if there are any games created, add this player to it!
+    if(this.game) {
+        var gamecore = this.game.gamecore;
+        // player instances are array of actual client handles
+        this.game.player_instances.push({
+            id: player.userid, 
+            player: player
+        });
+        game.player_count++;
+        // players are array of player objects
+        this.game.gamecore.players.push({
+            id: player.userid, 
+            player: new game_player(gamecore,player,game.player_count)
+        });
+        console.log("player collection is now: " + this.game.gamecore.players)
+        player.send('s.j.')
+        // start the server update loop
+        gamecore.update();
     } else { 
         //no games? create one!
         this.createGame(player);
