@@ -38,29 +38,20 @@ game_server.server_onMessage = function(client,message) {
 
     //Extract important variables
     var change_target = client.game.gamecore.get_player(client.userid);
-
-    if(message_type == 'c') {    // Client clicked somewhere
-        if(!change_target.targets_enabled) {
-            change_target.speed = client.game.gamecore.global_speed;
-        } else {
-            if(client.game.gamecore.good2write) {
-                change_target.speed = client.game.gamecore.global_speed;
-            }
-        }
+    var others = client.game.gamecore.get_others(client.userid);
+    if(message_type == 'a') {    // Client is changing angle
         // Set their (server) angle 
         change_target.angle = message_parts[1];
-
-        // Set their (server) destination to the point that was clicked
-        change_target.destination = {x : message_parts[2], y : message_parts[3]};
-        
-        // Notify other client of angle change
-        if(other_client){
-            other_client.send('s.a.' + message_parts[1]);
+        console.log("new angle =", change_target.angle)
+        // Notify other clients of angle change
+        if(others) {
+            _.map(others, function(p) {p.instance.send('s.a.' + client.userid + '.' + message_parts[1])});
         }
+    } else if (message_type == 's') {
+        change_target.speed = message_parts[1];
     } else if (message_type == "h") { // Receive message when browser focus shifts
         change_target.visible = message_parts[1];
     }
-    // else if(...) {
     
     // Any other ways you want players to interact with the game can be added
     // here as "else if" statements.

@@ -196,6 +196,7 @@ game_core.prototype.server_send_update = function(){
     var players = this.get_all_players()
 //    console.log(players)
     // Add info about all players
+    _.extend(this.laststate, {ids: _.map(players, function(p){return p.instance.userid})})
     _.extend(this.laststate, {pos: _.map(players, function(p){return p.pos})})
     _.extend(this.laststate, {poi: _.map(players, function(p){return p.points_earned})})
     _.extend(this.laststate, {angle: _.map(players, function(p){return p.angle})})

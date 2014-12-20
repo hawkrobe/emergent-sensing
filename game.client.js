@@ -13,52 +13,46 @@
    THE FOLLOWING FUNCTIONS MAY NEED TO BE CHANGED
 */
 
+// A window global for our game root variable.
+var game = {};
+// A window global for our id, which we can use to look ourselves up
+var my_id = null;
+// Keeps track of whether player is paying attention...
 var visible;
 
+// what happens when you press 'left'?
+left_turn = function() {
+    var self = game.get_player(my_id);
+    self.angle = (Number(self.angle) - 10) % 360;
+    console.log("new angle =" + self.angle)
+    // Need to tell server about this...
+    game.socket.send("a." + self.angle);
+};
 
+// what happens when you press 'left'?
+right_turn = function() {
+    var self = game.get_player(my_id);
+    console.log("new angle =" + self.angle)
+    self.angle = (Number(self.angle) + 10) % 360;
+    // Need to tell server about this...
+    game.socket.send("a." + self.angle);
+};
 
-// This function is called whenever a player clicks. 
-// Input:
-//   * game = the current game object for extracting current state
-//   * newX = the X coordinate of the player's click
-//   * newY = the Y coordinate of the player's click
-client_on_click = function(game, newX, newY ) {
-    // Auto-correcting input, but only between rounds
-    if (game.condition == 'ballistic' && !game.draw_enabled) {
-        if (game.distance_between({x : newX, y : newY},
-                                  game.targets.top.location) 
-            < game.targets.top.outer_radius) {
-            newX = game.targets.top.location.x;
-            newY = game.targets.top.location.y;
-        } else if (game.distance_between({x : newX, y: newY},
-                                         game.targets.bottom.location) 
-                   < game.targets.bottom.outer_radius) {
-            newX = game.targets.bottom.location.x;
-            newY = game.targets.bottom.location.y;
-        }
-    }
-    
-    oldX = game.players.self.pos.x;
-    oldY = game.players.self.pos.y;
-    dx = newX - oldX;
-    dy = newY - oldY;
-    
-    // Complicated logic. If you're in the dynamic condition, your clicks will
-    // ALWAYS register. If you're in the ballistic condition, they'll only register
-    // if you're in the pre- (or between-)game period where nothing's being written.
-    if((game.condition == "ballistic" && !game.good2write) || 
-       game.condition == "dynamic") {
-        game.players.self.destination = {x : Math.round(newX), y : Math.round(newY)};
-        game.players.self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
-        
-        // Send game information to server so that other player (and server) 
-        // can update information
-        info_packet = ("c." + game.players.self.angle + 
-                       "."  + game.players.self.destination.x +
-                       "."  + game.players.self.destination.y);
-        game.socket.send(info_packet);
-    } 
-}; 
+// what happens when you press 'left'?
+speed_up = function() {
+    var self = game.get_player(my_id);
+    self.speed = game.max_speed;
+    // Need to tell server about this...
+    game.socket.send("s." + self.speed);
+}
+
+// what happens when you press 'left'?
+speed_down = function() {
+    var self = game.get_player(my_id);
+    self.speed = game.min_speed;
+    // Need to tell server about this...
+    game.socket.send("s." + self.speed);
+}
 
 // Function that gets called client-side when someone disconnects
 client_ondisconnect = function(data) {
@@ -74,18 +68,18 @@ client_ondisconnect = function(data) {
     
     console.log("Disconnecting...");
 
-    if(game.games_remaining == 0) {
-        // If the game is done, redirect them to an exit survey
-        URL = './static/game_over.html';
-        URL += '?id=' + game.players.self.id;
-        window.location.replace(URL);
-    } else {
-        // Otherwise, redirect them to a "we're sorry, the other
-        // player disconnected" page
-        URL = './static/disconnected.html'
-        URL += '?id=' + my_id;
-        window.location.replace(URL);
-    }
+    // if(game.games_remaining == 0) {
+    //     // If the game is done, redirect them to an exit survey
+    //     URL = './static/game_over.html';
+    //     URL += '?id=' + game.players.self.id;
+    //     window.location.replace(URL);
+    // } else {
+    //     // Otherwise, redirect them to a "we're sorry, the other
+    //     // player disconnected" page
+    //     URL = './static/disconnected.html'
+    //     URL += '?id=' + my_id;
+    //     window.location.replace(URL);
+    // }
 };
 
 /* 
@@ -107,6 +101,11 @@ client_onserverupdate_received = function(data){
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
 //    console.log(data)
+    if(data.ids) {
+        _.map(_.zip(game.players, data.ids),
+              function(z) {z[0].id = z[1];  })
+    }
+
     if(data.pos) {
         _.map(_.zip(game.get_all_players(), data.pos),
               function(z) {z[0].pos = game.pos(z[1]); 
@@ -143,6 +142,7 @@ client_onserverupdate_received = function(data){
 // clients, look for "server_onMessage" in game.server.js.
 client_onMessage = function(data) {
 
+    console.log("received data:" + data)
     var commands = data.split('.');
     var command = commands[0];
     var subcommand = commands[1] || null;
@@ -176,8 +176,9 @@ client_onMessage = function(data) {
         case 'e' : //end game requested
             client_ondisconnect(); break;
         case 'a' : // other player changed angle
-            game.players.other.angle = commanddata; break;
-            game.players.other.draw();
+            var player_id = commands[2];
+            var angle_val = commands[3];
+            game.get_player(player_id).angle = angle_val; break;
         }        
         break; 
     } 
@@ -241,7 +242,6 @@ client_update = function() {
 
     //draw help/information if required
     draw_info(game, "Instructions: Click where you want to go");
-    console.log(game.players)
     //Draw opponent next
     _.map(game.get_others(my_id), function(p){draw_player(game, p)});
 
@@ -258,11 +258,6 @@ client_update = function() {
   The following code should NOT need to be changed
 */
 
-// A window global for our game root variable.
-var game = {};
-// A window global for our id, which we can use to look ourselves up
-var my_id = null;
-
 // When loading the page, we store references to our
 // drawing canvases, and initiate a game instance.
 window.onload = function(){
@@ -278,19 +273,9 @@ window.onload = function(){
     //Adjust its size
     game.viewport.width = game.world.width;
     game.viewport.height = game.world.height;
-    
-    // Assign click handler ONCE, with the associated data.
-    // Just sends click info to the client_on_click function,
-    // since the things we care about haven't been defined yet
-    $('#viewport').click(function(e){
-        e.preventDefault();
-        // e.pageX is relative to whole page -- we want
-        // relative to GAME WORLD (i.e. viewport)
-        var offset = $(this).offset(); 
-        var relX = e.pageX - offset.left;
-        var relY = e.pageY - offset.top;
-        client_on_click(game, relX, relY);
-    }); 
+    KeyboardJS.on('left', function(){left_turn()})
+    KeyboardJS.on('right', function(){right_turn()})
+    KeyboardJS.on('space', function(){speed_up()}, function(){speed_down()})
 
     //Fetch the rendering contexts
     game.ctx = game.viewport.getContext('2d');
