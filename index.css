@@ -6,12 +6,45 @@ html , body {
      padding: 0;
 }
 
+.alignleft {
+	float: left;
+}
+
+.alignright {
+	float: right;
+}
+
+#main {
+	width: 480px;
+	height: 520px;
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 10px;
+	left:0; right:0; top:0; bottom:0;
+	position: absolute;
+}
+
+#curr_bonus {
+	width: 480px;
+	height: 15px;
+}
+
+#second_row {
+	width: 480px;
+	height: 10px;
+}
+
+#instructions {
+	width: 480px;
+	height: 15px;
+	font: 10pt Helvetica;
+}
+
 #viewport {
 	  border:solid 1px #333;
 	  height : 480px;
-	  margin: auto;
-	  left:0; right:0; top:0; bottom:0;
-	  position: absolute;
 	  width : 480px;
+	  left:0; right:0; top:0; bottom:0;
 	  z-index:100;
 }

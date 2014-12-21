@@ -100,7 +100,6 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
-//    console.log(data)
     if(data.ids) {
         _.map(_.zip(game.players, data.ids),
               function(z) {z[0].id = z[1];  })
@@ -108,8 +107,7 @@ client_onserverupdate_received = function(data){
 
     if(data.pos) {
         _.map(_.zip(game.get_all_players(), data.pos),
-              function(z) {z[0].pos = game.pos(z[1]); 
-              })
+              function(z) {z[0].pos = game.pos(z[1]);})
     }
     if(data.poi) {
         _.map(_.zip(game.get_all_players(), data.poi),
@@ -123,10 +121,6 @@ client_onserverupdate_received = function(data){
         _.map(_.zip(game.get_all_players(), data.speed),
               function(z) {z[0].speed = z[1];  })
     }
-    this.targets.top.payoff = data.tcp;
-    this.targets.bottom.payoff = data.bcp; 
-    this.targets.top.color = data.tcc;
-    this.targets.bottom.color = data.bcc;
     this.condition = data.cond;
     this.draw_enabled = data.de;
     this.good2write = data.g2w;
@@ -171,8 +165,6 @@ client_onMessage = function(data) {
             game.players.push({id: commanddata, player: new game_player(game)})
         case 'b' : //blink title
             flashTitle("GO!");  break;
-        case 'n' : //ready a game requested
-            client_new_game(); break;
         case 'e' : //end game requested
             client_ondisconnect(); break;
         case 'a' : // other player changed angle
@@ -238,16 +230,17 @@ client_countdown = function() {
 
 client_update = function() {
     //Clear the screen area
-    game.ctx.clearRect(0,0,720,480);
+    game.ctx.clearRect(0,0,480,480);
 
     //draw help/information if required
-    draw_info(game, "Instructions: Click where you want to go");
+    draw_info(game, "");
     //Draw opponent next
     _.map(game.get_others(my_id), function(p){draw_player(game, p)});
 
     // Draw points scoreboard 
-    game.ctx.fillText("Money earned: $" + (game.get_player(my_id).points_earned / 100).fixed(2), 300, 15);
-    game.ctx.fillText("Games remaining: " + game.games_remaining, 580, 15)
+    $("#cumulative_bonus").html("Total bonus so far: $" + (game.get_player(my_id).points_earned / 100).fixed(2));
+    $("#curr_bonus").html("Current bonus:" + game.get_player(my_id).angle);
+    $("#time").html("Time remaining: " + game.games_remaining);
 
     //And then we draw ourself so we're always in front
     draw_player(game, game.get_player(my_id));
