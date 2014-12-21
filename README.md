@@ -1,4 +1,4 @@
-![Example Experiment Screenshot](/../screenshot/static/Example_Image.jpg?raw=true)
+Note: This is an unofficial fork of [MWERT](https://github.com/hawkrobe/MWERT), adapted to allow arbitrary numbers of players to join a single room and participate in a collective behavior task. This task was originally used by Ian Couzin's lab to investigate collective behavior in fish.
 
 Local demo (from scratch)
 =========================
@@ -7,7 +7,7 @@ Local demo (from scratch)
 
 2. On Mac or Linux, use the Terminal to navigate to the location where you want to create your project, and enter 
    ```
-   git clone https://github.com/hawkrobe/MWERT.git
+   git clone https://github.com/hawkrobe/couzin_replication.git
    ```
    at the command line to create a local copy of this repository. On Windows, run this command in the shell you installed in the previous step.
 
@@ -22,36 +22,6 @@ Local demo (from scratch)
    ```
    This means that you've successfully created a 'server' that can be accessed by copying and pasting 
    ```
-   http://localhost:8000/index.html?id=1000&condition=dynamic 
+   http://localhost:8000/index.html
    ```
-   in one tab of your browser. You should see an avatar in a waiting room. To connect the other player in another tab for test purposes, open a new tab and use this URL with a different id:
-   ```
-   http://localhost:8000/index.html?id=1001&condition=dynamic 
-   ```
-   To see the other (staged) version of the experiment, just change "dynamic" to "ballistic" in the URL query string. Also note that if no id is provided, a unique id will be randomly generated.
-
-Putting experiment on web server
-================================
-
-To make your experiment accessible over the internet, you'll need to put it in a publicly accessible directory of a web server, and run ```node app.js``` from that directory. To link clients to the experiment, replace "localhost" in the links given above with your web server's name. Sample templates are given for 'disconnected' and 'game over' web pages, but you may want to serve up a customized HTML document containing an exit survey or a portal to submit work (if you are using an online labor market like Amazon Mechanical Turk). To do so, you can change the URL in the ```client_newgame()``` and ```client_ondisconnect()``` functions contained in **client.js**.
-
-Integrating with MySQL
-======================
-
-First, enter your database information (i.e. user, password, and database name) in **database.js**. Next, set the ```use_db``` variable to ```true``` at the top of **app.js** and **game.server.js**. By default, the code assumes a table called ```game_participant``` with fields ```workerID``` and ```bonus_pay```, but you can change the queries at the following places in the code to fit your database:
-
-The database is queried at only two points in the provided code. One is in **app.js** to check whether the id supplied in the query string exists in the database. If it isn't, the player is notified and referred to another site rather than being assigned a unique random id. The other location is the ```server_newgame()``` function in **game.core.js**, where we save each player’s current winnings to the database at the end of each round, just in case someone disconnects and we must pay however much they accumulated.
-
-
-Code Glossary
-=============
-
-The code is divided across several distinct files to make it easier to understand the roles played by different functions. Here are the high-level description of the contents so that you can find the part you need to change for your own application:
-
-* **game.core.js**: Contains the game logic and core client-side functions. Creates game, player, and target objects and specifies their properties. This is the primary code that must be changed when specifying a different game logic (e.g. ```server_update_physics()```, ```server_newgame()```, ```writeData()```). 
-* **app.js**: This is the Node.js script that sets everything up to listen for clients on the specified port. It will not need to be changed, except if you want to listen on a different port (default 8000).
-* **game.client.js**: Runs in a client's browser upon accessing the URL being served by our Node.js app. Creates a client-side game_core object, establishes a Socket.io connection between the client and the server, and specifies what happens upon starting or joining a game. This needs to be changed if introducing new Socket.io messsage (i.e. if you want to track a new client-side event), new shared variables, or new details of how games begin.
-* **game.server.js**: Contains the functions to pair people up into separate 'rooms' (```findGame()```) and also species how the server acts upon messages passed from clients (```onMessage()```). This needs to be changed if you want groups of more than two people, or if you're adding new events to the Socket.io pipeline.
-* **drawing.js**: Contains the HTML5 code to render graphics. Only needs to be changed if you desire a different graphical representation.
-* **index.html, index.css**: Define background of page and runs necessary client-side scripts. Do not need to be changed.
-* **disconnected.html, game_over.html**: Template pages to demonstrate how to refer a player out of the game upon some event. Should be replaced by pages specific to your purpose (e.g. an exit survey, a debriefing, or a link to submit the HIT on Mechanical Turk).
+   in one tab of your browser. You should see an avatar in a waiting room. To connect the other player in another tab for test purposes, open a new tab and use the same URL. Repeat as many times as you'd like!
