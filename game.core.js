@@ -72,6 +72,9 @@ var game_core = function(game_instance){
     //Set to true if we want players to act under noise
     this.noise = false;
 
+    // This draws the circle in which players can see other players
+    this.visibility_radius = 27.5 * 3; // 27.5cm * 3
+
     //Number of games left
     this.games_remaining = 50;
 
@@ -431,7 +434,6 @@ function NormalDistribution(sigma, mu) {
     });
 }
 
-
 get_random_position = function(world) {
     return {
         x: Math.floor((Math.random() * world.width) + 1),
@@ -439,6 +441,17 @@ get_random_position = function(world) {
     };
 };
 
+// At beginning of round, want to start people close enough 
+// together that they can see at least one or two others...
+// In circle with radius quarter size of tank.
+get_random_center_position = function(world) {
+    var theta = Math.random()*Math.PI*2;
+    return {
+        x: world.width /2 + (Math.cos(angle)* world.width /4),
+        y: world.height/2 + (Math.sin(angle)* world.height/4)
+    };
+}
+    
 get_random_angle = function() {
     return Math.floor((Math.random() * 360) + 1);
 };

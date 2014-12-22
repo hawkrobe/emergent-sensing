@@ -220,22 +220,27 @@ client_countdown = function() {
 }
 
 client_update = function() {
+    var percent = (Math.abs(game.get_player(my_id).angle/360))
+    var player = game.get_player(my_id)
+
     //Clear the screen area
     game.ctx.clearRect(0,0,480,480);
 
     //Draw opponent next
     _.map(game.get_others(my_id), function(p){draw_player(game, p)});
-    var percent = (Math.abs(game.get_player(my_id).angle/360))
-    console.log(percent)
+
+    // Draw visibility radius
+    draw_visibility_radius(game, player)
+    
     // Draw points scoreboard 
-    $("#cumulative_bonus").html("Total bonus so far: $" + (game.get_player(my_id).points_earned / 100).fixed(2));
+    $("#cumulative_bonus").html("Total bonus so far: $" + (player.points_earned / 100).fixed(2));
     $("#curr_bonus").html("Current bonus: <span style='color: " 
         + getColorForPercentage(percent) 
-        +";'>" + Math.abs(game.get_player(my_id).angle) + "</span>");
+        +";'>" + Math.abs(player.angle) + "</span>");
     $("#time").html("Time remaining: " + game.games_remaining);
 
     //And then we draw ourself so we're always in front
-    draw_player(game, game.get_player(my_id));
+    draw_player(game, player);
 };
 
 var percentColors = [

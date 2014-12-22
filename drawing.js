@@ -38,6 +38,16 @@ draw_player = function(game, player){
     game.ctx.fillText(player.message, 290, 240);
 }; 
 
+draw_visibility_radius = function(game, player) {
+    var x = player.pos.x
+    var y = player.pos.y
+    var r = game.visibility_radius
+    game.ctx.beginPath();
+    game.ctx.strokeStyle = 'gray';
+    game.ctx.arc(x, y, r, 0, 2 * Math.PI, false);
+    game.ctx.stroke();
+}
+
 // draws instructions at the bottom in a nice style
 draw_info = function(game, info) {    
     //Draw information shared by both players
