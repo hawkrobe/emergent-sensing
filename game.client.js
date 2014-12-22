@@ -232,20 +232,44 @@ client_update = function() {
     //Clear the screen area
     game.ctx.clearRect(0,0,480,480);
 
-    //draw help/information if required
-    draw_info(game, "");
     //Draw opponent next
     _.map(game.get_others(my_id), function(p){draw_player(game, p)});
-
+    var percent = (Math.abs(game.get_player(my_id).angle/360))
+    console.log(percent)
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (game.get_player(my_id).points_earned / 100).fixed(2));
-    $("#curr_bonus").html("Current bonus:" + game.get_player(my_id).angle);
+    $("#curr_bonus").html("Current bonus: <span style='color: " 
+        + getColorForPercentage(percent) 
+        +";'>" + Math.abs(game.get_player(my_id).angle) + "</span>");
     $("#time").html("Time remaining: " + game.games_remaining);
 
     //And then we draw ourself so we're always in front
     draw_player(game, game.get_player(my_id));
 };
 
+var percentColors = [
+    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
+    { pct: 0.5, color: { r: 0xff, g: 0xff, b: 0xff } },
+    { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
+ 
+var getColorForPercentage = function(pct) {
+    for (var i = 0; i < percentColors.length; i++) {
+        if (pct <= percentColors[i].pct) {
+            var lower = percentColors[i - 1] || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } };
+            var upper = percentColors[i];
+            var range = upper.pct - lower.pct;
+            var rangePct = (pct - lower.pct) / range;
+            var pctLower = 1 - rangePct;
+            var pctUpper = rangePct;
+            var color = {
+                r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+                g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+                b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+            };
+            return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+        }
+    }
+}
 
 /*
   The following code should NOT need to be changed

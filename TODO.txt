@@ -1,10 +1,16 @@
 TODO:
 
 * start game once threshold number of players has been reached?
-* keep track of how long the game has been going
 * draw visibility radius around each player
-* give player feedback about how many minutes are remaining 
-* give player feedback about current bonus 
+* write data to file
+* allow people to disconnect gracefully (without ending the game)
+* make movement less choppy
+* keep track of how long the game has been going
+-> give player correct feedback about how many minutes are remaining
+* integrate light field
+-> give player correct feedback about current & cumulative bonus 
+
+
 
 COMPLETED:
 
@@ -13,8 +19,13 @@ COMPLETED:
   -- Remove "separate rooms" feature from server.game.js, as everyone will be playing together
   -- Don't need separate function for 'host' and 'other', since players are identical
   -- Notify and update clients when new player joins
-* Set sizes & speeds to couzin spe
+* Set sizes & speeds to couzin spec
 * Integrate keyboard.js to collect user input
 * remove all the clicking functions
 * get turning to work
 * get space bar boost to work
+* display modifications
+  -- big curr bonus header
+  -- smaller cumulative bonus & time remaining trackers
+  -- color curr bonus val with gradient
+  -- move instructions to footer (clear playable space)
