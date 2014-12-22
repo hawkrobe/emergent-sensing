@@ -1,15 +1,18 @@
 TODO:
 
-* start game once threshold number of players has been reached?
-* draw visibility radius around each player
-* write data to file
+* start game once threshold number of players has been reached (read # required from file)
+* collect next set of players in waiting room once first game starts
+* actually block view of other players outside of visibility radius
+* create round structure
+-> randomly assign order of light levels
+-> reset positions at beginning of each round
+-> create 5 second break in waiting room ("next round begins in...")
 * allow people to disconnect gracefully (without ending the game)
-* make movement less choppy
 * keep track of how long the game has been going
 -> give player correct feedback about how many minutes are remaining
 * integrate light field
 -> give player correct feedback about current & cumulative bonus 
-
+* write the data we want to file
 
 
 COMPLETED:
@@ -29,3 +32,4 @@ COMPLETED:
   -- smaller cumulative bonus & time remaining trackers
   -- color curr bonus val with gradient
   -- move instructions to footer (clear playable space)
+* draw visibility radius around each player
