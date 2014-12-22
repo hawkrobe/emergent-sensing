@@ -43,28 +43,11 @@ var game_core = function(game_instance){
 
     //Dimensions of world -- Used in collision detection, etc.
     this.world = {width : 480, height : 480};  // 160cm * 3
-
-    //We create a player set, passing them the game that is running
-    //them, as well. Both the server and the clients need separate
-    //instances of both players, but the server has more information
-    //about who is who. Clients will be given this info later.
-    if(this.server) {
-        this.players = [{
-            id: this.instance.player_instances[0].id, 
-            player: new game_player(this,this.instance.player_instances[0].player)
-        }];
-	    this.game_clock = 0;
-    } else {
-	    this.players = [{
-            id: null, 
-            player: new game_player(this)
-        }]
-    }
     
     //How often the players move forward <global_speed>px in ms.
     this.tick_frequency = 100;
 
-    //The speed at which the clients move (e.g. 10px/tick)
+    //The speed at which the clients move (e.g. # px/tick)
     this.min_speed = 7.5 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
 
     this.max_speed = 25 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
@@ -85,6 +68,23 @@ var game_core = function(game_instance){
     //If draw_enabled is true, players will see their true angle. If it's false,
     //players can keep their actions hidden from the other player.
     this.draw_enabled = true;
+
+    //We create a player set, passing them the game that is running
+    //them, as well. Both the server and the clients need separate
+    //instances of both players, but the server has more information
+    //about who is who. Clients will be given this info later.
+    if(this.server) {
+        this.players = [{
+            id: this.instance.player_instances[0].id, 
+            player: new game_player(this,this.instance.player_instances[0].player)
+        }];
+        this.game_clock = 0;
+    } else {
+        this.players = [{
+            id: null, 
+            player: new game_player(this)
+        }]
+    }
 
     //Start a physics loop, this is separate to the rendering
     //as this happens at a fixed frequency. Capture the id so
@@ -125,7 +125,7 @@ var game_player = function( game_instance, player_instance) {
 
     this.pos = get_random_position(this.game.world);
     this.angle = get_random_angle();
-    this.speed = 5;
+    this.speed = this.game.min_speed;
     this.color = 'white';
 }; 
 

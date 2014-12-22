@@ -19,22 +19,19 @@ var game = {};
 var my_id = null;
 // Keeps track of whether player is paying attention...
 var visible;
+var active_keys = []; 
 
 // what happens when you press 'left'?
 left_turn = function() {
     var self = game.get_player(my_id);
-    self.angle = (Number(self.angle) - 10) % 360;
-    console.log("new angle =" + self.angle)
-    // Need to tell server about this...
+    self.angle = (Number(self.angle) - 3) % 360;
     game.socket.send("a." + self.angle);
 };
 
 // what happens when you press 'left'?
 right_turn = function() {
     var self = game.get_player(my_id);
-    console.log("new angle =" + self.angle)
-    self.angle = (Number(self.angle) + 10) % 360;
-    // Need to tell server about this...
+    self.angle = (Number(self.angle) + 3) % 360;
     game.socket.send("a." + self.angle);
 };
 
@@ -42,7 +39,6 @@ right_turn = function() {
 speed_up = function() {
     var self = game.get_player(my_id);
     self.speed = game.max_speed;
-    // Need to tell server about this...
     game.socket.send("s." + self.speed);
 }
 
@@ -50,7 +46,6 @@ speed_up = function() {
 speed_down = function() {
     var self = game.get_player(my_id);
     self.speed = game.min_speed;
-    // Need to tell server about this...
     game.socket.send("s." + self.speed);
 }
 
@@ -226,6 +221,12 @@ client_update = function() {
     //Clear the screen area
     game.ctx.clearRect(0,0,480,480);
 
+    // Turn if key is still being held... Don't do anything if both are held
+    if (active_keys.length < 2) {
+        if(_.contains(active_keys, 'right')) right_turn();
+        if(_.contains(active_keys, 'left')) left_turn() ;
+    }
+
     //Draw opponent next
     _.map(game.get_others(my_id), function(p){draw_player(game, p)});
 
@@ -286,8 +287,14 @@ window.onload = function(){
     //Adjust its size
     game.viewport.width = game.world.width;
     game.viewport.height = game.world.height;
-    KeyboardJS.on('left', function(){left_turn()})
-    KeyboardJS.on('right', function(){right_turn()})
+
+    // Keep track of which keys are being pressed
+    KeyboardJS.on('left', 
+        function(){if(!_.contains(active_keys, 'left')) active_keys.push('left');},//if(_.contains(active_keys, 'left')) ;}, 
+        function(){active_keys = _.without(active_keys, 'left');});//active_keys = _.without(active_keys, 'left');})
+    KeyboardJS.on('right', 
+        function(){if(!_.contains(active_keys, 'right')) active_keys.push('right');}, 
+        function(){active_keys = _.without(active_keys, 'right');})
     KeyboardJS.on('space', function(){speed_up()}, function(){speed_down()})
 
     //Fetch the rendering contexts
