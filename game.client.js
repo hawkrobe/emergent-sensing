@@ -62,7 +62,6 @@ client_ondisconnect = function(data) {
     me.info_color = 'rgba(255,255,255,0.1)';
     me.state = 'not-connected';
     me.online = false;
-    // game.players.self.destination = null;
     // game.players.other.info_color = 'rgba(255,255,255,0.1)';
     // game.players.other.state = 'not-connected';
     
@@ -194,14 +193,6 @@ client_new_game = function() {
     // Reset angles
     player_host.angle = game.left_player_start_angle;
     player_client.angle = game.right_player_start_angle;
-
-    //Update their destinations
-    player_host.destination = null;
-    player_client.destination = null;
-
-    // They SHOULD see the targets information
-    game.players.self.targets_enabled = true;
-    game.players.other.targets_enabled = true;
 
     // Initiate countdown (with timeouts)
     if (game.condition == 'dynamic')

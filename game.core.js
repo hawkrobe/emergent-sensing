@@ -30,14 +30,7 @@ var game_core = function(game_instance){
     // 'magic numbers' elsewhere
     this.self_color = '#2288cc';
     this.other_color = 'white';
-    this.big_payoff = 4
-    this.little_payoff = 1
     
-    // Create targets and assign fixed position
-    this.targets = {
-        top :    new target({x : 360, y : 120}),
-	    bottom : new target({x : 360, y : 360})};                  
-
     //Store the instance, if any (passed from game.server.js)
     this.instance = game_instance;
 
@@ -69,7 +62,7 @@ var game_core = function(game_instance){
     }
     
     //How often the players move forward <global_speed>px in ms.
-    this.tick_frequency = 250;
+    this.tick_frequency = 100;
 
     //The speed at which the clients move (e.g. 10px/tick)
     this.min_speed = 7.5 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
@@ -87,7 +80,7 @@ var game_core = function(game_instance){
     this.game_number = 1;
 
     //If draw_enabled is true, players will see their true angle. If it's false,
-    //players can set their destination and keep it hidden from the other player.
+    //players can keep their actions hidden from the other player.
     this.draw_enabled = true;
 
     //Start a physics loop, this is separate to the rendering
@@ -113,8 +106,6 @@ var game_player = function( game_instance, player_instance) {
     
     this.info_color = 'rgba(255,255,255,0)';
     this.id = '';
-    this.targets_enabled = false; // If true, will display targets
-    this.destination = null; // Last place client clicked
     this.points_earned = 0; // keep track of number of points
 
     //These are used in moving us around later
@@ -135,16 +126,6 @@ var game_player = function( game_instance, player_instance) {
     this.color = 'white';
 }; 
 
-// The target is the payoff-bearing goal. We construct it with these properties
-var target = function(location) {
-    this.payoff = 1;
-    this.location = location;
-    this.visited = false;
-    this.radius = 10;
-    this.outer_radius = this.radius + 35;
-    this.color = 'white';
-};
-
 // server side we set the 'game_core' class to a global type, so that
 // it can use it in other files (specifically, game.server.js)
 if('undefined' != typeof global) {
@@ -152,16 +133,7 @@ if('undefined' != typeof global) {
     module.exports = global.game_player = game_player;
 }
 
-get_random_position = function(world) {
-    return {
-        x: Math.floor((Math.random() * world.width) + 1),
-        y: Math.floor((Math.random() * world.height) + 1)
-    };
-};
-
-get_random_angle = function() {
-    return Math.floor((Math.random() * 360) + 1);
-};
+// HELPER FUNCTIONS
 
 // Method to easily look up player 
 game_core.prototype.get_player = function(id) {
@@ -180,66 +152,52 @@ game_core.prototype.get_all_players = function() {
     return _.map(this.players, function(p){return p.player})
 };
 
+// Takes two location objects and computes the distance between them
+game_core.prototype.distance_between = function(obj1, obj2) {
+    x1 = obj1.x;
+    x2 = obj2.x;
+    y1 = obj1.y;
+    y2 = obj2.y;
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+};
+
+//copies a 2d vector like object from one to another
+game_core.prototype.pos = function(a) { return {x:a.x,y:a.y}; };
+
+//Add a 2d vector with another one and return the resulting vector
+game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
+
+
+// SERVER FUNCTIONS
+
 // Notifies clients of changes on the server side. Server totally
 // handles position and points.
 game_core.prototype.server_send_update = function(){
     //Make a snapshot of the current state, for updating the clients
     this.laststate = {
-        tcc : this.targets.top.color,                //'top target color'
-        bcc : this.targets.bottom.color,             //'bottom target color'
-        tcp : this.targets.top.payoff,               //'top target payoff'
-        bcp : this.targets.bottom.payoff,            //'bottom target payoff'
         cond: this.condition,                        //dynamic or ballistic?
         de  : this.draw_enabled,                    // true to see angle
         g2w : this.good2write,                      // true when game's started
     };
-    var players = this.get_all_players()
-//    console.log(players)
     // Add info about all players
+    var players = this.get_all_players()
     _.extend(this.laststate, {ids: _.map(players, function(p){return p.instance.userid})})
     _.extend(this.laststate, {pos: _.map(players, function(p){return p.pos})})
     _.extend(this.laststate, {poi: _.map(players, function(p){return p.points_earned})})
     _.extend(this.laststate, {angle: _.map(players, function(p){return p.angle})})
     _.extend(this.laststate, {speed: _.map(players, function(p){return p.speed})})
 
-    var local_laststate = this.laststate;
     //Send the snapshot to the players
+    var local_laststate = this.laststate;
     _.map(this.get_all_players(), function(p){p.instance.emit( 'onserverupdate', local_laststate)})
 };
 
-// This is called every 666ms and simulates the world state. This is
-// where we update positions and check whether targets have been reached.
+// This is called every few ms and simulates the world state. This is
+// where we update positions 
 game_core.prototype.server_update_physics = function() {
     var local_this = this;
     _.map(this.get_all_players(), function(p){
-        // If a player has reached their destination, stop. Have to put
-        // other wrapper because destination is null until player clicks
-        // Must use distance from, since the player's position is at the
-        // center of the body, which is long. As long as any part of the
-        // body is where it should be, we want them to stop.
-        // if (p.destination) {
-        //     if (this.distance_between(p.pos,p.destination) < 8)
-        //         p.speed = 0;
-        // }
-
-        // Impose Gaussian noise on movement to create uncertainty
-        // Recall base speed is 10, so to avoid moving backward, need that to be rare.
-        // Set the standard deviation of the noise distribution.
-        // if (this.noise) {
-        //     var noise_sd = 4;
-        //     var nd = new NormalDistribution(noise_sd,0); 
-        //     // If a player isn't moving, no noise. Otherwise they'll wiggle in place.
-        //     // Use !good2write as a proxy for the 'waiting room' state
-        //     if (p.speed == 0 || !this.good2write) 
-        //         p.noise = 0;
-        //     else
-        //         p.noise = nd.sample();
-        // } else {
-        //     p.noise = 0;
-        // }
-
-        //Handle player one movement (calculate using polar coordinates)
-        r1 = p.speed; //+ p.noise;
+        r1 = p.speed; 
         theta1 = (p.angle - 90) * Math.PI / 180;
         p.old_state.pos = local_this.pos(p.pos) ;
         var new_dir = {
@@ -305,31 +263,6 @@ game_core.prototype.writeData = function() {
     console.log("Wrote: " + other_data_line);
 };
 
-// This also gets called at the beginning of every new game.
-// It randomizes payoffs, resets colors, and makes the targets "fresh and
-// available" again.
-game_core.prototype.server_reset_targets = function() {
-
-    top_target = this.targets.top;
-    bottom_target = this.targets.bottom;
-    top_target.color = bottom_target.color = 'white';
-    top_target.visited = bottom_target.visited = false;
-
-    // Randomly reset payoffs
-    var r = Math.floor(Math.random() * 2);
-
-    if (r == 0) {
-        this.targets.top.payoff = this.little_payoff;
-        this.targets.bottom.payoff = this.big_payoff;
-        this.best_target_string = 'bottom';
-    } else {
-        this.targets.top.payoff = this.big_payoff;
-        this.targets.bottom.payoff = this.little_payoff;
-        this.best_target_string = 'top';
-    }
-}; 
-
-
 // This is a really important function -- it gets called when a round
 // has been completed, and updates the database with how much money
 // people have made so far. This way, if somebody gets disconnected or
@@ -360,25 +293,14 @@ game_core.prototype.server_newgame = function() {
     this.players.self.speed = 0;
     this.players.other.speed = 0;
 
-    // Tell the server about targets being enabled, so it can use it as a flag elsewhere
-    this.players.self.targets_enabled = true;
-    this.players.other.targets_enabled = true;
-
     // Don't want to write to file during countdown -- too confusing
     this.good2write = false;
-
-    // Reset destinations
-    this.players.self.destination = null;
-    this.players.other.destination = null;
 
     // Don't want people signalling until after countdown/validated input
     this.draw_enabled = false;
 
     //Reset positions
     this.server_reset_positions();
-
-    //Reset targets
-    this.server_reset_targets();
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
     this.instance.player_client.send('s.n.');
@@ -409,7 +331,6 @@ game_core.prototype.server_newgame = function() {
 
 //Main update loop -- don't worry about it
 game_core.prototype.update = function() {
-    
     //Update the game specifics
     if(!this.server) 
         client_update();
@@ -484,6 +405,8 @@ game_core.prototype.check_collision = function( item ) {
     item.pos.y = item.pos.y.fixed(4);
 };
 
+// MATH FUNCTIONS
+
 // Just in case we want to draw from Gaussian to get noise on movement...
 function NormalDistribution(sigma, mu) {
     return new Object({
@@ -508,29 +431,20 @@ function NormalDistribution(sigma, mu) {
     });
 }
 
-/* Helper functions for the game code:
-   Here we have some common maths and game related code to make
-   working with 2d vectors easy, as well as some helpers for
-   rounding numbers to fixed point.
-*/
+
+get_random_position = function(world) {
+    return {
+        x: Math.floor((Math.random() * world.width) + 1),
+        y: Math.floor((Math.random() * world.height) + 1)
+    };
+};
+
+get_random_angle = function() {
+    return Math.floor((Math.random() * 360) + 1);
+};
 
 // (4.22208334636).fixed(n) will return fixed point value to n places, default n = 3
 Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
-
-// Takes two location objects and computes the distance between them
-game_core.prototype.distance_between = function(obj1, obj2) {
-    x1 = obj1.x;
-    x2 = obj2.x;
-    y1 = obj1.y;
-    y2 = obj2.y;
-    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-};
-
-//copies a 2d vector like object from one to another
-game_core.prototype.pos = function(a) { return {x:a.x,y:a.y}; };
-
-//Add a 2d vector with another one and return the resulting vector
-game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
 
 //The remaining code runs the update animations
 
