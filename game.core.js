@@ -52,22 +52,18 @@ var game_core = function(game_instance){
 
     this.max_speed = 25 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
 
-    //Set to true if we want players to act under noise
-    this.noise = false;
-
     // This draws the circle in which players can see other players
     this.visibility_radius = 27.5 * 3; // 27.5cm * 3
 
-    //Number of games left
-    this.games_remaining = 50;
+    //Number of players needed to start the game
+    this.players_threshold = 3;
 
     //Players will replay over and over, so we keep track of which number we're on,
     //to print out to data file
-    this.game_number = 1;
+    this.round_num = 0;
 
-    //If draw_enabled is true, players will see their true angle. If it's false,
-    //players can keep their actions hidden from the other player.
-    this.draw_enabled = true;
+    //If hiding_enabled is true, players will only see others in their visibility radius
+    this.hiding_enabled = false;
 
     //We create a player set, passing them the game that is running
     //them, as well. Both the server and the clients need separate
@@ -111,9 +107,8 @@ var game_player = function( game_instance, player_instance) {
     this.id = '';
     this.points_earned = 0; // keep track of number of points
 
-    //These are used in moving us around later
+    //This is used in moving us around later
     this.old_state = {pos:{x:0,y:0}};
-    this.cur_state = {pos:{x:0,y:0}};
 
     //The world bounds we are confined to
     this.pos_limits = {
@@ -178,8 +173,8 @@ game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y
 game_core.prototype.server_send_update = function(){
     //Make a snapshot of the current state, for updating the clients
     this.laststate = {
-        cond: this.condition,                        //dynamic or ballistic?
-        de  : this.draw_enabled,                    // true to see angle
+        cond: this.condition,                       //dynamic or ballistic?
+        de  : this.hiding_enabled,                  // true to see angle
         g2w : this.good2write,                      // true when game's started
     };
     // Add info about all players
@@ -198,11 +193,11 @@ game_core.prototype.server_send_update = function(){
 // This is called every few ms and simulates the world state. This is
 // where we update positions 
 game_core.prototype.server_update_physics = function() {
-    var local_this = this;
+    var local_gamecore = this;
     _.map(this.get_all_players(), function(p){
         r1 = p.speed; 
         theta1 = (p.angle - 90) * Math.PI / 180;
-        p.old_state.pos = local_this.pos(p.pos) ;
+        p.old_state.pos = local_gamecore.pos(p.pos) ;
         var new_dir = {
             x : r1 * Math.cos(theta1), 
             y : r1 * Math.sin(theta1)
@@ -271,61 +266,50 @@ game_core.prototype.writeData = function() {
 // people have made so far. This way, if somebody gets disconnected or
 // something, we'll still know what to pay them.
 game_core.prototype.server_newgame = function() {
-    if (this.use_db) { // set in game.server.js
-	    console.log("USING DB");
-        var sql1 = 'UPDATE game_participant SET bonus_pay = ' + 
-            (this.players.self.points_earned / 100).toFixed(2); 
-        sql1 += ' WHERE workerId = "' + this.players.self.instance.userid + '"';
-        this.mysql_conn.query(sql1, function(err, rows, fields) {
-            if (err) throw err;
-            console.log('Updated sql with command: ', sql1);
-        });
-        var sql2 = 'UPDATE game_participant SET bonus_pay = ' + 
-            (this.players.other.points_earned / 100).toFixed(2); 
-        sql2 += ' WHERE workerId = "' + this.players.other.instance.userid + '"';
-        this.mysql_conn.query(sql2, function(err, rows, fields) {
-            if (err) throw err;
-            console.log('Updated sql with command: ', sql2);
-        });
-    }
+    // if (this.use_db) { // set in game.server.js
+	   //  console.log("USING DB");
+    //     var sql1 = 'UPDATE game_participant SET bonus_pay = ' + 
+    //         (this.players.self.points_earned / 100).toFixed(2); 
+    //     sql1 += ' WHERE workerId = "' + this.players.self.instance.userid + '"';
+    //     this.mysql_conn.query(sql1, function(err, rows, fields) {
+    //         if (err) throw err;
+    //         console.log('Updated sql with command: ', sql1);
+    //     });
+    //     var sql2 = 'UPDATE game_participant SET bonus_pay = ' + 
+    //         (this.players.other.points_earned / 100).toFixed(2); 
+    //     sql2 += ' WHERE workerId = "' + this.players.other.instance.userid + '"';
+    //     this.mysql_conn.query(sql2, function(err, rows, fields) {
+    //         if (err) throw err;
+    //         console.log('Updated sql with command: ', sql2);
+    //     });
+    // }
     
+    var local_gamecore = this;
+
     // Update number of games remaining
-    this.games_remaining -= 1;
+    this.round_num += 1;
 
     // Don't want players moving during countdown
-    this.players.self.speed = 0;
-    this.players.other.speed = 0;
+    _.map(local_gamecore.get_all_players(), function(p) {p.speed = 0;})
 
     // Don't want to write to file during countdown -- too confusing
     this.good2write = false;
 
     // Don't want people signalling until after countdown/validated input
-    this.draw_enabled = false;
+    this.hidden_enabled = true;
 
     //Reset positions
     this.server_reset_positions();
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
-    this.instance.player_client.send('s.n.');
-    this.instance.player_host.send('s.n.');
-   
-    var local_this = this;
+    _.map(local_gamecore.get_all_players(), function(p) {p.instance.send('s.begin_game.')})
 
-    // For the dynamic version, we want there to be a countdown.
-    // For the ballistic version, the game won't start until both players have
-    // made valid choices so the function must be checked over and over. It's in
-    // server_update_physics.
-    if(this.condition == "dynamic"){
-        // After countdown, players start moving, we start writing data, and clock resets
-        setTimeout(function(){
-            local_this.good2write = true;
-            local_this.draw_enabled = true;
-            console.log("GOOOOOO!");
-            local_this.players.self.speed = local_this.global_speed;
-            local_this.players.other.speed = local_this.global_speed;
-            local_this.game_clock = 0;
-        }, 3000);
-    } 
+    // Launch game after countdown;
+    setTimeout(function(){
+    //        local_gamecore.good2write = true;
+        _.map(local_gamecore.get_all_players(), function(p) {p.speed = local_gamecore.min_speed});
+        local_gamecore.game_clock = 0;
+    }, 3000);
 };
 
 /*
@@ -347,16 +331,11 @@ game_core.prototype.update = function() {
 
 // This gets called every iteration of a new game to reset positions
 game_core.prototype.server_reset_positions = function() {
-
-    var player_host = this.players.self.host ? this.players.self : this.players.other;
-    var player_client = this.players.self.host ? this.players.other : this.players.self;
-
-    player_host.pos = this.right_player_start_pos;
-    player_client.pos = this.left_player_start_pos;
-
-    player_host.angle = this.right_player_start_angle;
-    player_client.angle = this.left_player_start_angle;
-
+    var local_gamecore = this;
+    _.map(local_gamecore.get_all_players(), function(p) {
+        p.pos = get_random_center_position(local_gamecore.world);
+        p.angle = get_random_angle(local_gamecore.world);
+    })
 }; 
 
 //For the server, we need to cancel the setTimeout that the polyfill creates
@@ -410,30 +389,6 @@ game_core.prototype.check_collision = function( item ) {
 
 // MATH FUNCTIONS
 
-// Just in case we want to draw from Gaussian to get noise on movement...
-function NormalDistribution(sigma, mu) {
-    return new Object({
-        sigma: sigma,
-        mu: mu,
-        sample: function() {
-            var res;
-            if (this.storedDeviate) {
-                res = this.storedDeviate * this.sigma + this.mu;
-                this.storedDeviate = null;
-            } else {
-                var dist = Math.sqrt(-1 * Math.log(Math.random()));
-                var angle = 2 * Math.PI * Math.random();
-                this.storedDeviate = dist*Math.cos(angle);
-                res = dist*Math.sin(angle) * this.sigma + this.mu;
-            }
-            return res;
-        },
-        sampleInt : function() {
-            return Math.round(this.sample());
-        }
-    });
-}
-
 get_random_position = function(world) {
     return {
         x: Math.floor((Math.random() * world.width) + 1),
@@ -447,8 +402,8 @@ get_random_position = function(world) {
 get_random_center_position = function(world) {
     var theta = Math.random()*Math.PI*2;
     return {
-        x: world.width /2 + (Math.cos(angle)* world.width /4),
-        y: world.height/2 + (Math.sin(angle)* world.height/4)
+        x: world.width /2 + (Math.cos(theta)* world.width /4),
+        y: world.height/2 + (Math.sin(theta)* world.height/4)
     };
 }
     

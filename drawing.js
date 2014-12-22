@@ -10,11 +10,8 @@ draw_player = function(game, player){
     // players can set their destinations but won't turn to face them.
     // As soon as the countdown is over, it's set to true and they
     // immediately start using that new angle
-    if (player.game.draw_enabled) {
-	    game.ctx.rotate((player.angle * Math.PI) / 180);
-    } else {
-	    game.ctx.rotate((player.start_angle * Math.PI) / 180);
-    }
+    game.ctx.rotate((player.angle * Math.PI) / 180);
+
     // This draws the triangle
     game.ctx.fillStyle = player.color;
     game.ctx.strokeStyle = player.color;
@@ -30,8 +27,8 @@ draw_player = function(game, player){
     game.ctx.restore();
 
     //Draw tag underneath players
-    game.ctx.fillStyle = player.info_color;
-    game.ctx.fillText(player.state, player.pos.x+10, player.pos.y + 20); 
+//    game.ctx.fillStyle = player.info_color;
+//    game.ctx.fillText(player.state, player.pos.x+10, player.pos.y + 20); 
 
     // Draw message in center (for countdown, e.g.)
     game.ctx.fillStyle = 'white';

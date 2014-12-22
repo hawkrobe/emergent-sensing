@@ -55,7 +55,6 @@ client_ondisconnect = function(data) {
     var me = game.get_player(my_id)
     var others = game.get_others(my_id);
     me.info_color = 'rgba(255,255,255,0.1)';
-    me.state = 'not-connected';
     me.online = false;
     // game.players.other.info_color = 'rgba(255,255,255,0.1)';
     // game.players.other.state = 'not-connected';
@@ -151,17 +150,19 @@ client_onMessage = function(data) {
         case 'alert' : // Not in database, so you can't play...
             alert('You did not enter an ID'); 
             window.location.replace('http://nodejs.org'); break;
-        case 'j' : //join a game requested
+        case 'join' : //join a game requested
             var num_players = commanddata;
             client_onjoingame(num_players); break;
-        case 'n' : // New player joined... Need to add them to our list.
+        case 'add_player' : // New player joined... Need to add them to our list.
             console.log("adding player")
             game.players.push({id: commanddata, player: new game_player(game)})
-        case 'b' : //blink title
+        case 'begin_game' :
+            client_newgame(); break;
+        case 'blink' : //blink title
             flashTitle("GO!");  break;
-        case 'e' : //end game requested
+        case 'end' : //end game requested
             client_ondisconnect(); break;
-        case 'a' : // other player changed angle
+        case 'angle_change' : // other player changed angle
             var player_id = commands[2];
             var angle_val = commands[3];
             game.get_player(player_id).angle = angle_val; break;
@@ -171,47 +172,31 @@ client_onMessage = function(data) {
 }; 
 
 // Restarts things on the client side. Necessary for iterated games.
-client_new_game = function() {
-    if (game.games_remaining == 0) {
+client_newgame = function() {
+    if (game.round_num == 3) {
         // Redirect to exit survey
         var URL = './static/game_over.html';
         URL += '?id=' + game.players.self.id;
         window.location.replace(URL);
     } else {
         // Decrement number of games remaining
-        game.games_remaining -= 1;
+        game.round_num += 1;
     }
 
-    var player_host = game.players.self.host ?  game.players.self : game.players.other;
-    var player_client = game.players.self.host ?  game.players.other : game.players.self;
-
-    // Reset angles
-    player_host.angle = game.left_player_start_angle;
-    player_client.angle = game.right_player_start_angle;
-
     // Initiate countdown (with timeouts)
-    if (game.condition == 'dynamic')
-        client_countdown();
-
-    // Set text beneath player
-    game.players.self.state = 'YOU';
-    game.players.other.state = '';
+    client_countdown();
 }; 
 
 client_countdown = function() {
-    game.players.self.message = '          Begin in 3...';
-    setTimeout(function(){game.players.self.message = '          Begin in 2...';}, 
+    var player = game.get_player(my_id);
+    player.message = '          Begin in 3...';
+    setTimeout(function(){player.message = '          Begin in 2...';}, 
                1000);
-    setTimeout(function(){game.players.self.message = '          Begin in 1...';}, 
+    setTimeout(function(){player.message = '          Begin in 1...';}, 
                2000);
-
-    // At end of countdown, say "GO" and start using their real angle
-    setTimeout(function(){
-        game.players.self.message = '               GO';
-    }, 3000);
-    
-    // Remove message text
-    setTimeout(function(){game.players.self.message = '';}, 4000);
+    setTimeout(function(){player.message = '               GO';}, 
+               3000);
+    setTimeout(function(){player.message = '';}, 4000);
 }
 
 client_update = function() {
@@ -238,7 +223,7 @@ client_update = function() {
     $("#curr_bonus").html("Current bonus: <span style='color: " 
         + getColorForPercentage(percent) 
         +";'>" + Math.abs(player.angle) + "</span>");
-    $("#time").html("Time remaining: " + game.games_remaining);
+    $("#time").html("Time remaining: " + game.time_remaining);
 
     //And then we draw ourself so we're always in front
     draw_player(game, player);
@@ -315,7 +300,7 @@ client_connect_to_server = function(game) {
     //When we connect, we are not 'connected' until we have a server id
     //and are placed in a game by the server. The server sends us a message for that.
     game.socket.on('connect', function(){
-        game.state = 'connecting';
+//        game.state = 'connecting';
     }.bind(game));
 
     //Sent when we are disconnected (network, server down, etc)
