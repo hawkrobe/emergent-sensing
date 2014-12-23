@@ -48,9 +48,9 @@ var game_core = function(game_instance){
     this.tick_frequency = 125;     //Update 8 times per second
 
     //The speed at which the clients move (e.g. # px/tick)
-    this.min_speed = 21 / 8; // 7.5cm * 3 * .5s 
+    this.min_speed = 21 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
 
-    this.max_speed = 70 / 8; // 7.5cm * 3 * .5s 
+    this.max_speed = 70 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
 
     // This draws the circle in which players can see other players
     this.visibility_radius = 77; // 27.5cm * 3
@@ -119,7 +119,7 @@ var game_player = function( game_instance, player_instance) {
     };
 
     this.pos = get_random_position(this.game.world);
-    this.angle = get_random_angle();
+    this.angle = null;
     this.speed = this.game.min_speed;
     this.color = 'white';
 }; 
