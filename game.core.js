@@ -266,24 +266,6 @@ game_core.prototype.writeData = function() {
 // people have made so far. This way, if somebody gets disconnected or
 // something, we'll still know what to pay them.
 game_core.prototype.server_newgame = function() {
-    // if (this.use_db) { // set in game.server.js
-	   //  console.log("USING DB");
-    //     var sql1 = 'UPDATE game_participant SET bonus_pay = ' + 
-    //         (this.players.self.points_earned / 100).toFixed(2); 
-    //     sql1 += ' WHERE workerId = "' + this.players.self.instance.userid + '"';
-    //     this.mysql_conn.query(sql1, function(err, rows, fields) {
-    //         if (err) throw err;
-    //         console.log('Updated sql with command: ', sql1);
-    //     });
-    //     var sql2 = 'UPDATE game_participant SET bonus_pay = ' + 
-    //         (this.players.other.points_earned / 100).toFixed(2); 
-    //     sql2 += ' WHERE workerId = "' + this.players.other.instance.userid + '"';
-    //     this.mysql_conn.query(sql2, function(err, rows, fields) {
-    //         if (err) throw err;
-    //         console.log('Updated sql with command: ', sql2);
-    //     });
-    // }
-    
     var local_gamecore = this;
 
     // Update number of games remaining

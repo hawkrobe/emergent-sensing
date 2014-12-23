@@ -26,13 +26,10 @@ draw_player = function(game, player){
     game.ctx.beginPath();
     game.ctx.restore();
 
-    //Draw tag underneath players
-//    game.ctx.fillStyle = player.info_color;
-//    game.ctx.fillText(player.state, player.pos.x+10, player.pos.y + 20); 
-
     // Draw message in center (for countdown, e.g.)
     game.ctx.fillStyle = 'white';
-    game.ctx.fillText(player.message, 290, 240);
+    game.ctx.textAlign = 'center';
+    game.ctx.fillText(player.message, 240, 240);
 }; 
 
 draw_visibility_radius = function(game, player) {

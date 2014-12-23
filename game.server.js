@@ -68,7 +68,6 @@ game_server.findGame = function(player) {
             if(!this.games.hasOwnProperty(gameid)) continue;
             var game = this.games[gameid];
             var gamecore = game.gamecore;
-            console.log([game.player_count, gamecore.players_threshold])
             if(game.player_count < gamecore.players_threshold) { 
                joined_a_game = true;
                 // player instances are array of actual client handles
@@ -93,9 +92,10 @@ game_server.findGame = function(player) {
                 gamecore.server_send_update();
                 gamecore.update();
 
-                if (game.player_count == gamecore.players_threshold) 
+                if (game.player_count == gamecore.players_threshold) {
+                    console.log(["starting game:", game.player_count, gamecore.players_threshold])
                     this.startGame(game)
-                // check threshold and start game if it's been exceeded
+                }
             }
         }
         if(!joined_a_game) { // if we didn't join a game, we must create one
@@ -153,18 +153,20 @@ game_server.createGame = function(player) {
 // we are requesting to kill a game in progress.
 // This gets called if someone disconnects
 game_server.endGame = function(gameid, userid) {
-    var thegame = this.game;
+    var thegame = this.games [ gameid ];
     if(thegame) {
-        //stop the game updates immediately
-        thegame.gamecore.stop_update();
-
-        //if the game has two players, then one is leaving
+        //if the game has more than one player, it's fine -- let the others keep playing, but let them know
         if(thegame.player_count > 1) {
-            _.map(thegame.gamecore.get_others(userid), function(p) {p.instance.send('s.end.')})
+            thegame.gamecore.players = _.without(thegame.gamecore.players, 
+                                                 _.findWhere(thegame.gamecore.players, {id: userid}))
+            _.map(thegame.gamecore.get_others(userid), function(p) {p.instance.send('s.end.' + userid)})
+            thegame.player_count--;
+        } else {
+            // If the game only has one player and they leave, remove it.
+            thegame.gamecore.stop_update();
+            delete this.games[gameid];
+            this.log('game removed. there are now ' + this.game_count + ' games' );
         }
-        delete this.game;
-        this.game_count--;
-        this.log('game removed. there are now ' + this.game_count + ' games' );
     } else {
         this.log('that game was not found!');
     }    
@@ -172,7 +174,6 @@ game_server.endGame = function(gameid, userid) {
 
 // When the threshold is exceeded, this gets called
 game_server.startGame = function(game) {
-//    _.map(game.get_all_players(), function(p){p.instance.send('s.start.')})
     game.active = true;
     game.gamecore.server_newgame(); 
 };

@@ -50,16 +50,9 @@ speed_down = function() {
 }
 
 // Function that gets called client-side when someone disconnects
-client_ondisconnect = function(data) {
+client_ondisconnect = function(userid) {
     // Everything goes offline!
-    var me = game.get_player(my_id)
-    var others = game.get_others(my_id);
-    me.info_color = 'rgba(255,255,255,0.1)';
-    me.online = false;
-    // game.players.other.info_color = 'rgba(255,255,255,0.1)';
-    // game.players.other.state = 'not-connected';
-    
-    console.log("Disconnecting...");
+    game.players = _.without(game.players, _.findWhere(game.players, {id: userid}))
 
     // if(game.games_remaining == 0) {
     //     // If the game is done, redirect them to an exit survey
@@ -155,13 +148,15 @@ client_onMessage = function(data) {
             client_onjoingame(num_players); break;
         case 'add_player' : // New player joined... Need to add them to our list.
             console.log("adding player")
-            game.players.push({id: commanddata, player: new game_player(game)})
+            game.players.push({id: commanddata, player: new game_player(game)}); break;
         case 'begin_game' :
+            game.hidden_enabled = true;
             client_newgame(); break;
         case 'blink' : //blink title
             flashTitle("GO!");  break;
         case 'end' : //end game requested
-            client_ondisconnect(); break;
+            var id = commanddata;
+            client_ondisconnect(id); break;
         case 'angle_change' : // other player changed angle
             var player_id = commands[2];
             var angle_val = commands[3];
@@ -189,12 +184,12 @@ client_newgame = function() {
 
 client_countdown = function() {
     var player = game.get_player(my_id);
-    player.message = '          Begin in 3...';
-    setTimeout(function(){player.message = '          Begin in 2...';}, 
+    player.message = 'Begin in 3...';
+    setTimeout(function(){player.message = 'Begin in 2...';}, 
                1000);
-    setTimeout(function(){player.message = '          Begin in 1...';}, 
+    setTimeout(function(){player.message = 'Begin in 1...';}, 
                2000);
-    setTimeout(function(){player.message = '               GO';}, 
+    setTimeout(function(){player.message = 'GO';}, 
                3000);
     setTimeout(function(){player.message = '';}, 4000);
 }
@@ -212,8 +207,10 @@ client_update = function() {
         if(_.contains(active_keys, 'left')) left_turn() ;
     }
 
-    //Draw opponent next
-    _.map(game.get_others(my_id), function(p){draw_player(game, p)});
+    //Draw opponent next (but only those in radius)
+    _.map(game.get_others(my_id), function(p){
+        if(!game.hidden_enabled || game.distance_between(p.pos, player.pos) < game.visibility_radius)
+            draw_player(game, p)});
 
     // Draw visibility radius
     draw_visibility_radius(game, player)

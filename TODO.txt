@@ -1,13 +1,9 @@
 TODO:
 
-* start game once threshold number of players has been reached (read # required from file)
-* collect next set of players in waiting room once first game starts
-* actually block view of other players outside of visibility radius
+* determine threshold # players for game from file?
 * create round structure
 -> randomly assign order of light levels
--> reset positions at beginning of each round
 -> create 5 second break in waiting room ("next round begins in...")
-* allow people to disconnect gracefully (without ending the game)
 * keep track of how long the game has been going
 -> give player correct feedback about how many minutes are remaining
 * integrate light field
@@ -17,19 +13,22 @@ TODO:
 
 COMPLETED:
 
-* Initialize with random locations and random angles
 * Allow more than 2 people to be in a room together
-  -- Remove "separate rooms" feature from server.game.js, as everyone will be playing together
   -- Don't need separate function for 'host' and 'other', since players are identical
   -- Notify and update clients when new player joins
 * Set sizes & speeds to couzin spec
 * Integrate keyboard.js to collect user input
 * remove all the clicking functions
-* get turning to work
+* get turning to work smoothly (constant angular velocity)
 * get space bar boost to work
 * display modifications
   -- big curr bonus header
   -- smaller cumulative bonus & time remaining trackers
   -- color curr bonus val with gradient
-  -- move instructions to footer (clear playable space)
+  -- move instructions to footer (clear out playable space)
 * draw visibility radius around each player
+  -- actually block view of other players outside of visibility radius (during round)
+* start game once threshold number of players has been reached 
+* collect next set of players in waiting room once first game starts
+* reset positions to center beginning of each round
+* allow people to disconnect gracefully (without ending the game)
