@@ -1,6 +1,7 @@
 TODO:
 
-* determine threshold # players for game from file?
+* determine threshold # players for individual game from file?
+* only send 'instant' updates about angles for players within your visibility sphere? (could prevent lag in bigger groups)
 * create round structure
 -> randomly assign order of light levels
 -> create 5 second break in waiting room ("next round begins in...")
@@ -9,7 +10,10 @@ TODO:
 * integrate light field
 -> give player correct feedback about current & cumulative bonus 
 * write the data we want to file
-
+-> curr bonus, positions, keyboard inputs, active?, angle, noise level, velocity, list of players in visibility radius
+* put dots on circle to represent direction
+* change color of whole background (not viewpoint -- white to green)
+* database... 
 
 COMPLETED:
 

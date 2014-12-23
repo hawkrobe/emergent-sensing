@@ -24,14 +24,14 @@ var active_keys = [];
 // what happens when you press 'left'?
 left_turn = function() {
     var self = game.get_player(my_id);
-    self.angle = (Number(self.angle) - 3) % 360;
+    self.angle = (Number(self.angle) - 5) % 360;
     game.socket.send("a." + self.angle);
 };
 
 // what happens when you press 'left'?
 right_turn = function() {
     var self = game.get_player(my_id);
-    self.angle = (Number(self.angle) + 3) % 360;
+    self.angle = (Number(self.angle) + 5) % 360;
     game.socket.send("a." + self.angle);
 };
 
@@ -199,7 +199,7 @@ client_update = function() {
     var player = game.get_player(my_id)
 
     //Clear the screen area
-    game.ctx.clearRect(0,0,480,480);
+    game.ctx.clearRect(0,0,280,485);
 
     // Turn if key is still being held... Don't do anything if both are held
     if (active_keys.length < 2) {

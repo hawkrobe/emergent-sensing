@@ -42,18 +42,18 @@ var game_core = function(game_instance){
     this.newgame_initiated_flag = false;
 
     //Dimensions of world -- Used in collision detection, etc.
-    this.world = {width : 480, height : 480};  // 160cm * 3
+    this.world = {width : 280, height : 485};  // 160cm * 3
     
     //How often the players move forward <global_speed>px in ms.
-    this.tick_frequency = 100;
+    this.tick_frequency = 125;     //Update 8 times per second
 
     //The speed at which the clients move (e.g. # px/tick)
-    this.min_speed = 7.5 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
+    this.min_speed = 21 / 8; // 7.5cm * 3 * .5s 
 
-    this.max_speed = 25 * 3 * (this.tick_frequency / 1000); // 7.5cm * 3 * .5s 
+    this.max_speed = 70 / 8; // 7.5cm * 3 * .5s 
 
     // This draws the circle in which players can see other players
-    this.visibility_radius = 27.5 * 3; // 27.5cm * 3
+    this.visibility_radius = 77; // 27.5cm * 3
 
     //Number of players needed to start the game
     this.players_threshold = 3;
@@ -98,7 +98,7 @@ var game_player = function( game_instance, player_instance) {
     this.game = game_instance;
 
     //Set up initial values for our state information
-    this.size = { x:16, y:16, hx:8, hy:8 }; // Approximately 5cm * 3 long
+    this.size = { x:14, y:14, hx:7, hy:7 }; // Approximately 5cm * 3 long
     this.state = 'not-connected';
     this.visible = "visible"; // Tracks whether client is watching game
     this.message = '';
