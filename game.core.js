@@ -117,9 +117,13 @@ var game_player = function( game_instance, player_instance) {
 	    y_min: this.size.hy,
 	    y_max: this.game.world.height - this.size.hy
     };
-
-    this.pos = get_random_position(this.game.world);
-    this.angle = get_random_angle();
+    if (this.game.server) {
+        this.pos = get_random_position(this.game.world);
+        this.angle = get_random_angle();
+    } else {
+        this.pos = null;
+        this.angle = null;
+    }
     this.speed = this.game.min_speed;
     this.color = 'white';
 }; 
