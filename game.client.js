@@ -101,7 +101,7 @@ client_onserverupdate_received = function(data){
     }
     if(data.angle) {
         _.map(_.zip(game.get_all_players(), data.angle),
-              function(z) {z[0].angle = z[1];  })
+              function(z) {if(z[0] != game.get_player(my_id) | z[0].angle == null) z[0].angle = z[1];})
     }
     if(data.speed) {
         _.map(_.zip(game.get_all_players(), data.speed),
