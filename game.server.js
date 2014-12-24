@@ -154,13 +154,19 @@ game_server.createGame = function(player) {
 // This gets called if someone disconnects
 game_server.endGame = function(gameid, userid) {
     var thegame = this.games [ gameid ];
+    console.log(thegame.gamecore.players)
     if(thegame) {
         //if the game has more than one player, it's fine -- let the others keep playing, but let them know
         if(thegame.player_count > 1) {
-            thegame.gamecore.players = _.without(thegame.gamecore.players, 
-                                                 _.findWhere(thegame.gamecore.players, {id: userid}))
             _.map(thegame.gamecore.get_others(userid), function(p) {p.instance.send('s.end.' + userid)})
-            thegame.player_count--;
+
+            var i = _.indexOf(thegame.gamecore.players, _.findWhere(thegame.gamecore.players, {id: userid}))
+            thegame.gamecore.players[i].player = null;
+
+            console.log("removing player " + i);
+            console.log("new player list is: ");
+            console.log(thegame.gamecore.players);
+            thegame.gamecore.server_send_update();
         } else {
             // If the game only has one player and they leave, remove it.
             thegame.gamecore.stop_update();

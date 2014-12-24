@@ -77,7 +77,7 @@ var initialize = function(query, client, id) {
         //If the client was in a game set by game_server.findGame,
         //we can tell the game server to update that game state.
         if(client.userid && client.game && client.game.id) 
-            //player leaving a game should destroy that game
+            //player leaving a game should that game
             game_server.endGame(client.game.id, client.userid);            
     });
 };

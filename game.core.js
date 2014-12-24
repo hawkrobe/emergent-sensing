@@ -139,19 +139,21 @@ if('undefined' != typeof global) {
 
 // Method to easily look up player 
 game_core.prototype.get_player = function(id) {
+    console.log("looking for " + id + " and found " + _.pluck(this.players, 'id'))
     var result = _.find(this.players, function(e){ return e.id == id; });
     return result.player
 };
 
 // Method to get whole list of players
 game_core.prototype.get_others = function(id) {
-    return _.map(_.filter(this.players, function(e){return e.id != id}), 
-        function(p){return p.player})
+    return _.without(_.map(_.filter(this.players, function(e){return e.id != id}), 
+        function(p){return p.player?p.player:null}), null)
 };
 
 // Method to get whole list of players
-game_core.prototype.get_all_players = function() {
-    return _.map(this.players, function(p){return p.player})
+game_core.prototype.get_active_players = function() {
+    return _.without(_.map(this.players, function(p){
+        return p.player?p.player:null}), null)
 };
 
 // Takes two location objects and computes the distance between them
@@ -182,8 +184,9 @@ game_core.prototype.server_send_update = function(){
         g2w : this.good2write,                      // true when game's started
     };
     // Add info about all players
-    var players = this.get_all_players()
-    _.extend(this.laststate, {ids: _.map(players, function(p){return p.instance.userid})})
+    var local_game = this;
+    var players = this.get_active_players()
+    _.extend(this.laststate, {ids: _.map(local_game.players, function(p){return p.id})})
     _.extend(this.laststate, {pos: _.map(players, function(p){return p.pos})})
     _.extend(this.laststate, {poi: _.map(players, function(p){return p.points_earned})})
     _.extend(this.laststate, {angle: _.map(players, function(p){return p.angle})})
@@ -191,14 +194,16 @@ game_core.prototype.server_send_update = function(){
 
     //Send the snapshot to the players
     var local_laststate = this.laststate;
-    _.map(this.get_all_players(), function(p){p.instance.emit( 'onserverupdate', local_laststate)})
+    console.log("sending update to")
+    console.log(players);
+    _.map(players, function(p){p.instance.emit( 'onserverupdate', local_laststate)})
 };
 
 // This is called every few ms and simulates the world state. This is
 // where we update positions 
 game_core.prototype.server_update_physics = function() {
     var local_gamecore = this;
-    _.map(this.get_all_players(), function(p){
+    _.map(this.get_active_players(), function(p){
         r1 = p.speed; 
         theta1 = (p.angle - 90) * Math.PI / 180;
         p.old_state.pos = local_gamecore.pos(p.pos) ;
@@ -276,7 +281,7 @@ game_core.prototype.server_newgame = function() {
     this.round_num += 1;
 
     // Don't want players moving during countdown
-    _.map(local_gamecore.get_all_players(), function(p) {p.speed = 0;})
+    _.map(local_gamecore.get_active_players(), function(p) {p.speed = 0;})
 
     // Don't want to write to file during countdown -- too confusing
     this.good2write = false;
@@ -288,12 +293,12 @@ game_core.prototype.server_newgame = function() {
     this.server_reset_positions();
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
-    _.map(local_gamecore.get_all_players(), function(p) {p.instance.send('s.begin_game.')})
+    _.map(local_gamecore.get_active_players(), function(p) {p.instance.send('s.begin_game.')})
 
     // Launch game after countdown;
     setTimeout(function(){
     //        local_gamecore.good2write = true;
-        _.map(local_gamecore.get_all_players(), function(p) {p.speed = local_gamecore.min_speed});
+        _.map(local_gamecore.get_active_players(), function(p) {p.speed = local_gamecore.min_speed});
         local_gamecore.game_clock = 0;
     }, 3000);
 };
@@ -318,7 +323,7 @@ game_core.prototype.update = function() {
 // This gets called every iteration of a new game to reset positions
 game_core.prototype.server_reset_positions = function() {
     var local_gamecore = this;
-    _.map(local_gamecore.get_all_players(), function(p) {
+    _.map(local_gamecore.get_active_players(), function(p) {
         p.pos = get_random_center_position(local_gamecore.world);
         p.angle = get_random_angle(local_gamecore.world);
     })

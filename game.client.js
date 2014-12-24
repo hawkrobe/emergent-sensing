@@ -50,22 +50,8 @@ speed_down = function() {
 }
 
 // Function that gets called client-side when someone disconnects
-client_ondisconnect = function(userid) {
+client_ondisconnect = function() {
     // Everything goes offline!
-    game.players = _.without(game.players, _.findWhere(game.players, {id: userid}))
-
-    // if(game.games_remaining == 0) {
-    //     // If the game is done, redirect them to an exit survey
-    //     URL = './static/game_over.html';
-    //     URL += '?id=' + game.players.self.id;
-    //     window.location.replace(URL);
-    // } else {
-    //     // Otherwise, redirect them to a "we're sorry, the other
-    //     // player disconnected" page
-    //     URL = './static/disconnected.html'
-    //     URL += '?id=' + my_id;
-    //     window.location.replace(URL);
-    // }
 };
 
 /* 
@@ -86,30 +72,40 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
+    console.log("update received! Data is")
+    console.log(data)
+    console.log("player list is")
+    console.log(my_id)
+    console.log(game.players);
     if(data.ids) {
         _.map(_.zip(game.players, data.ids),
               function(z) {z[0].id = z[1];  })
     }
-
     if(data.pos) {
-        _.map(_.zip(game.get_all_players(), data.pos),
+        _.map(_.zip(game.get_active_players(), data.pos),
               function(z) {z[0].pos = game.pos(z[1]);})
     }
     if(data.poi) {
-        _.map(_.zip(game.get_all_players(), data.poi),
+        _.map(_.zip(game.get_active_players(), data.poi),
               function(z) {z[0].points_earned = z[1]; })
     }
+
     if(data.angle) {
-        _.map(_.zip(game.get_all_players(), data.angle),
-              function(z) {if(z[0] != game.get_player(my_id) | z[0].angle == null) z[0].angle = z[1];})
+        _.map(_.zip(game.players, data.angle),
+              function(z) {if(z[0].id != my_id | z[0].player.angle == null) z[0].player.angle = z[1];})
     }
+
     if(data.speed) {
-        _.map(_.zip(game.get_all_players(), data.speed),
+        _.map(_.zip(game.get_active_players(), data.speed),
               function(z) {z[0].speed = z[1];  })
     }
-    this.condition = data.cond;
-    this.draw_enabled = data.de;
-    this.good2write = data.g2w;
+
+    game.condition = data.cond;
+    game.draw_enabled = data.de;
+    game.good2write = data.g2w;
+    console.log("post update")
+    console.log(my_id)
+    console.log(game.players)
 }; 
 
 // This is where clients parse socket.io messages from the server. If
@@ -155,8 +151,9 @@ client_onMessage = function(data) {
         case 'blink' : //blink title
             flashTitle("GO!");  break;
         case 'end' : //end game requested
-            var id = commanddata;
-            client_ondisconnect(id); break;
+            var userid = commanddata;
+            var i = _.indexOf(game.players, _.findWhere(game.players, {id: userid}))
+            game.players[i].player = null; break;
         case 'angle_change' : // other player changed angle
             var player_id = commands[2];
             var angle_val = commands[3];
@@ -196,6 +193,8 @@ client_countdown = function() {
 }
 
 client_update = function() {
+    console.log("in update:")
+    console.log(game.players)
     var percent = (Math.abs(game.get_player(my_id).angle/360))
     var player = game.get_player(my_id)
 
@@ -320,18 +319,6 @@ client_onconnected = function(data) {
     game.get_player(my_id).online = true;
 };
 
-client_reset_positions = function() {
-
-    var player_host  =game.players.self.host ? game.players.self : game.players.other;
-    var player_client=game.players.self.host ? game.players.other : game.players.self;
-
-    //Host always spawns on the left facing inward.
-    player_host.pos = game.left_player_start_pos; 
-    player_client.pos = game.right_player_start_pos;
-    player_host.angle = game.left_player_start_angle;
-    player_client.angle = game.right_player_start_angle;
-}; 
-
 client_onjoingame = function(num_players) {
     // Need client to know how many players there are, so they can set up the appropriate data structure
     _.map(_.range(num_players - 1), function(i){game.players.unshift({id: null, player: new game_player(game)})});
@@ -375,7 +362,7 @@ function onchange (evt) {
         document.body.className = evt.target.hidden ? "hidden" : "visible";
     }
     visible = document.body.className;
-    game.socket.send("h." + document.body.className);
+//    game.socket.send("h." + document.body.className);
 };
 
 // Flashes title to notify user that game has started
