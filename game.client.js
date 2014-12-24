@@ -179,6 +179,7 @@ client_newgame = function() {
     }
 
     // Initiate countdown (with timeouts)
+    game.get_player(my_id).angle = null;
     client_countdown();
 }; 
 
@@ -213,7 +214,7 @@ client_update = function() {
             draw_player(game, p)});
 
     // Draw visibility radius
-    draw_visibility_radius(game, player)
+    if(player.pos) draw_visibility_radius(game, player)
     
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (player.points_earned / 100).fixed(2));
@@ -223,7 +224,7 @@ client_update = function() {
     $("#time").html("Time remaining: " + game.time_remaining);
 
     //And then we draw ourself so we're always in front
-    draw_player(game, player);
+    if(player.pos) draw_player(game, player);
 };
 
 var percentColors = [

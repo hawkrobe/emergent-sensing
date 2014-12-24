@@ -29,7 +29,7 @@ draw_player = function(game, player){
     // Draw message in center (for countdown, e.g.)
     game.ctx.fillStyle = 'white';
     game.ctx.textAlign = 'center';
-    game.ctx.fillText(player.message, 240, 240);
+    game.ctx.fillText(player.message, game.world.width/2, game.world.height/2);
 }; 
 
 draw_visibility_radius = function(game, player) {
