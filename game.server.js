@@ -30,7 +30,6 @@ require('./game.core.js');
 // with the coordinates of the click, which this function reads and
 // applies.
 game_server.server_onMessage = function(client,message) {
-    console.log("received message from " + client.userid + " saying " + message)
     //Cut the message up into sub components
     var message_parts = message.split('.');
 
@@ -94,7 +93,6 @@ game_server.findGame = function(player) {
                 gamecore.update();
 
                 if (game.player_count == gamecore.players_threshold) {
-                    console.log(["starting game:", game.player_count, gamecore.players_threshold])
                     this.startGame(game)
                 }
             }
@@ -158,16 +156,16 @@ game_server.endGame = function(gameid, userid) {
     if(thegame) {
         //if the game has more than one player, it's fine -- let the others keep playing, but let them know
         if(thegame.player_count > 1) {
+            // Keep track of which players have left
             thegame.gamecore.dead_players.push(userid);
 
             var i = _.indexOf(thegame.gamecore.players, _.findWhere(thegame.gamecore.players, {id: userid}))
             thegame.gamecore.players[i].player = null;
 
-            console.log("removing player " + i);
-            console.log("new player list is: ");
-            console.log(thegame.gamecore.players);
-
-//            thegame.gamecore.server_send_update();
+            // If the game hasn't started yet, allow more players to fill their place. after it starts, don't.
+            if (!thegame.active) {
+                thegame.player_count--;
+            }
         } else {
             // If the game only has one player and they leave, remove it.
             thegame.gamecore.stop_update();

@@ -142,7 +142,6 @@ if('undefined' != typeof global) {
 
 // Method to easily look up player 
 game_core.prototype.get_player = function(id) {
-    console.log("looking for " + id + " and found " + _.pluck(this.players, 'id'))
     var result = _.find(this.players, function(e){ return e.id == id; });
     return result.player
 };
@@ -199,10 +198,7 @@ game_core.prototype.server_send_update = function(){
 
     //Send the snapshot to the players
     var local_laststate = this.laststate;
-    if(this.dead_players.length > 0) {
-        console.log("sending update to")
-        console.log(players);
-    }
+
     _.map(players, function(p){p.player.instance.emit( 'onserverupdate', local_laststate)})
 };
 

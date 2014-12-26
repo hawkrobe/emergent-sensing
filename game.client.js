@@ -72,16 +72,17 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
+
+    if(data.ids) {
+        _.map(_.zip(game.players, data.ids),
+            function(z) {z[0].id = z[1];  })}
+
     if(data.dead_players.length > 0) {
         var userids = data.dead_players;
         var is = _.map(userids, function(userid) {
             return _.indexOf(game.players, _.findWhere(game.players, {id: userid}))})
         _.map(is, function(i) {game.players[i].player = null;}) 
     }
-
-    if(data.ids) {
-        _.map(_.zip(game.players, data.ids),
-              function(z) {z[0].id = z[1];  })}
 
     if(data.pos) {
         _.map(_.zip(game.get_active_players(), data.pos),
@@ -115,7 +116,6 @@ client_onserverupdate_received = function(data){
 // clients, look for "server_onMessage" in game.server.js.
 client_onMessage = function(data) {
 
-    console.log("received data:" + data)
     var commands = data.split('.');
     var command = commands[0];
     var subcommand = commands[1] || null;
