@@ -158,7 +158,6 @@ game_server.endGame = function(gameid, userid) {
         if(thegame.player_count > 1) {
             // Keep track of which players have left
             thegame.gamecore.dead_players.push(userid);
-
             var i = _.indexOf(thegame.gamecore.players, _.findWhere(thegame.gamecore.players, {id: userid}))
             thegame.gamecore.players[i].player = null;
 

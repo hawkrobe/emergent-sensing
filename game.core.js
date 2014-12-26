@@ -45,11 +45,10 @@ var game_core = function(game_instance){
     this.world = {width : 280, height : 485};  // 160cm * 3
     
     //How often the players move forward <global_speed>px in ms.
-    this.tick_frequency = 125;     //Update 8 times per second
+    this.tick_frequency = 500;     //Update 8 times per second
 
     //The speed at which the clients move (e.g. # px/tick)
     this.min_speed = 21 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
-
     this.max_speed = 70 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
 
     // This draws the circle in which players can see other players
@@ -180,26 +179,32 @@ game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y
 // handles position and points.
 game_core.prototype.server_send_update = function(){
     //Make a snapshot of the current state, for updating the clients
-    this.laststate = {
+    var local_game = this;
+    var state = {
         cond: this.condition,                       //dynamic or ballistic?
         de  : this.hiding_enabled,                  // true to see angle
         g2w : this.good2write,                      // true when game's started
-        dead_players : this.dead_players
     };
 
     // Add info about all players
-    var local_game = this;
-    var players = this.get_active_players()
-    _.extend(this.laststate, {ids: _.map(local_game.players, function(p){return p.id})})
-    _.extend(this.laststate, {pos: _.map(players, function(p){return p.player.pos})})
-    _.extend(this.laststate, {poi: _.map(players, function(p){return p.player.points_earned})})
-    _.extend(this.laststate, {angle: _.map(players, function(p){return p.player.angle})})
-    _.extend(this.laststate, {speed: _.map(players, function(p){return p.player.speed})})
-
+    var player_packet = _.map(local_game.players, function(p){
+        if(p.player){
+            return {id: p.id,
+                    player: {
+                        pos: p.player.pos,
+                        poi: p.player.points_earned,
+                        angle: p.player.angle,
+                        speed: p.player.speed}}
+        } else {
+            return {id: p.id,
+                    player: null}
+        }
+    })
+    _.extend(state, {players: player_packet})
+    
     //Send the snapshot to the players
-    var local_laststate = this.laststate;
-
-    _.map(players, function(p){p.player.instance.emit( 'onserverupdate', local_laststate)})
+    this.state = state;
+    _.map(local_game.get_active_players(), function(p){p.player.instance.emit( 'onserverupdate', state)})
 };
 
 // This is called every few ms and simulates the world state. This is

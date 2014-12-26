@@ -73,33 +73,54 @@ client_onserverupdate_received = function(data){
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
 
-    if(data.ids) {
-        _.map(_.zip(game.players, data.ids),
-            function(z) {z[0].id = z[1];  })}
+    console.log("received update from server:")
+    console.log(data)
 
-    if(data.dead_players.length > 0) {
-        var userids = data.dead_players;
-        var is = _.map(userids, function(userid) {
-            return _.indexOf(game.players, _.findWhere(game.players, {id: userid}))})
-        _.map(is, function(i) {game.players[i].player = null;}) 
+    if(data.players) {
+        _.map(_.zip(data.players, game.players),
+            function(z){
+                z[0].id = z[1].id
+                if (z[0].player == null) {
+                    z[1].player = null
+                } else {
+                    var s_player = z[0].player
+                    var l_player = z[1].player
+                    l_player.angle = s_player.angle
+                    l_player.points_earned = s_player.poi
+                    l_player.pos = game.pos(s_player.pos)
+                    l_player.speed = s_player.speed
+                }
+            })
     }
+    //     // update ids
+    //     _.map(_.zip(game.players, ps.id)
+    // if(data.ids) {
+    //     _.map(_.zip(game.players, data.ids),
+    //         function(z) {z[0].id = z[1];  })}
 
-    if(data.pos) {
-        _.map(_.zip(game.get_active_players(), data.pos),
-              function(z) {z[0].player.pos = game.pos(z[1]);})}
+    // if(data.dead_players.length > 0) {
+    //     var userids = data.dead_players;
+    //     var is = _.map(userids, function(userid) {
+    //         return _.indexOf(game.players, _.findWhere(game.players, {id: userid}))})
+    //     _.map(is, function(i) {game.players[i].player = null;}) 
+    // }
 
-    if(data.poi) {
-        _.map(_.zip(game.get_active_players(), data.poi),
-              function(z) {z[0].player.points_earned = z[1]; })}
+    // if(data.pos) {
+    //     _.map(_.zip(game.get_active_players(), data.pos),
+    //           function(z) {z[0].player.pos = game.pos(z[1]);})}
 
-    if(data.angle) {
-        _.map(_.zip(game.get_active_players(), data.angle),
-              function(z) {if(z[0].id != my_id | z[0].player.angle == null) 
-                              z[0].player.angle = z[1];})}
+    // if(data.poi) {
+    //     _.map(_.zip(game.get_active_players(), data.poi),
+    //           function(z) {z[0].player.points_earned = z[1]; })}
 
-    if(data.speed) {
-        _.map(_.zip(game.get_active_players(), data.speed),
-              function(z) {z[0].player.speed = z[1];  })}
+    // if(data.angle) {
+    //     _.map(_.zip(game.get_active_players(), data.angle),
+    //           function(z) {if(z[0].id != my_id | z[0].player.angle == null) 
+    //                           z[0].player.angle = z[1];})}
+
+    // if(data.speed) {
+    //     _.map(_.zip(game.get_active_players(), data.speed),
+    //           function(z) {z[0].player.speed = z[1];  })}
 
     game.condition = data.cond;
     game.draw_enabled = data.de;
