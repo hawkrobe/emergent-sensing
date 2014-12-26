@@ -58,6 +58,9 @@ var game_core = function(game_instance){
     //Number of players needed to start the game
     this.players_threshold = 3;
 
+    // array of players who've left the game
+    this.dead_players = [];
+
     //Players will replay over and over, so we keep track of which number we're on,
     //to print out to data file
     this.round_num = 0;
@@ -147,13 +150,13 @@ game_core.prototype.get_player = function(id) {
 // Method to get whole list of players
 game_core.prototype.get_others = function(id) {
     return _.without(_.map(_.filter(this.players, function(e){return e.id != id}), 
-        function(p){return p.player?p.player:null}), null)
+        function(p){return p.player ? p : null}), null)
 };
 
 // Method to get whole list of players
 game_core.prototype.get_active_players = function() {
     return _.without(_.map(this.players, function(p){
-        return p.player?p.player:null}), null)
+        return p.player ? p : null}), null)
 };
 
 // Takes two location objects and computes the distance between them
@@ -182,21 +185,25 @@ game_core.prototype.server_send_update = function(){
         cond: this.condition,                       //dynamic or ballistic?
         de  : this.hiding_enabled,                  // true to see angle
         g2w : this.good2write,                      // true when game's started
+        dead_players : this.dead_players
     };
+
     // Add info about all players
     var local_game = this;
     var players = this.get_active_players()
     _.extend(this.laststate, {ids: _.map(local_game.players, function(p){return p.id})})
-    _.extend(this.laststate, {pos: _.map(players, function(p){return p.pos})})
-    _.extend(this.laststate, {poi: _.map(players, function(p){return p.points_earned})})
-    _.extend(this.laststate, {angle: _.map(players, function(p){return p.angle})})
-    _.extend(this.laststate, {speed: _.map(players, function(p){return p.speed})})
+    _.extend(this.laststate, {pos: _.map(players, function(p){return p.player.pos})})
+    _.extend(this.laststate, {poi: _.map(players, function(p){return p.player.points_earned})})
+    _.extend(this.laststate, {angle: _.map(players, function(p){return p.player.angle})})
+    _.extend(this.laststate, {speed: _.map(players, function(p){return p.player.speed})})
 
     //Send the snapshot to the players
     var local_laststate = this.laststate;
-    console.log("sending update to")
-    console.log(players);
-    _.map(players, function(p){p.instance.emit( 'onserverupdate', local_laststate)})
+    if(this.dead_players.length > 0) {
+        console.log("sending update to")
+        console.log(players);
+    }
+    _.map(players, function(p){p.player.instance.emit( 'onserverupdate', local_laststate)})
 };
 
 // This is called every few ms and simulates the world state. This is
@@ -204,15 +211,16 @@ game_core.prototype.server_send_update = function(){
 game_core.prototype.server_update_physics = function() {
     var local_gamecore = this;
     _.map(this.get_active_players(), function(p){
-        r1 = p.speed; 
-        theta1 = (p.angle - 90) * Math.PI / 180;
-        p.old_state.pos = local_gamecore.pos(p.pos) ;
+        var player = p.player;
+        r1 = player.speed; 
+        theta1 = (player.angle - 90) * Math.PI / 180;
+        player.old_state.pos = local_gamecore.pos(player.pos) ;
         var new_dir = {
             x : r1 * Math.cos(theta1), 
             y : r1 * Math.sin(theta1)
         };  
-        p.pos = p.game.v_add( p.old_state.pos, new_dir );
-        p.game.check_collision( p );
+        player.pos = player.game.v_add( player.old_state.pos, new_dir );
+        player.game.check_collision( player );
     })
 };
 
@@ -281,7 +289,7 @@ game_core.prototype.server_newgame = function() {
     this.round_num += 1;
 
     // Don't want players moving during countdown
-    _.map(local_gamecore.get_active_players(), function(p) {p.speed = 0;})
+    _.map(local_gamecore.get_active_players(), function(p) {p.player.speed = 0;})
 
     // Don't want to write to file during countdown -- too confusing
     this.good2write = false;
@@ -293,12 +301,12 @@ game_core.prototype.server_newgame = function() {
     this.server_reset_positions();
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
-    _.map(local_gamecore.get_active_players(), function(p) {p.instance.send('s.begin_game.')})
+    _.map(local_gamecore.get_active_players(), function(p) {p.player.instance.send('s.begin_game.')})
 
     // Launch game after countdown;
     setTimeout(function(){
     //        local_gamecore.good2write = true;
-        _.map(local_gamecore.get_active_players(), function(p) {p.speed = local_gamecore.min_speed});
+        _.map(local_gamecore.get_active_players(), function(p) {p.player.speed = local_gamecore.min_speed});
         local_gamecore.game_clock = 0;
     }, 3000);
 };
@@ -324,8 +332,8 @@ game_core.prototype.update = function() {
 game_core.prototype.server_reset_positions = function() {
     var local_gamecore = this;
     _.map(local_gamecore.get_active_players(), function(p) {
-        p.pos = get_random_center_position(local_gamecore.world);
-        p.angle = get_random_angle(local_gamecore.world);
+        p.player.pos = get_random_center_position(local_gamecore.world);
+        p.player.angle = get_random_angle(local_gamecore.world);
     })
 }; 
 

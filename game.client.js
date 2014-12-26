@@ -51,7 +51,7 @@ speed_down = function() {
 
 // Function that gets called client-side when someone disconnects
 client_ondisconnect = function() {
-    // Everything goes offline!
+    // TODO: If server drops us, redirect to "disconnected.html" page
 };
 
 /* 
@@ -72,40 +72,37 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
-    console.log("update received! Data is")
-    console.log(data)
-    console.log("player list is")
-    console.log(my_id)
-    console.log(game.players);
-    if(data.ids) {
-        _.map(_.zip(game.players, data.ids),
-              function(z) {z[0].id = z[1];  })
-    }
-    if(data.pos) {
-        _.map(_.zip(game.get_active_players(), data.pos),
-              function(z) {z[0].pos = game.pos(z[1]);})
-    }
-    if(data.poi) {
-        _.map(_.zip(game.get_active_players(), data.poi),
-              function(z) {z[0].points_earned = z[1]; })
+    if(data.dead_players.length > 0) {
+        var userids = data.dead_players;
+        var is = _.map(userids, function(userid) {
+            return _.indexOf(game.players, _.findWhere(game.players, {id: userid}))})
+        _.map(is, function(i) {game.players[i].player = null;}) 
     }
 
+    if(data.ids) {
+        _.map(_.zip(game.players, data.ids),
+              function(z) {z[0].id = z[1];  })}
+
+    if(data.pos) {
+        _.map(_.zip(game.get_active_players(), data.pos),
+              function(z) {z[0].player.pos = game.pos(z[1]);})}
+
+    if(data.poi) {
+        _.map(_.zip(game.get_active_players(), data.poi),
+              function(z) {z[0].player.points_earned = z[1]; })}
+
     if(data.angle) {
-        _.map(_.zip(game.players, data.angle),
-              function(z) {if(z[0].id != my_id | z[0].player.angle == null) z[0].player.angle = z[1];})
-    }
+        _.map(_.zip(game.get_active_players(), data.angle),
+              function(z) {if(z[0].id != my_id | z[0].player.angle == null) 
+                              z[0].player.angle = z[1];})}
 
     if(data.speed) {
         _.map(_.zip(game.get_active_players(), data.speed),
-              function(z) {z[0].speed = z[1];  })
-    }
+              function(z) {z[0].player.speed = z[1];  })}
 
     game.condition = data.cond;
     game.draw_enabled = data.de;
     game.good2write = data.g2w;
-    console.log("post update")
-    console.log(my_id)
-    console.log(game.players)
 }; 
 
 // This is where clients parse socket.io messages from the server. If
@@ -150,10 +147,6 @@ client_onMessage = function(data) {
             client_newgame(); break;
         case 'blink' : //blink title
             flashTitle("GO!");  break;
-        case 'end' : //end game requested
-            var userid = commanddata;
-            var i = _.indexOf(game.players, _.findWhere(game.players, {id: userid}))
-            game.players[i].player = null; break;
         case 'angle_change' : // other player changed angle
             var player_id = commands[2];
             var angle_val = commands[3];
@@ -193,8 +186,6 @@ client_countdown = function() {
 }
 
 client_update = function() {
-    console.log("in update:")
-    console.log(game.players)
     var percent = (Math.abs(game.get_player(my_id).angle/360))
     var player = game.get_player(my_id)
 
@@ -209,8 +200,8 @@ client_update = function() {
 
     //Draw opponent next (but only those in radius)
     _.map(game.get_others(my_id), function(p){
-        if(!game.hidden_enabled || game.distance_between(p.pos, player.pos) < game.visibility_radius)
-            draw_player(game, p)});
+        if(!game.hidden_enabled || game.distance_between(p.player.pos, player.pos) < game.visibility_radius)
+            draw_player(game, p.player)});
 
     // Draw visibility radius
     if(player.pos) draw_visibility_radius(game, player)

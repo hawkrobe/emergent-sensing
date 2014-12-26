@@ -30,6 +30,7 @@ require('./game.core.js');
 // with the coordinates of the click, which this function reads and
 // applies.
 game_server.server_onMessage = function(client,message) {
+    console.log("received message from " + client.userid + " saying " + message)
     //Cut the message up into sub components
     var message_parts = message.split('.');
 
@@ -44,7 +45,7 @@ game_server.server_onMessage = function(client,message) {
         change_target.angle = message_parts[1];
         // Notify other clients of angle change
         if(others) {
-            _.map(others, function(p) {p.instance.send('s.angle_change.' + client.userid + '.' + message_parts[1])});
+            _.map(others, function(p) {p.player.instance.send('s.angle_change.' + client.userid + '.' + message_parts[1])});
         }
     } else if (message_type == 's') {
         change_target.speed = message_parts[1];
@@ -88,7 +89,7 @@ game_server.findGame = function(player) {
                 player.send('s.join.' + gamecore.players.length)
 
                 // notify existing players that someone new is joining
-                _.map(gamecore.get_others(player.userid), function(p){p.instance.send( 's.add_player.' + player.userid)})
+                _.map(gamecore.get_others(player.userid), function(p){p.player.instance.send( 's.add_player.' + player.userid)})
                 gamecore.server_send_update();
                 gamecore.update();
 
@@ -154,11 +155,10 @@ game_server.createGame = function(player) {
 // This gets called if someone disconnects
 game_server.endGame = function(gameid, userid) {
     var thegame = this.games [ gameid ];
-    console.log(thegame.gamecore.players)
     if(thegame) {
         //if the game has more than one player, it's fine -- let the others keep playing, but let them know
         if(thegame.player_count > 1) {
-            _.map(thegame.gamecore.get_others(userid), function(p) {p.instance.send('s.end.' + userid)})
+            thegame.gamecore.dead_players.push(userid);
 
             var i = _.indexOf(thegame.gamecore.players, _.findWhere(thegame.gamecore.players, {id: userid}))
             thegame.gamecore.players[i].player = null;
@@ -166,7 +166,8 @@ game_server.endGame = function(gameid, userid) {
             console.log("removing player " + i);
             console.log("new player list is: ");
             console.log(thegame.gamecore.players);
-            thegame.gamecore.server_send_update();
+
+//            thegame.gamecore.server_send_update();
         } else {
             // If the game only has one player and they leave, remove it.
             thegame.gamecore.stop_update();
