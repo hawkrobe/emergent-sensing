@@ -35,21 +35,17 @@ game_server.server_onMessage = function(client,message) {
 
     //The first is always the type of message
     var message_type = message_parts[0];
-
+    console.log("received message: " + message)
     //Extract important variables
-    var change_target = client.game.gamecore.get_player(client.userid);
+    var target = client.game.gamecore.get_player(client.userid);
     var others = client.game.gamecore.get_others(client.userid);
     if(message_type == 'a') {    // Client is changing angle
         // Set their (server) angle 
-        change_target.angle = message_parts[1];
-        // Notify other clients of angle change
-        if(others) {
-            _.map(others, function(p) {p.player.instance.send('s.angle_change.' + client.userid + '.' + message_parts[1])});
-        }
+        target.angle = message_parts[1];
     } else if (message_type == 's') {
-        change_target.speed = message_parts[1];
+        target.speed = message_parts[1];
     } else if (message_type == "h") { // Receive message when browser focus shifts
-        change_target.visible = message_parts[1];
+        target.visible = message_parts[1];
     }
 };
 

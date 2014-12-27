@@ -45,7 +45,7 @@ var game_core = function(game_instance){
     this.world = {width : 280, height : 485};  // 160cm * 3
     
     //How often the players move forward <global_speed>px in ms.
-    this.tick_frequency = 500;     //Update 8 times per second
+    this.tick_frequency = 125;     //Update 8 times per second
 
     //The speed at which the clients move (e.g. # px/tick)
     this.min_speed = 21 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
@@ -55,7 +55,7 @@ var game_core = function(game_instance){
     this.visibility_radius = 77; // 27.5cm * 3
 
     //Number of players needed to start the game
-    this.players_threshold = 3;
+    this.players_threshold = 4;
 
     // array of players who've left the game
     this.dead_players = [];

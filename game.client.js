@@ -20,6 +20,7 @@ var my_id = null;
 // Keeps track of whether player is paying attention...
 var visible;
 var active_keys = []; 
+var speed_change = "none";
 
 // what happens when you press 'left'?
 left_turn = function() {
@@ -34,20 +35,6 @@ right_turn = function() {
     self.angle = (Number(self.angle) + 5) % 360;
     game.socket.send("a." + self.angle);
 };
-
-// what happens when you press 'left'?
-speed_up = function() {
-    var self = game.get_player(my_id);
-    self.speed = game.max_speed;
-    game.socket.send("s." + self.speed);
-}
-
-// what happens when you press 'left'?
-speed_down = function() {
-    var self = game.get_player(my_id);
-    self.speed = game.min_speed;
-    game.socket.send("s." + self.speed);
-}
 
 // Function that gets called client-side when someone disconnects
 client_ondisconnect = function() {
@@ -72,9 +59,6 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
-
-    console.log("received update from server:")
-    console.log(data)
 
     if(data.players) {
         _.map(_.zip(data.players, game.players),
@@ -139,10 +123,6 @@ client_onMessage = function(data) {
             client_newgame(); break;
         case 'blink' : //blink title
             flashTitle("GO!");  break;
-        case 'angle_change' : // other player changed angle
-            var player_id = commands[2];
-            var angle_val = commands[3];
-            game.get_player(player_id).angle = angle_val; break;
         }        
         break; 
     } 
@@ -183,6 +163,14 @@ client_update = function() {
 
     //Clear the screen area
     game.ctx.clearRect(0,0,280,485);
+
+    // Alter speeds
+    if (speed_change != "none") {
+        var self = game.get_player(my_id);
+        self.speed = speed_change == "up" ? game.max_speed : game.min_speed;
+        game.socket.send("s." + self.speed);
+        speed_change = "none"
+    }
 
     // Turn if key is still being held... Don't do anything if both are held
     if (active_keys.length < 2) {
@@ -260,7 +248,10 @@ window.onload = function(){
     KeyboardJS.on('right', 
         function(){if(!_.contains(active_keys, 'right')) active_keys.push('right');}, 
         function(){active_keys = _.without(active_keys, 'right');})
-    KeyboardJS.on('space', function(){speed_up()}, function(){speed_down()})
+    KeyboardJS.on('space', 
+        function(){speed_change = "up"}, 
+        function(){speed_change = "down"})
+
 
     //Fetch the rendering contexts
     game.ctx = game.viewport.getContext('2d');
