@@ -1,12 +1,9 @@
 TODO:
 
 * determine threshold # players for individual game from file?
-* only send 'instant' updates about angles for players within your visibility sphere? (could prevent lag in bigger groups)
 * create round structure
 -> randomly assign order of light levels
 -> create 5 second break in waiting room ("next round begins in...")
-* keep track of how long the game has been going
--> give player correct feedback about how many minutes are remaining
 * integrate light field
 -> give player correct feedback about current & cumulative bonus 
 * write the data we want to file
@@ -36,3 +33,5 @@ COMPLETED:
 * collect next set of players in waiting room once first game starts
 * reset positions to center beginning of each round
 * allow people to disconnect gracefully (without ending the game)
+* keep track of how long the game has been going
+-> give player correct feedback about how many minutes are remaining

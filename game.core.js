@@ -44,6 +44,12 @@ var game_core = function(game_instance){
     //Dimensions of world -- Used in collision detection, etc.
     this.world = {width : 280, height : 485};  // 160cm * 3
     
+    // keep track of how long it's been going
+    this.clock = 0;
+
+    // set how long each round will last (in minutes)
+    this.round_length = 6
+
     //How often the players move forward <global_speed>px in ms.
     this.tick_frequency = 125;     //Update 8 times per second
 
@@ -56,9 +62,6 @@ var game_core = function(game_instance){
 
     //Number of players needed to start the game
     this.players_threshold = 4;
-
-    // array of players who've left the game
-    this.dead_players = [];
 
     //Players will replay over and over, so we keep track of which number we're on,
     //to print out to data file
@@ -229,54 +232,55 @@ game_core.prototype.server_update_physics = function() {
 // "data" directory. We keep EVERYTHING so that we
 // can analyze the data to an arbitrary precision later on.
 game_core.prototype.writeData = function() {
-    // Some funny business going on with angles being negative, so we correct for that
-    var host_angle_to_write = this.players.self.angle;
-    var other_angle_to_write = this.players.other.angle;
-    var file_path ;
-    if (this.players.self.angle < 0)
-        host_angle_to_write = parseInt(this.players.self.angle, 10) + 360;
-    if (this.players.other.angle < 0)
-        other_angle_to_write = parseInt(this.players.other.angle, 10)  + 360;
-    if (this.condition == "ballistic") 
-        file_path = "data/ballistic/game_" + this.game_id + ".csv";
-    else if (this.condition == "dynamic") 
-        file_path = "data/dynamic/game_" + this.game_id + ".csv";
+    console.log("writing...")
+    // // Some funny business going on with angles being negative, so we correct for that
+    // var host_angle_to_write = this.players.self.angle;
+    // var other_angle_to_write = this.players.other.angle;
+    // var file_path ;
+    // if (this.players.self.angle < 0)
+    //     host_angle_to_write = parseInt(this.players.self.angle, 10) + 360;
+    // if (this.players.other.angle < 0)
+    //     other_angle_to_write = parseInt(this.players.other.angle, 10)  + 360;
+    // if (this.condition == "ballistic") 
+    //     file_path = "data/ballistic/game_" + this.game_id + ".csv";
+    // else if (this.condition == "dynamic") 
+    //     file_path = "data/dynamic/game_" + this.game_id + ".csv";
     
-    // Write data for the host player
-    var host_data_line = String(this.game_number) + ',';
-    host_data_line += String(this.game_clock) + ',';
-    host_data_line += this.best_target_string + ',';
-    host_data_line += "host,";
-    host_data_line += this.players.self.visible + ',';
-    host_data_line += this.players.self.pos.x + ',';
-    host_data_line += this.players.self.pos.y + ',';
-    host_data_line += host_angle_to_write + ',';
-    host_data_line += this.players.self.points_earned + ',';
-    host_data_line += this.players.self.noise.fixed(2) + ',';
-    this.fs.appendFile(file_path, 
-                       String(host_data_line) + "\n",
-                       function (err) {
-                           if(err) throw err;
-                       });
-    console.log("Wrote: " + host_data_line);
+    // // Write data for the host player
+    // var host_data_line = String(this.game_number) + ',';
+    // host_data_line += String(this.game_clock) + ',';
+    // host_data_line += this.best_target_string + ',';
+    // host_data_line += "host,";
+    // host_data_line += this.players.self.visible + ',';
+    // host_data_line += this.players.self.pos.x + ',';
+    // host_data_line += this.players.self.pos.y + ',';
+    // host_data_line += host_angle_to_write + ',';
+    // host_data_line += this.players.self.points_earned + ',';
+    // host_data_line += this.players.self.noise.fixed(2) + ',';
+    // this.fs.appendFile(file_path, 
+    //                    String(host_data_line) + "\n",
+    //                    function (err) {
+    //                        if(err) throw err;
+    //                    });
+    // console.log("Wrote: " + host_data_line);
 
-    // Write data for the other player
-    var other_data_line = String(this.game_number) + ',';
-    other_data_line += String(this.game_clock) + ',';
-    other_data_line += this.best_target_string + ',';
-    other_data_line += "other,";
-    other_data_line += this.players.other.visible + ',';
-    other_data_line += this.players.other.pos.x + ',';
-    other_data_line += this.players.other.pos.y + ',';
-    other_data_line += other_angle_to_write + ',';
-    other_data_line += this.players.other.points_earned + ',';
-    other_data_line += this.players.other.noise.fixed(2) + ',';
-    this.fs.appendFile(file_path,
-                       String(other_data_line) + "\n",
-                       function (err) {
-                           if(err) throw err;
-                       });
-    console.log("Wrote: " + other_data_line);
+    // // Write data for the other player
+    // var other_data_line = String(this.game_number) + ',';
+    // other_data_line += String(this.game_clock) + ',';
+    // other_data_line += this.best_target_string + ',';
+    // other_data_line += "other,";
+    // other_data_line += this.players.other.visible + ',';
+    // other_data_line += this.players.other.pos.x + ',';
+    // other_data_line += this.players.other.pos.y + ',';
+    // other_data_line += other_angle_to_write + ',';
+    // other_data_line += this.players.other.points_earned + ',';
+    // other_data_line += this.players.other.noise.fixed(2) + ',';
+    // this.fs.appendFile(file_path,
+    //                    String(other_data_line) + "\n",
+    //                    function (err) {
+    //                        if(err) throw err;
+    //                    });
+    // console.log("Wrote: " + other_data_line);
 };
 
 // This is a really important function -- it gets called when a round
@@ -306,7 +310,7 @@ game_core.prototype.server_newgame = function() {
 
     // Launch game after countdown;
     setTimeout(function(){
-    //        local_gamecore.good2write = true;
+        local_gamecore.good2write = true;
         _.map(local_gamecore.get_active_players(), function(p) {p.player.speed = local_gamecore.min_speed});
         local_gamecore.game_clock = 0;
     }, 3000);
@@ -421,11 +425,10 @@ Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixe
 //Code below is from Three.js, and sourced from links below
 
 //http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-//http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 
 //requestAnimationFrame polyfill by Erik Möller
 //fixes from Paul Irish and Tino Zijdel
-var frame_time = 60/1000; // run the local game at 16ms/ 60hz
+var frame_time = 60 / 1000; // run the local game at 16ms/ 60hz
 if('undefined' != typeof(global)) frame_time = 45; //on server we run at 45ms, 22hz
 
 ( function () {

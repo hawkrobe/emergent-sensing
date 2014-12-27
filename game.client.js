@@ -80,6 +80,7 @@ client_onserverupdate_received = function(data){
     game.condition = data.cond;
     game.draw_enabled = data.de;
     game.good2write = data.g2w;
+
 }; 
 
 // This is where clients parse socket.io messages from the server. If
@@ -152,9 +153,12 @@ client_countdown = function() {
                1000);
     setTimeout(function(){player.message = 'Begin in 1...';}, 
                2000);
-    setTimeout(function(){player.message = 'GO';}, 
+    setTimeout(function(){
+        player.message = 'GO';     
+        game.start_time = new Date();}, 
                3000);
-    setTimeout(function(){player.message = '';}, 4000);
+    setTimeout(function(){player.message = '';}, 
+               4000);
 }
 
 client_update = function() {
@@ -191,7 +195,10 @@ client_update = function() {
     $("#curr_bonus").html("Current bonus: <span style='color: " 
         + getColorForPercentage(percent) 
         +";'>" + Math.abs(player.angle) + "</span>");
-    $("#time").html("Time remaining: " + game.time_remaining);
+
+    // Draw time remaining 
+    var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))
+    $("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : "You are in the waiting room.");
 
     //And then we draw ourself so we're always in front
     if(player.pos) draw_player(game, player);

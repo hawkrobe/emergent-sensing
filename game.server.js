@@ -151,27 +151,27 @@ game_server.endGame = function(gameid, userid) {
     var thegame = this.games [ gameid ];
     if(thegame) {
         //if the game has more than one player, it's fine -- let the others keep playing, but let them know
-        if(thegame.player_count > 1) {
-            // Keep track of which players have left
-            thegame.gamecore.dead_players.push(userid);
+        var player_metric = thegame.active ? thegame.gamecore.get_active_players().length : thegame.player_count
+        console.log("game has " + player_metric + " players")
+        if(player_metric > 1) {
             var i = _.indexOf(thegame.gamecore.players, _.findWhere(thegame.gamecore.players, {id: userid}))
             thegame.gamecore.players[i].player = null;
 
             // If the game hasn't started yet, allow more players to fill their place. after it starts, don't.
-            if (!thegame.active) {
+            if (!thegame.active) 
                 thegame.player_count--;
-            }
         } else {
             // If the game only has one player and they leave, remove it.
             thegame.gamecore.stop_update();
             delete this.games[gameid];
+            this.game_count--;
             this.log('game removed. there are now ' + this.game_count + ' games' );
         }
     } else {
         this.log('that game was not found!');
-    }    
+    }   
 }; 
-
+    
 // When the threshold is exceeded, this gets called
 game_server.startGame = function(game) {
     game.active = true;
