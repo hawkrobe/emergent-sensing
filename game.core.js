@@ -43,9 +43,6 @@ var game_core = function(game_instance){
 
     //Dimensions of world -- Used in collision detection, etc.
     this.world = {width : 280, height : 485};  // 160cm * 3
-    
-    // keep track of how long it's been going
-    this.clock = 0;
 
     // set how long each round will last (in minutes)
     this.round_length = 6
@@ -62,6 +59,8 @@ var game_core = function(game_instance){
 
     //Number of players needed to start the game
     this.players_threshold = 4;
+
+    this.background_field = zeros([485, 240])
 
     //Players will replay over and over, so we keep track of which number we're on,
     //to print out to data file
@@ -148,7 +147,7 @@ game_core.prototype.get_player = function(id) {
     return result.player
 };
 
-// Method to get whole list of players
+// Method to get list of players that aren't the given id
 game_core.prototype.get_others = function(id) {
     return _.without(_.map(_.filter(this.players, function(e){return e.id != id}), 
         function(p){return p.player ? p : null}), null)
@@ -225,6 +224,9 @@ game_core.prototype.server_update_physics = function() {
         };  
         player.pos = player.game.v_add( player.old_state.pos, new_dir );
         player.game.check_collision( player );
+        // Also update the current points at this new position
+        player.points_earned = local_gamecore.background_field[Math.floor(player.pos.y)][Math.floor(player.pos.x)]
+        console.log("points_earned: " + player.points_earned);
     })
 };
 
@@ -357,6 +359,9 @@ game_core.prototype.create_physics_simulation = function() {
     return setInterval(function(){
         this.update_physics();
         this.game_clock += 1;
+//        this.background_field = temp_field
+        // Start pre-loading background field for next time step
+
         if (this.good2write) {
             this.writeData();
         }
@@ -364,8 +369,17 @@ game_core.prototype.create_physics_simulation = function() {
 };
 
 game_core.prototype.update_physics = function() {
-    if(this.server) 
-	this.server_update_physics();
+    if(this.server) {
+        this.server_update_physics();
+        var next_time = this.game_clock 
+        var local_game = this;
+        var call_time = new Date()
+        this.fs.readFile(__dirname + '/background/t' + next_time + '_rounded.csv', function(err, data){
+            if(err) throw err;
+//            console.log("file " + next_time + " read in " + (new Date() - call_time) + "ms")
+            local_game.parser.write(data)
+        })
+    }
 };
 
 //Prevents people from leaving the arena
@@ -417,6 +431,16 @@ get_random_angle = function() {
 
 // (4.22208334636).fixed(n) will return fixed point value to n places, default n = 3
 Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
+
+function zeros(dimensions) {
+    var array = [];
+
+    for (var i = 0; i < dimensions[0]; ++i) {
+        array.push(dimensions.length == 1 ? 0 : zeros(dimensions.slice(1)));
+    }
+
+    return array;
+}
 
 //The remaining code runs the update animations
 

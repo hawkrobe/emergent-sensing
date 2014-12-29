@@ -12,7 +12,9 @@
         use_db      = false,
         game_server = module.exports = { games : {}, game_count:0 },
         UUID        = require('node-uuid'),
-        fs          = require('fs');
+        fs          = require('fs'),
+        linereader  = require('line-reader')
+        parse       = require('csv-parse');
 
     if (use_db) {
 	    database    = require(__dirname + "/database"),
@@ -122,6 +124,33 @@ game_server.createGame = function(player) {
 
     // Set up the filesystem variable we'll use to write later
     game.gamecore.fs = fs;
+    game.gamecore.linereader = linereader;
+    var output = []
+
+    // Set up the parser we'll use to read .csv later
+    var parser = parse({delimiter: ','})
+    
+    parser.on('readable', function(){
+        while(record = parser.read()){
+            output.push(record)
+            if(output.length == 485) {
+                game.gamecore.background_field = output;
+                output = []
+            }
+        }
+    });
+
+    // Catch any error
+    parser.on('error', function(err){
+        console.log("Error: " + err.message);
+    });
+
+    // When we are done, test that the parsed output matched what expected
+    parser.on('finish', function(){
+        console.log("finish")
+    });
+
+    game.gamecore.parser = parser;
 
     // When workers are directed to the page, they specify which
     // version of the task they're running. 

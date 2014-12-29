@@ -162,7 +162,6 @@ client_countdown = function() {
 }
 
 client_update = function() {
-    var percent = (Math.abs(game.get_player(my_id).angle/360))
     var player = game.get_player(my_id)
 
     //Clear the screen area
@@ -192,9 +191,10 @@ client_update = function() {
     
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (player.points_earned / 100).fixed(2));
+
     $("#curr_bonus").html("Current bonus: <span style='color: " 
-        + getColorForPercentage(percent) 
-        +";'>" + Math.abs(player.angle) + "</span>");
+        + getColorForPercentage(player.points_earned) 
+        +";'>" + Math.abs(player.points_earned) + "</span>");
 
     // Draw time remaining 
     var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))
