@@ -226,7 +226,6 @@ game_core.prototype.server_update_physics = function() {
         player.game.check_collision( player );
         // Also update the current points at this new position
         player.points_earned = local_gamecore.background_field[Math.floor(player.pos.y)][Math.floor(player.pos.x)]
-        console.log("points_earned: " + player.points_earned);
     })
 };
 
@@ -371,14 +370,17 @@ game_core.prototype.create_physics_simulation = function() {
 game_core.prototype.update_physics = function() {
     if(this.server) {
         this.server_update_physics();
-        var next_time = this.game_clock 
-        var local_game = this;
-        var call_time = new Date()
-        this.fs.readFile(__dirname + '/background/t' + next_time + '_rounded.csv', function(err, data){
-            if(err) throw err;
-//            console.log("file " + next_time + " read in " + (new Date() - call_time) + "ms")
-            local_game.parser.write(data)
-        })
+        // start reading csv and updating background once game starts
+        if(this.good2write) {
+            var local_game = this;
+            this.fs.readFile(__dirname + '/background/t' + this.game_clock + '_rounded.csv', function(err, data){
+                if(err) throw err;
+                local_game.parse(data, {delimiter: ','}, function(err, output){
+                    if(err) throw err;
+                    local_game.background_field = output;
+                })
+            })
+        }
     }
 };
 

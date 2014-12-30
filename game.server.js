@@ -8,6 +8,8 @@
     MIT Licensed.
 */
 
+require('look').start()
+
     var
         use_db      = false,
         game_server = module.exports = { games : {}, game_count:0 },
@@ -127,6 +129,8 @@ game_server.createGame = function(player) {
     game.gamecore.linereader = linereader;
     var output = []
 
+    game.gamecore.parse = parse;
+    
     // Set up the parser we'll use to read .csv later
     var parser = parse({delimiter: ','})
     
