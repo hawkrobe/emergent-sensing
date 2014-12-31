@@ -60,7 +60,8 @@ var game_core = function(game_instance){
     //Number of players needed to start the game
     this.players_threshold = 4;
 
-    this.background_field = zeros([485, 240])
+    // Background field holds the background values
+    this.background_vals = null;
 
     //Players will replay over and over, so we keep track of which number we're on,
     //to print out to data file
@@ -225,7 +226,7 @@ game_core.prototype.server_update_physics = function() {
         player.pos = player.game.v_add( player.old_state.pos, new_dir );
         player.game.check_collision( player );
         // Also update the current points at this new position
-        player.points_earned = local_gamecore.background_field[Math.floor(player.pos.y)][Math.floor(player.pos.x)]
+//        player.points_earned = local_gamecore.background_vals[Math.floor(player.pos.y)][Math.floor(player.pos.x)]
     })
 };
 
@@ -358,7 +359,7 @@ game_core.prototype.create_physics_simulation = function() {
     return setInterval(function(){
         this.update_physics();
         this.game_clock += 1;
-//        this.background_field = temp_field
+//        this.background_vals = temp_field
         // Start pre-loading background field for next time step
 
         if (this.good2write) {
@@ -373,12 +374,18 @@ game_core.prototype.update_physics = function() {
         // start reading csv and updating background once game starts
         if(this.good2write) {
             var local_game = this;
-            this.fs.readFile(__dirname + '/background/t' + this.game_clock + '_rounded.csv', function(err, data){
+            var background_vals = []
+            local_game.fs.open(__dirname + '/background/t' + this.game_clock + '_rounded.csv', 'r', function(err, fd) {
                 if(err) throw err;
-                local_game.parse(data, {delimiter: ','}, function(err, output){
-                    if(err) throw err;
-                    local_game.background_field = output;
-                })
+                _.map(local_game.get_active_players(), function(p){
+                    var pos = p.player.pos
+                    var loc = (240*5)*Math.round(pos.y) + Math.round(pos.x)*5
+                    local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
+                        if(err) throw err;
+                        p.player.points_earned = Number(buffer.toString('utf8'))
+                        local_game.fs.close(fd, function(){})
+                    });
+                });
             })
         }
     }

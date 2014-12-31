@@ -130,7 +130,7 @@ game_server.createGame = function(player) {
     var output = []
 
     game.gamecore.parse = parse;
-    
+
     // Set up the parser we'll use to read .csv later
     var parser = parse({delimiter: ','})
     
