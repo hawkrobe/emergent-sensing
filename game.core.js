@@ -58,7 +58,7 @@ var game_core = function(game_instance){
     this.visibility_radius = 77; // 27.5cm * 3
 
     //Number of players needed to start the game
-    this.players_threshold = 4;
+    this.players_threshold = 2;
 
     // Background field holds the background values
     this.background_vals = null;
@@ -372,16 +372,17 @@ game_core.prototype.update_physics = function() {
     if(this.server) {
         this.server_update_physics();
         // start reading csv and updating background once game starts
-        if(this.good2write) {
+	if(this.good2write) {
             var local_game = this;
             var background_vals = []
-            local_game.fs.open(__dirname + '/background/t' + this.game_clock + '_rounded.csv', 'r', function(err, fd) {
+            local_game.fs.open('/home/pkrafft/couzin/output/background/1-1en01/t' + local_game.game_clock + '.csv', 'r', function(err, fd) {
                 if(err) throw err;
                 _.map(local_game.get_active_players(), function(p){
                     var pos = p.player.pos
-                    var loc = (240*5)*Math.round(pos.y) + Math.round(pos.x)*5
-                    local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
+		    var loc = (280*5 + 1)*Math.round(pos.y) + Math.round(pos.x)*5
+			local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
                         if(err) throw err;
+			console.log("on tick " + local_game.game_clock + ", updated points earned to " + Number(buffer.toString('utf8')))
                         p.player.points_earned = Number(buffer.toString('utf8'))
                         local_game.fs.close(fd, function(){})
                     });

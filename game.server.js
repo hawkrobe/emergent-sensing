@@ -15,7 +15,6 @@ require('look').start()
         game_server = module.exports = { games : {}, game_count:0 },
         UUID        = require('node-uuid'),
         fs          = require('fs'),
-        linereader  = require('line-reader')
         parse       = require('csv-parse');
 
     if (use_db) {
@@ -126,7 +125,6 @@ game_server.createGame = function(player) {
 
     // Set up the filesystem variable we'll use to write later
     game.gamecore.fs = fs;
-    game.gamecore.linereader = linereader;
     var output = []
 
     game.gamecore.parse = parse;
