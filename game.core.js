@@ -183,11 +183,7 @@ game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y
 game_core.prototype.server_send_update = function(){
     //Make a snapshot of the current state, for updating the clients
     var local_game = this;
-    var state = {
-        cond: this.condition,                       //dynamic or ballistic?
-        de  : this.hiding_enabled,                  // true to see angle
-        g2w : this.good2write,                      // true when game's started
-    };
+    
 
     // Add info about all players
     var player_packet = _.map(local_game.players, function(p){
@@ -203,11 +199,17 @@ game_core.prototype.server_send_update = function(){
                     player: null}
         }
     })
+    var state = {
+        cond: this.condition,                       //dynamic or ballistic?
+        de  : this.hiding_enabled,                  // true to see angle
+        g2w : this.good2write,                      // true when game's started
+    };
     _.extend(state, {players: player_packet})
-    
+
     //Send the snapshot to the players
     this.state = state;
-    _.map(local_game.get_active_players(), function(p){p.player.instance.emit( 'onserverupdate', state)})
+    _.map(local_game.get_active_players(), function(p){
+	    p.player.instance.emit( 'onserverupdate', state)})
 };
 
 // This is called every few ms and simulates the world state. This is
@@ -357,14 +359,22 @@ game_core.prototype.stop_update = function() {
 
 game_core.prototype.create_physics_simulation = function() {    
     return setInterval(function(){
-        this.update_physics();
-        this.game_clock += 1;
-//        this.background_vals = temp_field
-        // Start pre-loading background field for next time step
-
+	    var local_game = this;
+	// write based on what's happened in last tick
+	    if(this.server)
+	    _.map(local_game.get_active_players(), function(p){console.log('latency from ' + p.id + ' on last step is ' + p.player.latency)})
         if (this.good2write) {
             this.writeData();
         }
+        this.game_clock += 1;
+	// set latencies to null -- if they get updated within this tick, we'll know
+    
+	_.map(local_game.get_active_players(), function(p){p.player.latency = null})
+	if(this.server) {
+	    _.map(local_game.get_active_players(), function(p){
+		p.player.instance.emit('ping', {sendTime : Date.now()})})
+	}
+        this.update_physics();	
     }.bind(this), this.tick_frequency);
 };
 
@@ -378,9 +388,9 @@ game_core.prototype.update_physics = function() {
             local_game.fs.open('/home/pkrafft/couzin/output/background/1-1en01/t' + local_game.game_clock + '.csv', 'r', function(err, fd) {
                 if(err) throw err;
                 _.map(local_game.get_active_players(), function(p){
-                    var pos = p.player.pos
-		    var loc = (280*5 + 1)*Math.round(pos.y) + Math.round(pos.x)*5
-			local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
+		    var pos = p.player.pos;
+		    var loc = (280*5 + 1)*Math.round(pos.y) + Math.round(pos.x)*5;
+		    local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
                         if(err) throw err;
 			console.log("on tick " + local_game.game_clock + ", updated points earned to " + Number(buffer.toString('utf8')))
                         p.player.points_earned = Number(buffer.toString('utf8'))

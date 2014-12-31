@@ -49,6 +49,12 @@ game_server.server_onMessage = function(client,message) {
         target.speed = message_parts[1];
     } else if (message_type == "h") { // Receive message when browser focus shifts
         target.visible = message_parts[1];
+    } else if (message_type == 'pong') {
+	var latency = (Date.now() - message_parts[1])/2;
+	if(latency < 125) {
+	    console.log("updated latency: " + latency)
+		target.latency = latency
+		}
     }
 };
 
@@ -125,34 +131,6 @@ game_server.createGame = function(player) {
 
     // Set up the filesystem variable we'll use to write later
     game.gamecore.fs = fs;
-    var output = []
-
-    game.gamecore.parse = parse;
-
-    // Set up the parser we'll use to read .csv later
-    var parser = parse({delimiter: ','})
-    
-    parser.on('readable', function(){
-        while(record = parser.read()){
-            output.push(record)
-            if(output.length == 485) {
-                game.gamecore.background_field = output;
-                output = []
-            }
-        }
-    });
-
-    // Catch any error
-    parser.on('error', function(err){
-        console.log("Error: " + err.message);
-    });
-
-    // When we are done, test that the parsed output matched what expected
-    parser.on('finish', function(){
-        console.log("finish")
-    });
-
-    game.gamecore.parser = parser;
 
     // When workers are directed to the page, they specify which
     // version of the task they're running. 

@@ -66,7 +66,7 @@ var initialize = function(query, client, id) {
     client.on('message', function(m) {
         game_server.server_onMessage(client, m);
     }); 
-            
+
     // When this client disconnects, we want to tell the game server
     // about that as well, so it can remove them from the game they are
     // in, and make sure the other player knows that they left and so on.

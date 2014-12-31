@@ -59,7 +59,6 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
-
     if(data.players) {
         _.map(_.zip(data.players, game.players),
             function(z){
@@ -281,6 +280,9 @@ client_connect_to_server = function(game) {
 //        game.state = 'connecting';
     }.bind(game));
 
+    game.socket.on('ping', function(data){
+	    console.log("received ping")
+	    game.socket.send('pong.' + data.sendTime)})
     //Sent when we are disconnected (network, server down, etc)
     game.socket.on('disconnect', client_ondisconnect.bind(game));
     //Sent each tick of the server simulation. This is our authoritive update
