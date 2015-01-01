@@ -359,10 +359,10 @@ game_core.prototype.stop_update = function() {
 
 game_core.prototype.create_physics_simulation = function() {    
     return setInterval(function(){
-	    var local_game = this;
+	var local_game = this;
 	// write based on what's happened in last tick
-	    if(this.server)
-	    _.map(local_game.get_active_players(), function(p){console.log('latency from ' + p.id + ' on last step is ' + p.player.latency)})
+	//	if(this.server)
+	    //	    _.map(local_game.get_active_players(), function(p){console.log('latency from ' + p.id + ' on last step is ' + p.player.latency)})
         if (this.good2write) {
             this.writeData();
         }

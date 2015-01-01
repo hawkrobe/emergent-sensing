@@ -52,8 +52,7 @@ game_server.server_onMessage = function(client,message) {
     } else if (message_type == 'pong') {
 	var latency = (Date.now() - message_parts[1])/2;
 	if(latency < 125) {
-	    console.log("updated latency: " + latency)
-		target.latency = latency
+	    target.latency = latency
 		}
     }
 };

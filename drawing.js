@@ -42,6 +42,22 @@ draw_visibility_radius = function(game, player) {
     game.ctx.stroke();
 }
 
+draw_other_dot = function(game, player, other) {
+    var scaling_factor = game.distance_between(player.pos, other.pos);
+    var X = (other.pos.x - player.pos.x);
+    var Y = (player.pos.y - other.pos.y);
+    var theta = Math.atan2(Y,X);
+    game.ctx.beginPath();
+    game.ctx.arc(player.pos.x + game.visibility_radius*Math.cos(theta),
+		 player.pos.y - game.visibility_radius*Math.sin(theta), 
+		 5, 0, 2 * Math.PI, false);
+    game.ctx.fillStyle = 'white';
+    game.ctx.fill();
+    game.ctx.lineWidth = 1;
+    game.ctx.strokeStyle = 'gray';
+    game.ctx.stroke();
+};
+
 // draws instructions at the bottom in a nice style
 draw_info = function(game, info) {    
     //Draw information shared by both players

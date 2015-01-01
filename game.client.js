@@ -180,13 +180,16 @@ client_update = function() {
         if(_.contains(active_keys, 'left')) left_turn() ;
     }
 
+    // Draw visibility radius
+    if(player.pos) draw_visibility_radius(game, player)
+
     //Draw opponent next (but only those in radius)
     _.map(game.get_others(my_id), function(p){
         if(!game.hidden_enabled || game.distance_between(p.player.pos, player.pos) < game.visibility_radius)
-            draw_player(game, p.player)});
+            draw_player(game, p.player)
+	else
+	    draw_other_dot(game, player, p.player)});
 
-    // Draw visibility radius
-    if(player.pos) draw_visibility_radius(game, player)
     
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (player.points_earned / 100).fixed(2));
@@ -281,7 +284,6 @@ client_connect_to_server = function(game) {
     }.bind(game));
 
     game.socket.on('ping', function(data){
-	    console.log("received ping")
 	    game.socket.send('pong.' + data.sendTime)})
     //Sent when we are disconnected (network, server down, etc)
     game.socket.on('disconnect', client_ondisconnect.bind(game));
