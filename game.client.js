@@ -164,7 +164,7 @@ client_update = function() {
     var player = game.get_player(my_id)
 
     //Clear the screen area
-    game.ctx.clearRect(0,0,280,485);
+    game.ctx.clearRect(0,0,485,280);
 
     // Alter speeds
     if (speed_change != "none") {

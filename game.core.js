@@ -42,7 +42,7 @@ var game_core = function(game_instance){
     this.newgame_initiated_flag = false;
 
     //Dimensions of world -- Used in collision detection, etc.
-    this.world = {width : 280, height : 485};  // 160cm * 3
+    this.world = {width : 485, height : 280};  // 160cm * 3
 
     // set how long each round will last (in minutes)
     this.round_length = 6
@@ -389,7 +389,7 @@ game_core.prototype.update_physics = function() {
                 if(err) throw err;
                 _.map(local_game.get_active_players(), function(p){
 		    var pos = p.player.pos;
-		    var loc = (280*5 + 1)*Math.round(pos.y) + Math.round(pos.x)*5;
+		    var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
 		    local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
                         if(err) throw err;
 			console.log("on tick " + local_game.game_clock + ", updated points earned to " + Number(buffer.toString('utf8')))
