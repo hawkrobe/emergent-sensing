@@ -69,13 +69,15 @@ client_onserverupdate_received = function(data){
                     var s_player = z[0].player
                     var l_player = z[1].player
                     if(z[0].id != my_id | l_player.angle == null) 
-                        l_player.angle = s_player.angle
-                    l_player.points_earned = s_player.poi
+			l_player.angle = s_player.angle
+                    l_player.curr_background = s_player.cbg
+		    l_player.total_points = s_player.tot
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
                 }
             })
     }
+    
     game.condition = data.cond;
     game.draw_enabled = data.de;
     game.good2write = data.g2w;
@@ -162,7 +164,7 @@ client_countdown = function() {
 
 client_update = function() {
     var player = game.get_player(my_id)
-
+    console.log("curr_background is " + player.total_points);
     //Clear the screen area
     game.ctx.clearRect(0,0,485,280);
 
@@ -192,11 +194,11 @@ client_update = function() {
 
     
     // Draw points scoreboard 
-    $("#cumulative_bonus").html("Total bonus so far: $" + (player.points_earned / 100).fixed(2));
+    $("#cumulative_bonus").html("Total pay so far: $" + (player.total_points).fixed(2));
 
     $("#curr_bonus").html("Current bonus: <span style='color: " 
-        + getColorForPercentage(player.points_earned) 
-        +";'>" + Math.abs(player.points_earned) + "</span>");
+        + getColorForPercentage(player.curr_background) 
+        +";'>" + Math.abs(player.curr_background) + "</span>");
 
     // Draw time remaining 
     var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))

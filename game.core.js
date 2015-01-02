@@ -53,6 +53,9 @@ var game_core = function(game_instance){
     //The speed at which the clients move (e.g. # px/tick)
     this.min_speed = 21 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
     this.max_speed = 70 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
+    
+    this.base_pay = .125; // controls conversion b/w background val and cum. points
+    this.max_bonus = .625; // total $ players can make in bonuses 
 
     // This draws the circle in which players can see other players
     this.visibility_radius = 77; // 27.5cm * 3
@@ -110,7 +113,9 @@ var game_player = function( game_instance, player_instance) {
     
     this.info_color = 'rgba(255,255,255,0)';
     this.id = '';
-    this.points_earned = 0; // keep track of number of points
+    this.curr_background = 0; // keep track of current background val
+    this.avg_score = 0; // keep track of average score, for bonus
+    this.total_points = 0; // keep track of total score, for paying participant
 
     //This is used in moving us around later
     this.old_state = {pos:{x:0,y:0}};
@@ -191,7 +196,8 @@ game_core.prototype.server_send_update = function(){
             return {id: p.id,
                     player: {
                         pos: p.player.pos,
-                        poi: p.player.points_earned,
+                        cbg: p.player.curr_background,
+			tot: p.player.total_points,
                         angle: p.player.angle,
                         speed: p.player.speed}}
         } else {
@@ -228,7 +234,6 @@ game_core.prototype.server_update_physics = function() {
         player.pos = player.game.v_add( player.old_state.pos, new_dir );
         player.game.check_collision( player );
         // Also update the current points at this new position
-//        player.points_earned = local_gamecore.background_vals[Math.floor(player.pos.y)][Math.floor(player.pos.x)]
     })
 };
 
@@ -367,6 +372,7 @@ game_core.prototype.create_physics_simulation = function() {
             this.writeData();
         }
         this.game_clock += 1;
+
 	// set latencies to null -- if they get updated within this tick, we'll know
     
 	_.map(local_game.get_active_players(), function(p){p.player.latency = null})
@@ -393,8 +399,12 @@ game_core.prototype.update_physics = function() {
 		    local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
                         if(err) throw err;
 			console.log("on tick " + local_game.game_clock + ", updated points earned to " + Number(buffer.toString('utf8')))
-                        p.player.points_earned = Number(buffer.toString('utf8'))
-                        local_game.fs.close(fd, function(){})
+                        p.player.curr_background = Number(buffer.toString('utf8'))
+			p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) 
+					      / local_game.game_clock)
+			p.player.total_points = (local_game.base_pay*(local_game.game_clock/480) 
+						 + p.player.avg_score * local_game.max_bonus)
+			local_game.fs.close(fd, function(){})
                     });
                 });
             })
