@@ -286,7 +286,7 @@ client_connect_to_server = function(game) {
     }.bind(game));
 
     game.socket.on('ping', function(data){
-	    game.socket.send('pong.' + data.sendTime)})
+	    game.socket.send('pong.' + data.sendTime + "." + data.tick_num)})
     //Sent when we are disconnected (network, server down, etc)
     game.socket.on('disconnect', client_ondisconnect.bind(game));
     //Sent each tick of the server simulation. This is our authoritive update
@@ -349,7 +349,7 @@ function onchange (evt) {
         document.body.className = evt.target.hidden ? "hidden" : "visible";
     }
     visible = document.body.className;
-//    game.socket.send("h." + document.body.className);
+    game.socket.send("h." + document.body.className);
 };
 
 // Flashes title to notify user that game has started

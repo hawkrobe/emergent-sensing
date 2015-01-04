@@ -38,7 +38,7 @@ game_server.server_onMessage = function(client,message) {
 
     //The first is always the type of message
     var message_type = message_parts[0];
-    console.log("received message: " + message)
+    //console.log("received message: " + message)
     //Extract important variables
     var target = client.game.gamecore.get_player(client.userid);
     var others = client.game.gamecore.get_others(client.userid);
@@ -51,9 +51,9 @@ game_server.server_onMessage = function(client,message) {
         target.visible = message_parts[1];
     } else if (message_type == 'pong') {
 	var latency = (Date.now() - message_parts[1])/2;
-	if(latency < 125) {
-	    target.latency = latency
-		}
+	client.game.gamecore.fs.appendFile("data/latencies/game_" + client.game.gamecore.game_id + ".csv",
+			   String(client.userid)+","+client.game.gamecore.round_num+","+message_parts[2]+","+latency+"\n",
+			   function(err) { if(err) throw err; });
     }
 };
 
@@ -128,8 +128,14 @@ game_server.createGame = function(player) {
     // Tell the game about its own id
     game.gamecore.game_id = id;
 
-    // Set up the filesystem variable we'll use to write later
+    // Set up the filesystem variable we'll use later, and write headers
     game.gamecore.fs = fs;
+    game.gamecore.fs.appendFile("data/games/game_" + id + ".csv", 
+			     "pid, round, tick, noise_level, active, x_pos, y_pos, velocity, angle, bg_val, total_points\n",
+			     function (err) {if(err) throw err;});
+    game.gamecore.fs.appendFile("data/latencies/game_" + id + ".csv", 
+				"pid, round, tick, latency\n",
+			     function (err) {if(err) throw err;});
 
     // When workers are directed to the page, they specify which
     // version of the task they're running. 

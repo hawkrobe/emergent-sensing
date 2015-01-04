@@ -4,11 +4,6 @@ TODO:
 * create round structure
 -> randomly assign order of light levels
 -> create 5 second break in waiting room ("next round begins in...")
-* integrate light field
--> give player correct feedback about current & cumulative bonus 
-* write the data we want to file
--> curr bonus, positions, keyboard inputs, active?, angle, noise level, velocity, list of players in visibility radius
-* put dots on circle to represent direction
 * change color of whole background (not viewpoint -- white to green)
 * database... 
 
@@ -35,3 +30,8 @@ COMPLETED:
 * allow people to disconnect gracefully (without ending the game)
 * keep track of how long the game has been going
 -> give player correct feedback about how many minutes are remaining
+* put dots on circle to represent direction
+* integrate light field
+-> give player correct feedback about current & cumulative bonus 
+* write the data we want to file
+-> curr bonus, positions, keyboard inputs, active?, angle, noise level, velocity, list of players in visibility radius

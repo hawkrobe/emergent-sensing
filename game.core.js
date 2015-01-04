@@ -69,6 +69,9 @@ var game_core = function(game_instance){
     //Players will replay over and over, so we keep track of which number we're on,
     //to print out to data file
     this.round_num = 0;
+    
+    // Determines which background val file we read from
+    this.noise_level = 0;
 
     //If hiding_enabled is true, players will only see others in their visibility radius
     this.hiding_enabled = false;
@@ -241,7 +244,7 @@ game_core.prototype.server_update_physics = function() {
 // "data" directory. We keep EVERYTHING so that we
 // can analyze the data to an arbitrary precision later on.
 game_core.prototype.writeData = function() {
-    console.log("writing...")
+
     // // Some funny business going on with angles being negative, so we correct for that
     // var host_angle_to_write = this.players.self.angle;
     // var other_angle_to_write = this.players.other.angle;
@@ -250,46 +253,28 @@ game_core.prototype.writeData = function() {
     //     host_angle_to_write = parseInt(this.players.self.angle, 10) + 360;
     // if (this.players.other.angle < 0)
     //     other_angle_to_write = parseInt(this.players.other.angle, 10)  + 360;
-    // if (this.condition == "ballistic") 
-    //     file_path = "data/ballistic/game_" + this.game_id + ".csv";
-    // else if (this.condition == "dynamic") 
-    //     file_path = "data/dynamic/game_" + this.game_id + ".csv";
-    
-    // // Write data for the host player
-    // var host_data_line = String(this.game_number) + ',';
-    // host_data_line += String(this.game_clock) + ',';
-    // host_data_line += this.best_target_string + ',';
-    // host_data_line += "host,";
-    // host_data_line += this.players.self.visible + ',';
-    // host_data_line += this.players.self.pos.x + ',';
-    // host_data_line += this.players.self.pos.y + ',';
-    // host_data_line += host_angle_to_write + ',';
-    // host_data_line += this.players.self.points_earned + ',';
-    // host_data_line += this.players.self.noise.fixed(2) + ',';
-    // this.fs.appendFile(file_path, 
-    //                    String(host_data_line) + "\n",
-    //                    function (err) {
-    //                        if(err) throw err;
-    //                    });
-    // console.log("Wrote: " + host_data_line);
-
-    // // Write data for the other player
-    // var other_data_line = String(this.game_number) + ',';
-    // other_data_line += String(this.game_clock) + ',';
-    // other_data_line += this.best_target_string + ',';
-    // other_data_line += "other,";
-    // other_data_line += this.players.other.visible + ',';
-    // other_data_line += this.players.other.pos.x + ',';
-    // other_data_line += this.players.other.pos.y + ',';
-    // other_data_line += other_angle_to_write + ',';
-    // other_data_line += this.players.other.points_earned + ',';
-    // other_data_line += this.players.other.noise.fixed(2) + ',';
-    // this.fs.appendFile(file_path,
-    //                    String(other_data_line) + "\n",
-    //                    function (err) {
-    //                        if(err) throw err;
-    //                    });
-    // console.log("Wrote: " + other_data_line);
+    file_path = "data/games/game_" + this.game_id + ".csv";
+    var local_game = this;
+    _.map(local_game.get_active_players(), function(p) {
+	    var player_angle = p.player.angle;
+	    if (player_angle < 0) 
+		player_angle = parseInt(player_angle, 10) + 360;
+	    //also, keyboard inputs,  list of players in visibility radius?
+	    var line = String(p.id) + ',';
+	    line += String(local_game.round_num) + ',';
+	    line += String(local_game.game_clock) + ',';
+	    line += String(local_game.noise_level) + ',';
+	    line += p.player.visible + ',';
+	    line += p.player.pos.x +',';
+	    line += p.player.pos.y +',';
+	    line += p.player.speed +',';
+	    line += player_angle +',';
+	    line += p.player.curr_background +',';
+	    line += p.player.total_points.fixed(2) ;
+	    local_game.fs.appendFile(file_path, String(line) + "\n",
+			       function (err) {if(err) throw err;});
+	    console.log("Wrote: " + line);
+	})
 };
 
 // This is a really important function -- it gets called when a round
@@ -364,23 +349,18 @@ game_core.prototype.stop_update = function() {
 
 game_core.prototype.create_physics_simulation = function() {    
     return setInterval(function(){
-	var local_game = this;
-	// write based on what's happened in last tick
-	//	if(this.server)
-	    //	    _.map(local_game.get_active_players(), function(p){console.log('latency from ' + p.id + ' on last step is ' + p.player.latency)})
         if (this.good2write) {
             this.writeData();
         }
         this.game_clock += 1;
 
-	// set latencies to null -- if they get updated within this tick, we'll know
-    
-	_.map(local_game.get_active_players(), function(p){p.player.latency = null})
-	if(this.server) {
+	// Ping to get latency for this update
+	var local_game = this;
+	if(this.server & this.good2write) {
 	    _.map(local_game.get_active_players(), function(p){
-		p.player.instance.emit('ping', {sendTime : Date.now()})})
-	}
-        this.update_physics();	
+		    p.player.instance.emit('ping', {sendTime : Date.now(),
+					            tick_num: local_game.game_clock})})}
+    this.update_physics();	
     }.bind(this), this.tick_frequency);
 };
 
@@ -398,7 +378,7 @@ game_core.prototype.update_physics = function() {
 		    var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
 		    local_game.fs.read(fd, new Buffer(4), 0, 4, loc, function(err, bytesRead, buffer) {
                         if(err) throw err;
-			console.log("on tick " + local_game.game_clock + ", updated points earned to " + Number(buffer.toString('utf8')))
+			    //			console.log("on tick " + local_game.game_clock + ", updated points earned to " + Number(buffer.toString('utf8')))
                         p.player.curr_background = Number(buffer.toString('utf8'))
 			p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) 
 					      / local_game.game_clock)
