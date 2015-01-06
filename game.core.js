@@ -349,18 +349,26 @@ game_core.prototype.stop_update = function() {
 
 game_core.prototype.create_physics_simulation = function() {    
     return setInterval(function(){
-        if (this.good2write) {
+	    // finish this interval by writing and checking whether it's the end
+        if (this.server & this.good2write) {
             this.writeData();
         }
-        this.game_clock += 1;
-
-	// Ping to get latency for this update
 	var local_game = this;
+	if(this.game_clock == 2879) {
+	    _.map(local_game.get_active_players(), function(p){
+		    p.player.instance.send('s.end.')})
+		//		local_game.stop_update();
+	}
+        // start new interval by updating clock, pinging
+	// people, and updating physics
+	if(this.good2write) 
+	    this.game_clock += 1;
+	var local_game = this; // need a new local game w/ game clock change
 	if(this.server & this.good2write) {
 	    _.map(local_game.get_active_players(), function(p){
 		    p.player.instance.emit('ping', {sendTime : Date.now(),
 					            tick_num: local_game.game_clock})})}
-    this.update_physics();	
+	this.update_physics();	
     }.bind(this), this.tick_frequency);
 };
 
@@ -368,7 +376,7 @@ game_core.prototype.update_physics = function() {
     if(this.server) {
         this.server_update_physics();
         // start reading csv and updating background once game starts
-	if(this.good2write) {
+	if(this.good2write & this.game_clock < 2880) {
             var local_game = this;
             var background_vals = []
             local_game.fs.open('/home/pkrafft/couzin/output/background/1-1en01/t' + local_game.game_clock + '.csv', 'r', function(err, fd) {

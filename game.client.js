@@ -36,9 +36,12 @@ right_turn = function() {
     game.socket.send("a." + self.angle);
 };
 
-// Function that gets called client-side when someone disconnects
+// Function that gets called client-side when server disconnects someone
 client_ondisconnect = function() {
-    // TODO: If server drops us, redirect to "disconnected.html" page
+    // Redirect to exit survey
+    console.log("server booted")
+    var URL = 'http://people.csail.mit.edu/pkrafft/experiment/landing.html';
+    window.location.replace(URL);
 };
 
 /* 
@@ -103,14 +106,21 @@ client_onMessage = function(data) {
     case 's': //server message
 
         switch(subcommand) {    
-        case 'p' :// Permanent Message
-            game.players.self.message = commanddata;
-            break;
-        case 'm' :// Temporary Message
-            game.players.self.message = commanddata;
-            var local_game = game;
-            setTimeout(function(){local_game.players.self.message = '';}, 1000);
-            break;
+        // case 'p' :// Permanent Message
+	//     console.log("p received")
+        //     game.players.self.message = commanddata;
+        //     break;
+        // case 'm' :// Temporary Message
+	//     console.log("m received")
+        //     game.players.self.message = commanddata;
+        //     var local_game = game;
+        //     setTimeout(function(){local_game.players.self.message = '';}, 1000);
+        //     break;
+	case 'end' :
+	    // Redirect to exit survey
+	    console.log("received end message...")
+	    var URL = 'http://people.csail.mit.edu/pkrafft/experiment/landing.html';
+	    window.location.replace(URL); break;
         case 'alert' : // Not in database, so you can't play...
             alert('You did not enter an ID'); 
             window.location.replace('http://nodejs.org'); break;
@@ -132,15 +142,8 @@ client_onMessage = function(data) {
 
 // Restarts things on the client side. Necessary for iterated games.
 client_newgame = function() {
-    if (game.round_num == 3) {
-        // Redirect to exit survey
-        var URL = './static/game_over.html';
-        URL += '?id=' + game.players.self.id;
-        window.location.replace(URL);
-    } else {
-        // Decrement number of games remaining
-        game.round_num += 1;
-    }
+    // increment round
+    game.round_num += 1;
 
     // Initiate countdown (with timeouts)
     game.get_player(my_id).angle = null;
@@ -164,7 +167,6 @@ client_countdown = function() {
 
 client_update = function() {
     var player = game.get_player(my_id)
-    console.log("curr_background is " + player.total_points);
     //Clear the screen area
     game.ctx.clearRect(0,0,485,280);
 
