@@ -58,7 +58,7 @@ var game_core = function(game_instance){
     this.max_bonus = .625; // total $ players can make in bonuses 
 
     // This draws the circle in which players can see other players
-    this.visibility_radius = 77; // 27.5cm * 3
+    this.visibility_radius = 1000; // 27.5cm * 3
 
     //Number of players needed to start the game
     this.players_threshold = 3;
@@ -378,7 +378,7 @@ game_core.prototype.update_physics = function() {
 			local_game.fs.read(fd, new Buffer(4), 0, 4, loc, 
 					   function(err, bytesRead, buffer) {
 			    if(err) throw err;
-			    p.player.curr_background = Number(buffer.toString('utf8'))
+			    p.player.curr_background = 1 - Number(buffer.toString('utf8'))
 			    p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) / local_game.game_clock)
 			    p.player.total_points = (local_game.base_pay*(local_game.game_clock/480) + p.player.avg_score * local_game.max_bonus)
 			 });
@@ -428,8 +428,8 @@ get_random_position = function(world) {
 get_random_center_position = function(world) {
     var theta = Math.random()*Math.PI*2;
     return {
-        x: world.width /2 + (Math.cos(theta)* world.width /4),
-        y: world.height/2 + (Math.sin(theta)* world.height/4)
+        x: world.width /2 + (Math.cos(theta)* world.width /16),
+        y: world.height/2 + (Math.sin(theta)* world.height/16)
     };
 }
     

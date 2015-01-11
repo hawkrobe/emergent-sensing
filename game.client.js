@@ -200,7 +200,7 @@ client_update = function() {
 
     $("#curr_bonus").html("Current bonus: <span style='color: " 
         + getColorForPercentage(player.curr_background) 
-        +";'>" + Math.abs(player.curr_background) + "</span>");
+        +";'>" + Math.floor(player.curr_background*100)/100 + "</span>");
 
     // Draw time remaining 
     var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))
