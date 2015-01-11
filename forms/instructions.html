@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../favicon.ico">
+
+    <title>Experiment</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="../dist/css/bootstrap-theme.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="theme.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body role="document">
+
+    <div class="container theme-showcase" role="main">
+
+      </br>
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="width: 5%;"><span class="sr-only">5% Complete</span></div>
+      </div>
+
+      <div class="page-header">
+        <h1>Instructions</h1>
+      </div>
+
+      <p>At the end of these instructions, you will be required to
+      answer a brief quiz to assess your understanding.  This quiz
+      should be straight-forward if you read the instructions.  If you
+      fail this quiz, however, you will not be able to play the game,
+      so <strong>read these instructions carefully</strong>.</p>
+
+      <p>After finishing the instructions, you will then enter a
+      waiting room.  This task requires multiple participants, so you
+      may have to wait for other players to join before the game will
+      start.  <strong>You will be compensated for your time in the
+      waiting room, so please continue to pay attention as the game
+      should begin shortly.</strong> While you are waiting for other
+      players, feel free to familiarize yourself with the controls in
+      the game.  The game controls are the same in the waiting room as
+      in the real game.</p>
+
+      
+      <p>Once the game starts, you will see a screen that looks much
+      like the following:</p>
+
+      <p>
+      <center><img src="gameplay-2.png" alt="Example gameplay" style="width:304px;height:228px"></center>
+	  </p>
+
+      <p>
+	You will be in control of the blue triangle.  You will start
+	out moving at a constant speed.  <strong>Holding down space
+	bar will increase your speed.  The left and right arrow keys
+	will control the direction of your movement.</strong> You will
+	have a score at each point in the game, indicated by the
+	"Current Score" at the top of the page.  Each location in the
+	game area is associated with a certain score.  <strong>Your
+	goals is to locate yourself in high scoring locations for as
+	long as possible.</strong> <strong>You will receive a cash
+	bonus based on your cumulative score in the game.</strong> The
+	scores of locations will change over time.  Note that in the
+	waiting room, the score for every location will be zero, but
+	this will change once the game starts.
+      </p>
+      
+	<p>
+	When you are close enough to another player in the game, you
+	will be able to see that the location, direction, and speed of
+	that player, as in the screenshot above.  Your field of view
+	is indicated by the circle surrounding your triangle. If you
+	move away from the player, the player will then appear as a
+	dot on your field of view, as shown here:
+	</p>
+
+      <p>
+      <center><img src="gameplay-1.png" alt="Example gameplay" style="width:304px;height:228px"></center>
+	  </p>
+
+
+      <p>
+	The dot indicates the direction towards that player.
+	<strong>Note that there is no competition for
+	bonuses.</strong> All participants are playing in the same
+	environments and receive the same bonuses at identical
+	locations.  You can be at the same location as another player
+	with no penalty.
+	</p>
+
+      <p><strong>After the game ends, you will receive a survey code
+      to submit with your HIT.  You must submit the code exactly as
+      shown to receive your bonuses.</strong></p>
+      
+
+      <div class="page-header">
+        <h3>Comprehension Quiz</h3>
+      </div>
+
+      <strong>You will only have one chance to pass this quiz.  If you want to
+      participate in this study, please do not guess.</strong>
+
+      <form name="quiz" onsubmit="return validateForm()">
+
+	</br>
+	Your goal is to
+	  </br>
+	<input type="radio" name="goal" value="no"> Find areas with low scores
+	  </br>
+	    <input type="radio" name="goal" value="yes"> Find areas with high scores
+	  </br>
+
+	</br>
+	    The areas with the highest scores
+	  </br>
+	<input type="radio" name="loc" value="no"> Are always in the same location
+	  </br>
+	    <input type="radio" name="loc" value="yes"> May change locations
+	  </br>
+
+
+	</br>
+	When you are not pressing any buttons, you will
+      </br>
+	<input type="radio" name="none" value="no"> Not move at all
+	  </br>
+	    <input type="radio" name="none" value="yes"> Move at a slow speed
+	  </br>
+	    <input type="radio" name="none" value="no"> Move at a fast speed
+	  </br>
+
+
+	</br>
+	By holding down space bar you will
+      </br>
+	<input type="radio" name="speed" value="yes"> Increase your speed
+	  </br>
+	    <input type="radio" name="speed" value="no"> Decrease your speed
+	  </br>
+
+	</br>
+	To change direction you can use
+      </br>
+	<input type="radio" name="dir" value="yes"> The left and right arrow keys
+	  </br>
+	    <input type="radio" name="dir" value="no"> The up and down arrow keys
+	  </br>
+
+	</br>
+	If you at the same location as another player you will
+      </br>
+	<input type="radio" name="comp" value="no"> Receive less of a bonus compared to if no one else was there
+	  </br>
+	    <input type="radio" name="comp" value="no"> Receive more of a bonus compared to if no one else was there
+	  </br>
+	<input type="radio" name="comp" value="yes"> Receive the same as you would if no one else was there
+	  </br>
+
+	</br>
+	If you at the same location as another player you will
+      </br>
+	<input type="radio" name="diff" value="yes"> Both receive the same bonus
+	  </br>
+	    <input type="radio" name="diff" value="no"> May receive different bonuses
+	  </br>
+
+	</br>
+	You have participated in this study before </br>
+	<input type="radio" name="completed" value="yes"> Yes
+	  </br>
+	    <input type="radio" name="completed" value="no"> No
+	  </br>
+	    </br>
+	<input type="submit" value="Submit"> 
+		  </br>
+		  </br>
+      </form>
+      
+	<noscript><strong>JavaScript must be enabled to submit.</strong></noscript>
+
+
+    </div> <!-- /container -->
+
+    
+    <script src="./validate-form.js"></script>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="../dist/js/bootstrap.min.js"></script>
+    <script src="../assets/js/docs.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../assets/js/ie10-viewport-bug-workaround.js"></script>
+  </body>
+</html>
