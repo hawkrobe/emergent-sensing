@@ -39,16 +39,26 @@
         <h1>Congratulations!  You passed the comprehension checks.</h1>
       </div>
 
-      <p>
-	You will now be redirected to the game.
-      </p>
+      <div class="well">
+      <center>
+	Click below to enter the waiting room.
+	</center>
+      </div>
 
       <p>
-	If you are not redirected automatically, please press <a href="http://nospoon.mit.edu:8000/index.html">here</a>.
+        <center><button id="agree" type="button" class="btn btn-sm btn-primary">Start</button></center>
+	<noscript><strong>JavaScript must be enabled to start.</strong></noscript>
       </p>
 
     </div> <!-- /container -->
 
+    
+    <script type="text/javascript">
+      document.getElementById("agree").onclick = function () {
+        var id = Math.floor(Math.random() * 1e12);
+        location.href = "http://nospoon.mit.edu:8000/index.html?id=" + id;
+      };
+    </script>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->

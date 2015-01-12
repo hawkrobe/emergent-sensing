@@ -14,11 +14,16 @@ function turkGetParam( name, defaultValue ) {
 }
 
 function UTWorkerLimitReached(ut_id, workerId, assignmentId) {
+    
+    //    var sys = require("sys"),
+    //	path = require("path"), 
+    //	fs = require("fs");
+    
     var assignmentId = turkGetParam('assignmentId', '');
     if (assignmentId != '' && assignmentId != 'ASSIGNMENT_ID_NOT_AVAILABLE') {
         var workerId = turkGetParam('workerId', '');
-        var url = '//uniqueturker.myleott.com/'+ut_id+'/'+workerId+'/'+assignmentId;
-
+        var url = '/db/'+ut_id+'/'+workerId+'/'+assignmentId;
+	
         var response = turkGetParam('ut_response', '-1');
         if (window.XDomainRequest) {
             if (response == '-1') {
