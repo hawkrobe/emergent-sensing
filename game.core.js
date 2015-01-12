@@ -58,7 +58,7 @@ var game_core = function(game_instance){
     this.max_bonus = .625; // total $ players can make in bonuses 
 
     // This draws the circle in which players can see other players
-    this.visibility_radius = 1000; // 27.5cm * 3
+    //this.visibility_radius = 1000; // 27.5cm * 3
 
     //Number of players needed to start the game
     this.players_threshold = 3;
@@ -105,7 +105,7 @@ var game_player = function( game_instance, player_instance) {
     this.game = game_instance;
 
     //Set up initial values for our state information
-    this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // Approximately 5cm * 3 long
+    this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
     this.state = 'not-connected';
     this.visible = "visible"; // Tracks whether client is watching game
     this.message = '';
@@ -188,7 +188,6 @@ game_core.prototype.server_send_update = function(){
     //Make a snapshot of the current state, for updating the clients
     var local_game = this;
     
-
     // Add info about all players
     var player_packet = _.map(local_game.players, function(p){
         if(p.player){
@@ -208,9 +207,10 @@ game_core.prototype.server_send_update = function(){
         cond: this.condition,                       //dynamic or ballistic?
         de  : this.hiding_enabled,                  // true to see angle
         g2w : this.good2write,                      // true when game's started
+	rand_id: local_game.players[0].id
     };
     _.extend(state, {players: player_packet})
-
+    
     //Send the snapshot to the players
     this.state = state;
     _.map(local_game.get_active_players(), function(p){

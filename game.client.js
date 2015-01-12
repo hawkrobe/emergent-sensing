@@ -65,7 +65,7 @@ client_onserverupdate_received = function(data){
     if(data.players) {
         _.map(_.zip(data.players, game.players),
             function(z){
-                z[0].id = z[1].id
+                z[1].id = z[0].id
                 if (z[0].player == null) {
                     z[1].player = null
                 } else {
@@ -118,7 +118,7 @@ client_onMessage = function(data) {
             var num_players = commanddata;
             client_onjoingame(num_players); break;
         case 'add_player' : // New player joined... Need to add them to our list.
-            console.log("adding player")
+            console.log("adding player" + commanddata)
             game.players.push({id: commanddata, player: new game_player(game)}); break;
         case 'begin_game' :
             game.hidden_enabled = true;
@@ -172,15 +172,15 @@ client_update = function() {
     }
 
     // Draw visibility radius
-    if(player.pos) draw_visibility_radius(game, player)
+    //if(player.pos) draw_visibility_radius(game, player)
 
     //Draw opponent next (but only those in radius)
     _.map(game.get_others(my_id), function(p){
-        if(!game.hidden_enabled || game.distance_between(p.player.pos, player.pos) < game.visibility_radius)
-            draw_player(game, p.player)
-	else
-	    draw_other_dot(game, player, p.player)});
-
+	    //if(!game.hidden_enabled || game.distance_between(p.player.pos, player.pos) < game.visibility_radius)
+            draw_player(game, p)})
+	    //	else
+	    //draw_other_dot(game, player, p.player)});
+    
     
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total pay so far: $" + (player.total_points).fixed(2));
@@ -194,7 +194,7 @@ client_update = function() {
     $("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : "You are in the waiting room.");
 
     //And then we draw ourself so we're always in front
-    if(player.pos) draw_player(game, player);
+    if(player.pos) draw_player(game, {id: my_id, player: player} );
 };
 
 var percentColors = [
@@ -279,7 +279,7 @@ client_connect_to_server = function(game) {
     //Sent when we are disconnected (network, server down, etc)
     game.socket.on('disconnect', client_ondisconnect.bind(game));
     //Sent each tick of the server simulation. This is our authoritive update
-    game.socket.on('onserverupdate', client_onserverupdate_received.bind(game));
+    game.socket.on('onserverupdate', client_onserverupdate_received);
     //Handle when we connect to the server, showing state and storing id's.
     game.socket.on('onconnected', client_onconnected.bind(game));
     //On message from the server, we parse the commands and send it to the handlers
