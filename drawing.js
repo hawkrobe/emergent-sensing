@@ -3,7 +3,9 @@ draw_player = function(game, player){
     game.ctx.font = "10pt Helvetica";
 
     // Draw avatar as triangle
-    var v = [[0,-8],[-5,8],[5,8]];
+    var v = [[0,-player.size.x],
+	     [-player.size.hx,player.size.y],
+	     [player.size.hy,player.size.x]];
     game.ctx.save();
     game.ctx.translate(player.pos.x, player.pos.y);
     // draw_enabled is set to false during the countdown, so that

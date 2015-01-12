@@ -106,16 +106,6 @@ client_onMessage = function(data) {
     case 's': //server message
 
         switch(subcommand) {    
-        // case 'p' :// Permanent Message
-	//     console.log("p received")
-        //     game.players.self.message = commanddata;
-        //     break;
-        // case 'm' :// Temporary Message
-	//     console.log("m received")
-        //     game.players.self.message = commanddata;
-        //     var local_game = game;
-        //     setTimeout(function(){local_game.players.self.message = '';}, 1000);
-        //     break;
 	case 'end' :
 	    // Redirect to exit survey
 	    console.log("received end message...")
@@ -142,9 +132,6 @@ client_onMessage = function(data) {
 
 // Restarts things on the client side. Necessary for iterated games.
 client_newgame = function() {
-    // increment round
-    game.round_num += 1;
-
     // Initiate countdown (with timeouts)
     game.get_player(my_id).angle = null;
     client_countdown();
@@ -160,7 +147,7 @@ client_countdown = function() {
     setTimeout(function(){
         player.message = 'GO';     
         game.start_time = new Date();}, 
-               3000);
+	3000);
     setTimeout(function(){player.message = '';}, 
                4000);
 }

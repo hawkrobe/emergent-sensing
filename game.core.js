@@ -65,10 +65,6 @@ var game_core = function(game_instance){
 
     // Background field holds the background values
     this.background_vals = null;
-
-    //Players will replay over and over, so we keep track of which number we're on,
-    //to print out to data file
-    this.round_num = 0;
     
     // Determines which background val file we read from
     this.noise_level = 0;
@@ -109,7 +105,7 @@ var game_player = function( game_instance, player_instance) {
     this.game = game_instance;
 
     //Set up initial values for our state information
-    this.size = { x:14, y:14, hx:7, hy:7 }; // Approximately 5cm * 3 long
+    this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // Approximately 5cm * 3 long
     this.state = 'not-connected';
     this.visible = "visible"; // Tracks whether client is watching game
     this.message = '';
@@ -251,7 +247,6 @@ game_core.prototype.writeData = function() {
 		player_angle = parseInt(player_angle, 10) + 360;
 	    //also, keyboard inputs,  list of players in visibility radius?
 	    var line = String(p.id) + ',';
-	    line += String(local_game.round_num) + ',';
 	    line += String(local_game.game_clock) + ',';
 	    line += String(local_game.noise_level) + ',';
 	    line += p.player.visible + ',';
@@ -273,9 +268,6 @@ game_core.prototype.writeData = function() {
 // something, we'll still know what to pay them.
 game_core.prototype.server_newgame = function() {
     var local_gamecore = this;
-
-    // Update number of games remaining
-    this.round_num += 1;
 
     // Don't want players moving during countdown
     _.map(local_gamecore.get_active_players(), function(p) {p.player.speed = 0;})
@@ -369,7 +361,7 @@ game_core.prototype.update_physics = function() {
 	if(this.good2write & this.game_clock < 2880) {
             var local_game = this;
             var background_vals = []
-            local_game.fs.open('/home/pkrafft/couzin/output/background/1-1en01/t' + local_game.game_clock + '.csv', 'r', function(err, fd) {
+            local_game.fs.open('/home/pkrafft/couzin/output/light-fields-new/1-1en01/t' + local_game.game_clock + '.csv', 'r', function(err, fd) {
 	       local_game.fs.fstat(fd, function(err, stats) {
 		  if(err) throw err;
 		  _.map(local_game.get_active_players(), function(p){
@@ -378,7 +370,7 @@ game_core.prototype.update_physics = function() {
 			local_game.fs.read(fd, new Buffer(4), 0, 4, loc, 
 					   function(err, bytesRead, buffer) {
 			    if(err) throw err;
-			    p.player.curr_background = 1 - Number(buffer.toString('utf8'))
+			    p.player.curr_background = 1-Number(buffer.toString('utf8'))
 			    p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) / local_game.game_clock)
 			    p.player.total_points = (local_game.base_pay*(local_game.game_clock/480) + p.player.avg_score * local_game.max_bonus)
 			 });
