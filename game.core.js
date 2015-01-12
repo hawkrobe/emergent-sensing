@@ -369,10 +369,12 @@ game_core.prototype.update_physics = function() {
 			var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
 			local_game.fs.read(fd, new Buffer(4), 0, 4, loc, 
 					   function(err, bytesRead, buffer) {
-			    if(err) throw err;
-			    p.player.curr_background = 1-Number(buffer.toString('utf8'))
-			    p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) / local_game.game_clock)
-			    p.player.total_points = (local_game.base_pay*(local_game.game_clock/480) + p.player.avg_score * local_game.max_bonus)
+			   if(err) throw err;
+			   p.player.curr_background=(local_game.check_collision(p.player)
+						     ? 0 
+						     : 1-Number(buffer.toString('utf8')))
+			   p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) / local_game.game_clock)
+			   p.player.total_points = (local_game.base_pay*(local_game.game_clock/480) + p.player.avg_score * local_game.max_bonus)
 			 });
 		      });
 		  local_game.fs.close(fd, function(){})
@@ -384,25 +386,34 @@ game_core.prototype.update_physics = function() {
 
 //Prevents people from leaving the arena
 game_core.prototype.check_collision = function( item ) {
+    var collision = false
     //Left wall.
-    if(item.pos.x <= item.pos_limits.x_min)
+    if(item.pos.x <= item.pos_limits.x_min){
+	collision = true
         item.pos.x = item.pos_limits.x_min;
- 
+    }
     //Right wall
-    if(item.pos.x >= item.pos_limits.x_max )
+    if(item.pos.x >= item.pos_limits.x_max ){
+	collision = true
         item.pos.x = item.pos_limits.x_max;
-       
+    }
+
     //Roof wall.
-    if(item.pos.y <= item.pos_limits.y_min) 
+    if(item.pos.y <= item.pos_limits.y_min) {
+	collision = true
         item.pos.y = item.pos_limits.y_min;
-    
+    }
+
     //Floor wall
-    if(item.pos.y >= item.pos_limits.y_max ) 
+    if(item.pos.y >= item.pos_limits.y_max ) {
+	collision = true
         item.pos.y = item.pos_limits.y_max;
+    }
 
     //Fixed point helps be more deterministic
     item.pos.x = item.pos.x.fixed(4);
     item.pos.y = item.pos.y.fixed(4);
+    return collision
 };
 
 // MATH FUNCTIONS

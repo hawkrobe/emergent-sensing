@@ -177,7 +177,9 @@ client_update = function() {
     //Draw opponent next (but only those in radius)
     _.map(game.get_others(my_id), function(p){
 	    //if(!game.hidden_enabled || game.distance_between(p.player.pos, player.pos) < game.visibility_radius)
-            draw_player(game, p)})
+            draw_player(game, p.player)
+	    draw_label(game, p.player, "Player " + p.id.slice(0,4))
+	})
 	    //	else
 	    //draw_other_dot(game, player, p.player)});
     
@@ -194,7 +196,11 @@ client_update = function() {
     $("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : "You are in the waiting room.");
 
     //And then we draw ourself so we're always in front
-    if(player.pos) draw_player(game, {id: my_id, player: player} );
+    if(player.pos) {
+	draw_player(game, player)
+	draw_label(game, player, "YOU");
+    }
+
 };
 
 var percentColors = [

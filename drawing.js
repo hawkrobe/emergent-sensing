@@ -1,8 +1,5 @@
 // Draw players as triangles using HTML5 canvas
-draw_player = function(game, p_obj){
-    var player_id = p_obj.id;
-    var player = p_obj.player;
-
+draw_player = function(game, player){
     // Draw avatar as triangle
     var v = [[0,-player.size.x],
 	     [-player.size.hx,player.size.y],
@@ -25,19 +22,18 @@ draw_player = function(game, p_obj){
     game.ctx.beginPath();
     game.ctx.restore();
 
-    // draw floating label
-    //    game.ctx.fillStyle = player.info_color;
-    game.ctx.font = "8pt Helvetica";
-    if (player_id)
-	game.ctx.fillText("Player " + player_id.slice(0,4), player.pos.x+10, player.pos.y + 20); 
-
-
     // Draw message in center (for countdown, e.g.)
-    game.ctx.font = "10pt Helvetica";
-    game.ctx.fillStyle = 'white';
+    game.ctx.font = "bold 12pt Helvetica";
+    game.ctx.fillStyle = 'red';
     game.ctx.textAlign = 'center';
-    game.ctx.fillText(player.message, game.world.width/2, game.world.height/2);
+    game.ctx.fillText(player.message, game.world.width/2, game.world.height/5);
 }; 
+
+draw_label = function(game, player, label) {
+    game.ctx.font = "8pt Helvetica";
+    game.ctx.fillStyle = 'white';
+    game.ctx.fillText(label, player.pos.x+10, player.pos.y + 20); 
+}
 
 draw_visibility_radius = function(game, player) {
     var x = player.pos.x
