@@ -1,6 +1,7 @@
 // Draw players as triangles using HTML5 canvas
-draw_player = function(game, player){
-    game.ctx.font = "10pt Helvetica";
+draw_player = function(game, p_obj){
+    var player_id = p_obj.id;
+    var player = p_obj.player;
 
     // Draw avatar as triangle
     var v = [[0,-player.size.x],
@@ -8,10 +9,6 @@ draw_player = function(game, player){
 	     [player.size.hy,player.size.x]];
     game.ctx.save();
     game.ctx.translate(player.pos.x, player.pos.y);
-    // draw_enabled is set to false during the countdown, so that
-    // players can set their destinations but won't turn to face them.
-    // As soon as the countdown is over, it's set to true and they
-    // immediately start using that new angle
     game.ctx.rotate((player.angle * Math.PI) / 180);
 
     // This draws the triangle
@@ -28,7 +25,15 @@ draw_player = function(game, player){
     game.ctx.beginPath();
     game.ctx.restore();
 
+    // draw floating label
+    //    game.ctx.fillStyle = player.info_color;
+    game.ctx.font = "8pt Helvetica";
+    if (player_id)
+	game.ctx.fillText("Player " + player_id.slice(0,4), player.pos.x+10, player.pos.y + 20); 
+
+
     // Draw message in center (for countdown, e.g.)
+    game.ctx.font = "10pt Helvetica";
     game.ctx.fillStyle = 'white';
     game.ctx.textAlign = 'center';
     game.ctx.fillText(player.message, game.world.width/2, game.world.height/2);
