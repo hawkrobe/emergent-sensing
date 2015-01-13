@@ -40,6 +40,9 @@ var game_core = function(game_instance){
     //Dimensions of world -- Used in collision detection, etc.
     this.world = {width : 485, height : 280};  // 160cm * 3
 
+    // set maximum waiting room time (in minutes)
+    this.waiting_room_limit = 0.1
+
     // set how long each round will last (in minutes)
     this.round_length = 6
 

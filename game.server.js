@@ -70,7 +70,7 @@ game_server.findGame = function(player) {
             if(!this.games.hasOwnProperty(gameid)) continue;
             var game = this.games[gameid];
             var gamecore = game.gamecore;
-            if(game.player_count < gamecore.players_threshold) { 
+            if(game.player_count < gamecore.players_threshold && !game.active) { 
                joined_a_game = true;
                 // player instances are array of actual client handles
                 game.player_instances.push({
@@ -85,7 +85,7 @@ game_server.findGame = function(player) {
                 });
                 // Attach game to player so server can look at it later
                 player.game = game;
-
+		
                 // notify new player that they're joining game
                 player.send('s.join.' + gamecore.players.length)
 
@@ -93,7 +93,7 @@ game_server.findGame = function(player) {
                 _.map(gamecore.get_others(player.userid), function(p){p.player.instance.send( 's.add_player.' + player.userid)})
                 gamecore.server_send_update();
                 gamecore.update();
-
+		
                 if (game.player_count == gamecore.players_threshold) {
                     this.startGame(game)
                 }
@@ -118,13 +118,14 @@ game_server.createGame = function(player) {
 		    & !_.contains(local_this.finished_assignments, i))})[0]
     this.curr_assignments.push(assignment)
     var game_params = this.param_guide[assignment].split(',')
-    var id = parseInt(game_params[0])
+    var par_id = parseInt(game_params[0])
     var players_threshold = parseInt(game_params[1])
     var noise_location = game_params[2]
     
-    if(id == null)
-	id = UUID();
-
+    var d = new Date();
+    var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getMilliseconds()
+    var id = par_id + '_' + start_time;
+    
     //Create a new game instance
     var game = {
 	//generate a new id for the game
@@ -168,8 +169,19 @@ game_server.createGame = function(player) {
     // add to game collection
     this.games[ game.id ] = game;
     this.game_count++;
-    if(game.gamecore.players_threshold == 1)
+    if(game.gamecore.players_threshold == 1) {
 	this.startGame(game)
+    }
+    
+    var game_server = this
+
+    // schedule the game to start to prevent players from waiting too long
+    setTimeout(function() {
+	    if(!game.active) {
+		game_server.startGame(game);
+	    }
+	}, game.gamecore.waiting_room_limit*60*1000)
+	    
     //return it
     return game;
 }; 
