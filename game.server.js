@@ -12,18 +12,17 @@ require('look').start()
 
     var
         use_db      = false,
-        game_server = module.exports = { games : {}, game_count:0 },
+        game_server = module.exports = { games : {}, game_count:0, 
+                                         curr_assignments : [], finished_assignments:[]},
         UUID        = require('node-uuid'),
-        fs          = require('fs'),
-        parse       = require('csv-parse');
-
+        fs          = require('fs');
+	    
     if (use_db) {
 	    database    = require(__dirname + "/database"),
 	    connection  = database.getConnection();
     }
 
 global.window = global.document = global;
-
 require('./game.core.js');
 
 // This is the function where the server parses and acts on messages
@@ -112,20 +111,38 @@ game_server.findGame = function(player) {
 
 // Will run when first player connects
 game_server.createGame = function(player) {
-    var id = UUID();
+    // Figure out variables
+    var local_this = this;
+    var assignment = _.filter(_.range(8), function(i) {
+	    return (!_.contains(local_this.curr_assignments, i)
+		    & !_.contains(local_this.finished_assignments, i))})[0]
+    this.curr_assignments.push(assignment)
+    var game_params = this.param_guide[assignment].split(',')
+    var id = parseInt(game_params[0])
+    var players_threshold = parseInt(game_params[1])
+    var noise_location = game_params[2]
+    
+    if(id == null)
+	id = UUID();
 
     //Create a new game instance
     var game = {
-        id : id,           //generate a new id for the game
-        player_instances: [{id: player.userid, player: player}],     //store list of players in the game
-        player_count: 1             //for simple checking of state
+	//generate a new id for the game
+        id : id,           
+	//store list of players in the game
+        player_instances: [{id: player.userid, player: player}],
+	//for simple checking of state
+        player_count: 1             
     };
 
+    
     //Create a new game core instance (defined in game.core.js)
     game.gamecore = new game_core(game);
 
     // Tell the game about its own id
     game.gamecore.game_id = id;
+    game.gamecore.players_threshold = players_threshold
+    game.gamecore.noise_location = noise_location
 
     // Set up the filesystem variable we'll use later, and write headers
     game.gamecore.fs = fs;
@@ -145,14 +162,15 @@ game_server.createGame = function(player) {
     player.game = game;
     player.send('s.join.' + game.gamecore.players.length)
     this.log('player ' + player.userid + ' created a game with id ' + player.game.id);
-
+    this.log('curr_assignments are' + this.curr_assignments);
     //Start updating the game loop on the server
     game.gamecore.update();
 
     // add to game collection
     this.games[ game.id ] = game;
     this.game_count++;
-
+    if(game.gamecore.players_threshold == 1)
+	this.startGame(game)
     //return it
     return game;
 }; 
@@ -163,8 +181,10 @@ game_server.endGame = function(gameid, userid) {
     var thegame = this.games [ gameid ];
     if(thegame) {
         //if the game has more than one player, it's fine -- let the others keep playing, but let them know
-        var player_metric = thegame.active ? thegame.gamecore.get_active_players().length : thegame.player_count
-        console.log("game has " + player_metric + " players")
+        var player_metric = (thegame.active 
+			     ? thegame.gamecore.get_active_players().length 
+			     : thegame.player_count)
+        console.log("removing... game has " + player_metric + " players")
         if(player_metric > 1) {
             var i = _.indexOf(thegame.gamecore.players, _.findWhere(thegame.gamecore.players, {id: userid}))
             thegame.gamecore.players[i].player = null;
@@ -177,7 +197,13 @@ game_server.endGame = function(gameid, userid) {
             thegame.gamecore.stop_update();
             delete this.games[gameid];
             this.game_count--;
+	    // Remove from assignments, so someone else can be assigned to this condition
+	    var index = this.curr_assignments.indexOf(gameid);
+	    if(index > -1) 
+		this.curr_assignments.splice(index, 1);
+
             this.log('game removed. there are now ' + this.game_count + ' games' );
+	    this.log("curr assignments is now " + this.curr_assignments)
         }
     } else {
         this.log('that game was not found!');

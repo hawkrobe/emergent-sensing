@@ -14,6 +14,7 @@ var
     server          = app.listen(gameport),
     io              = require('socket.io')(server),
     _               = require('underscore'),
+    fs              = require('fs'),
     UUID            = require('node-uuid');
 
 if (use_db) {
@@ -38,6 +39,14 @@ app.get( '/*' , function( req, res ) {
     res.sendfile("./" + file);
 }); 
 
+// prep game_server object to assign players to conditions
+fs.readFile('./metadata/assignments.csv', {encoding: 'utf8'}, function(err,data) {
+    if(err) throw err;
+    // parse into lines
+    var lines = data.split(/\r?\n/);
+    game_server.param_guide = lines;
+})        
+
 // Socket.io will call this function when a client connects. We check
 // to see if the client supplied a id. If so, we distinguish them by
 // that, otherwise we assign them one at random
@@ -57,7 +66,7 @@ var initialize = function(query, client, id) {
 
     // Good to know when they connected
     console.log('\t socket.io:: player ' + client.userid + ' connected');
-        
+
     //Pass off to game.server.js code
     game_server.findGame(client);
     
@@ -72,11 +81,12 @@ var initialize = function(query, client, id) {
     // in, and make sure the other player knows that they left and so on.
     client.on('disconnect', function () {            
         console.log('\t socket.io:: client id ' + client.userid 
-                    + ' disconnected from game id' + client.game.id);
+                    + ' disconnected from game id ' + client.game.id);
         
         //If the client was in a game set by game_server.findGame,
         //we can tell the game server to update that game state.
         if(client.userid && client.game && client.game.id) 
+	    console.log("calling end game...")
             //player leaving a game should change that game
             game_server.endGame(client.game.id, client.userid);            
     });

@@ -37,10 +37,6 @@ var game_core = function(game_instance){
     //Store a flag if we are the server instance
     this.server = this.instance !== undefined;
 
-    //Store a flag if a newgame has been initiated.
-    //Used to prevent the loop from continuing to start newgames during timeout.
-    this.newgame_initiated_flag = false;
-
     //Dimensions of world -- Used in collision detection, etc.
     this.world = {width : 485, height : 280};  // 160cm * 3
 
@@ -59,16 +55,7 @@ var game_core = function(game_instance){
 
     // This draws the circle in which players can see other players
     //this.visibility_radius = 1000; // 27.5cm * 3
-
-    //Number of players needed to start the game
-    this.players_threshold = 3;
-
-    // Background field holds the background values
-    this.background_vals = null;
-    
-    // Determines which background val file we read from
-    this.noise_level = 0;
-
+   
     //If hiding_enabled is true, players will only see others in their visibility radius
     this.hiding_enabled = false;
 
@@ -204,10 +191,8 @@ game_core.prototype.server_send_update = function(){
         }
     })
     var state = {
-        cond: this.condition,                       //dynamic or ballistic?
         de  : this.hiding_enabled,                  // true to see angle
         g2w : this.good2write,                      // true when game's started
-	rand_id: local_game.players[0].id
     };
     _.extend(state, {players: player_packet})
     
@@ -339,7 +324,7 @@ game_core.prototype.create_physics_simulation = function() {
 	if(this.game_clock == 2879) {
 	    _.map(local_game.get_active_players(), function(p){
 		    p.player.instance.send('s.end.')})
-		//		local_game.stop_update();
+	    game_server.finished_assignments.push(this.instance.id)
 	}
         // start new interval by updating clock, pinging
 	// people, and updating physics
@@ -359,26 +344,29 @@ game_core.prototype.update_physics = function() {
         this.server_update_physics();
         // start reading csv and updating background once game starts
 	if(this.good2write & this.game_clock < 2880) {
-            var local_game = this;
-            var background_vals = []
-            local_game.fs.open('/home/pkrafft/couzin/output/light-fields-new/1-1en01/t' + local_game.game_clock + '.csv', 'r', function(err, fd) {
-	       local_game.fs.fstat(fd, function(err, stats) {
-		  if(err) throw err;
+           var local_game = this;
+           local_game.fs.open(local_game.noise_location+'t'+local_game.game_clock+'.csv',
+			      'r', function(err, fd) {
+		  local_game.fs.fstat(fd, function(err, stats) {
 		  _.map(local_game.get_active_players(), function(p){
 		        var pos = p.player.pos;
 			var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
 			local_game.fs.read(fd, new Buffer(4), 0, 4, loc, 
 					   function(err, bytesRead, buffer) {
-			   if(err) throw err;
+			   if(err) 
+			       console.log(err)
+			   else {
 			   p.player.curr_background=(local_game.check_collision(p.player)
 						     ? 0 
 						     : 1-Number(buffer.toString('utf8')))
+			   
 			   p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) / local_game.game_clock)
 			   p.player.total_points = (local_game.base_pay*(local_game.game_clock/480) + p.player.avg_score * local_game.max_bonus)
+			       }
 			 });
 		      });
 		  local_game.fs.close(fd, function(){})
-		  })
+		      })
 		})
 	  }
     };
