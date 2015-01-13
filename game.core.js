@@ -233,7 +233,6 @@ game_core.prototype.writeData = function() {
 	    //also, keyboard inputs,  list of players in visibility radius?
 	    var line = String(p.id) + ',';
 	    line += String(local_game.game_clock) + ',';
-	    line += String(local_game.noise_level) + ',';
 	    line += p.player.visible + ',';
 	    line += p.player.pos.x +',';
 	    line += p.player.pos.y +',';
@@ -243,7 +242,6 @@ game_core.prototype.writeData = function() {
 	    line += p.player.total_points.fixed(2) ;
 	    local_game.gameDataStream.write(String(line) + "\n",
 					    function (err) {if(err) throw err;});
-	    //	    console.log("Wrote: " + line);
 	})
 };
 
