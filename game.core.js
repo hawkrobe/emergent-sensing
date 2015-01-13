@@ -361,8 +361,8 @@ game_core.prototype.update_physics = function() {
 						     ? 0 
 						     : 1-Number(buffer.toString('utf8')))
 			   
-			   p.player.avg_score = (((p.player.avg_score * (local_game.game_clock - 1)) + p.player.curr_background) / local_game.game_clock)
-			   p.player.total_points = (local_game.base_pay*(local_game.game_clock/480) + p.player.avg_score * local_game.max_bonus)
+			   p.player.avg_score = p.player.avg_score + p.player.curr_background
+			   p.player.total_points = local_game.base_pay*(local_game.game_clock/480) + p.player.avg_score/2880 * local_game.max_bonus
 			       }
 			 });
 		      });
