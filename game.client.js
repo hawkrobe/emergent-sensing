@@ -40,7 +40,7 @@ right_turn = function() {
 client_ondisconnect = function(data) {
     // Redirect to exit survey
     console.log("server booted")
-    var URL = '/forms/end.html?id=' + my_id;
+    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
     window.location.replace(URL);
 };
 
@@ -109,7 +109,7 @@ client_onMessage = function(data) {
 	case 'end' :
 	    // Redirect to exit survey
 	    console.log("received end message...")
-	    var URL = '/forms/end.html?id=' + my_id;
+	    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
 	    window.location.replace(URL); break;
         case 'alert' : // Not in database, so you can't play...
             alert('You did not enter an ID'); 
