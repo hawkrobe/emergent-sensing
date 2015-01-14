@@ -1,10 +1,5 @@
 TODO:
 
-* determine threshold # players for individual game from file?
-* create round structure
--> randomly assign order of light levels
--> create 5 second break in waiting room ("next round begins in...")
-* change color of whole background (not viewpoint -- white to green)
 * database... 
 
 COMPLETED:
@@ -35,3 +30,8 @@ COMPLETED:
 -> give player correct feedback about current & cumulative bonus 
 * write the data we want to file
 -> curr bonus, positions, keyboard inputs, active?, angle, noise level, velocity, list of players in visibility radius
+* change color of whole background (not viewpoint -- white to green)
+* redirect to landing page after 6 min. (http://people.csail.mit.edu/pkrafft/experiment/landing.html)
+* set bonus at 0 around edge
+* get UID from querystring
+* read num. players and noise level from file when creating a game
