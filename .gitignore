@@ -1,0 +1,6 @@
+data/*
+db/*
+*~
+.DS_Store
+metadata/*
+light-fields/*
