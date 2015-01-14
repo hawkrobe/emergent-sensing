@@ -41,7 +41,7 @@ var game_core = function(game_instance){
     this.world = {width : 485, height : 280};  // 160cm * 3
 
     // set maximum waiting room time (in minutes)
-    this.waiting_room_limit = 0.1
+    this.waiting_room_limit = 1
 
     // set how long each round will last (in minutes)
     this.round_length = 6
@@ -325,7 +325,6 @@ game_core.prototype.create_physics_simulation = function() {
 	if(this.game_clock == 2879) {
 	    _.map(local_game.get_active_players(), function(p){
 		    p.player.instance.send('s.end.')})
-	    game_server.finished_assignments.push(this.instance.id)
 	}
         // start new interval by updating clock, pinging
 	// people, and updating physics

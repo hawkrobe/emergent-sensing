@@ -8,12 +8,11 @@
     MIT Licensed.
 */
 
-require('look').start()
+//require('look').start()
 
     var
         use_db      = false,
-        game_server = module.exports = { games : {}, game_count:0, 
-                                         curr_assignments : [], finished_assignments:[]},
+        game_server = module.exports = { games : {}, game_count:0, assignment:0},
         UUID        = require('node-uuid'),
         fs          = require('fs');
 	    
@@ -113,14 +112,11 @@ game_server.findGame = function(player) {
 game_server.createGame = function(player) {
     // Figure out variables
     var local_this = this;
-    var assignment = _.filter(_.range(8), function(i) {
-	    return (!_.contains(local_this.curr_assignments, i)
-		    & !_.contains(local_this.finished_assignments, i))})[0]
-    this.curr_assignments.push(assignment)
-    var game_params = this.param_guide[assignment].split(',')
+    var game_params = this.param_guide[this.assignment].split(',')
     var par_id = parseInt(game_params[0])
     var players_threshold = parseInt(game_params[1])
     var noise_location = game_params[2]
+    this.assignment = (this.assignment + 1) % this.param_guide.length
     
     var d = new Date();
     var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getMilliseconds()
@@ -162,7 +158,6 @@ game_server.createGame = function(player) {
     player.game = game;
     player.send('s.join.' + game.gamecore.players.length)
     this.log('player ' + player.userid + ' created a game with id ' + player.game.id);
-    this.log('curr_assignments are' + this.curr_assignments);
     //Start updating the game loop on the server
     game.gamecore.update();
 
@@ -208,13 +203,7 @@ game_server.endGame = function(gameid, userid) {
             thegame.gamecore.stop_update();
             delete this.games[gameid];
             this.game_count--;
-	    // Remove from assignments, so someone else can be assigned to this condition
-	    var index = this.curr_assignments.indexOf(gameid);
-	    if(index > -1) 
-		this.curr_assignments.splice(index, 1);
-
             this.log('game removed. there are now ' + this.game_count + ' games' );
-	    this.log("curr assignments is now " + this.curr_assignments)
         }
     } else {
         this.log('that game was not found!');

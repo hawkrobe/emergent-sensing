@@ -44,6 +44,9 @@ fs.readFile('./metadata/assignments.csv', {encoding: 'utf8'}, function(err,data)
     if(err) throw err;
     // parse into lines
     var lines = data.split(/\r?\n/);
+    if(lines[lines.length-1] == '') {
+	lines = lines.splice(0, lines.length-1)
+    }
     game_server.param_guide = lines;
 })        
 
