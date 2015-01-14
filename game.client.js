@@ -185,9 +185,9 @@ client_update = function() {
     
     
     // Draw points scoreboard 
-    $("#cumulative_bonus").html("Total pay so far: $" + (player.total_points).fixed(2));
+    $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
 
-    $("#curr_bonus").html("Current bonus: <span style='color: " 
+    $("#curr_bonus").html("Current Score: <span style='color: " 
         + getColorForPercentage(player.curr_background) 
         +";'>" + Math.floor(player.curr_background*100) + "%</span>");
 
