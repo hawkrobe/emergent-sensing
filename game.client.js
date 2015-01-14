@@ -187,12 +187,9 @@ client_update = function() {
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total pay so far: $" + (player.total_points).fixed(2));
 
-    //$("#curr_bonus").html("Current bonus: <span style='color: " 
-    //    + getColorForPercentage(player.curr_background) 
-    //    +";'>" + Math.floor(player.curr_background*100) + "%</span>");
-    
-    $("html").css('background', getColorForPercentage(player.curr_background));
-    $("body").css('background', getColorForPercentage(player.curr_background));
+    $("#curr_bonus").html("Current bonus: <span style='color: " 
+        + getColorForPercentage(player.curr_background) 
+        +";'>" + Math.floor(player.curr_background*100) + "%</span>");
 
     // Draw time remaining 
     var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))
@@ -212,24 +209,22 @@ var percentColors = [
     { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
  
 var getColorForPercentage = function(pct) {
-    col = Math.floor((1 - pct)*256/4);
-    return 'rgb(' + [col, col, col].join(',') + ')';
-    // for (var i = 0; i < percentColors.length; i++) {
-    //     if (pct <= percentColors[i].pct) {
-    //         var lower = percentColors[i - 1] || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } };
-    //         var upper = percentColors[i];
-    //         var range = upper.pct - lower.pct;
-    //         var rangePct = (pct - lower.pct) / range;
-    //         var pctLower = 1 - rangePct;
-    //         var pctUpper = rangePct;
-    //         var color = {
-    //             r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
-    //             g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
-    //             b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
-    //         };
-    //         return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
-    //     }
-    // }
+    for (var i = 0; i < percentColors.length; i++) {
+        if (pct <= percentColors[i].pct) {
+            var lower = percentColors[i - 1] || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } };
+            var upper = percentColors[i];
+            var range = upper.pct - lower.pct;
+            var rangePct = (pct - lower.pct) / range;
+            var pctLower = 1 - rangePct;
+            var pctUpper = rangePct;
+            var color = {
+                r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+                g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+                b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+            };
+            return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+        }
+    }
 }
 
 /*
