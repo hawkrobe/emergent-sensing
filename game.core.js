@@ -54,7 +54,7 @@ var game_core = function(game_instance){
     this.max_speed = 70 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
     
     this.base_pay = .125; // controls conversion b/w background val and cum. points
-    this.max_bonus = .75; // total $ players can make in bonuses 
+    this.max_bonus = 1; // total $ players can make in bonuses 
 
     // This draws the circle in which players can see other players
     //this.visibility_radius = 1000; // 27.5cm * 3
