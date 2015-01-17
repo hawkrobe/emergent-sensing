@@ -358,7 +358,7 @@ game_core.prototype.update_physics = function() {
 			   if(err) 
 			       console.log(err)
 			   else {
-			       if(player.pos) {
+			       if(p.player.pos) {
 				   p.player.curr_background=(local_game.check_collision(p.player)
 							     ? 0 
 							     : 1-Number(buffer.toString('utf8')))
