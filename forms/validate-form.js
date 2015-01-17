@@ -13,12 +13,12 @@ function validateForm() {
 	return false
     }
     if (completed == "yes") {
-        window.location = "./notwice.html";
+        location.replace("./notwice.html");
     } else {
 	if (dir == "no" || speed == "no" || none == "no" || loc  == "no" || goal == "no" || diff == "no" || goal == "no") {
-            window.location = "./fail.html";
+            location.replace("./fail.html");
 	} else {
-            window.location = "./pass.html";
+            location.replace("./pass.html");
 	}
     }
     return false
