@@ -49,7 +49,7 @@ game_server.server_onMessage = function(client,message) {
         target.visible = message_parts[1];
     } else if (message_type == 'pong') {
 	var latency = (Date.now() - message_parts[1])/2;
-	client.game.gamecore.latencyStream.write(String(client.userid)+","+client.game.gamecore.round_num+","+message_parts[2]+","+latency+"\n",
+	client.game.gamecore.latencyStream.write(String(client.userid)+","+message_parts[2]+","+latency+"\n",
 			   function(err) { if(err) throw err; });
     }
 };

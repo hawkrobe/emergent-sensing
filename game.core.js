@@ -219,7 +219,9 @@ game_core.prototype.server_update_physics = function() {
             y : r1 * Math.sin(theta1)
         };  
         player.pos = player.game.v_add( player.old_state.pos, new_dir );
-        player.game.check_collision( player );
+	if(player.pos) {
+            player.game.check_collision( player );
+	}
         // Also update the current points at this new position
     })
 };
@@ -356,13 +358,14 @@ game_core.prototype.update_physics = function() {
 			   if(err) 
 			       console.log(err)
 			   else {
-			   p.player.curr_background=(local_game.check_collision(p.player)
-						     ? 0 
-						     : 1-Number(buffer.toString('utf8')))
-			   
-			   p.player.avg_score = p.player.avg_score + p.player.curr_background
-			   p.player.total_points = p.player.avg_score/2880 * local_game.max_bonus
+			       if(p.player.pos) {
+				   p.player.curr_background=(local_game.check_collision(p.player)
+							     ? 0 
+							     : 1-Number(buffer.toString('utf8')))
 			       }
+			       p.player.avg_score = p.player.avg_score + p.player.curr_background
+			       p.player.total_points = p.player.avg_score/2880 * local_game.max_bonus
+			   }
 			 });
 		      });
 		  local_game.fs.close(fd, function(){})
@@ -374,6 +377,7 @@ game_core.prototype.update_physics = function() {
 
 //Prevents people from leaving the arena
 game_core.prototype.check_collision = function( item ) {
+    
     var collision = false
     //Left wall.
     if(item.pos.x <= item.pos_limits.x_min){
