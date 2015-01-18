@@ -18,10 +18,10 @@ Local demo (from scratch)
 5. Finally, to run the experiment, enter ```node app.js``` at the command line. You should expect to see the following message:
    ```
    info  - socket.io started
-       :: Express :: Listening on port 8000
+       :: Express :: Listening on port 8888
    ```
    This means that you've successfully created a 'server' that can be accessed by copying and pasting 
    ```
-   http://localhost:8000/index.html
+   http://localhost:8888/index.html
    ```
    in one tab of your browser. You should see an avatar in a waiting room. To connect the other player in another tab for test purposes, open a new tab and use the same URL. Repeat as many times as you'd like!
