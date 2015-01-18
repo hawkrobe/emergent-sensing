@@ -143,9 +143,9 @@ game_server.createGame = function(player) {
 
     // Set up the filesystem variable we'll use later, and write headers
     game.gamecore.fs = fs;
-    fs.writeFile("data/games/game_" +id+ ".csv", "pid, tick, active, x_pos, y_pos, velocity, angle, bg_val, total_points\n", function (err) {if(err) throw err;})
+    fs.writeFile("data/games/game_" +id+ ".csv", "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
     game.gamecore.gameDataStream = fs.createWriteStream("data/games/game_" +id+ ".csv", {'flags' : 'a'});
-    fs.writeFile("data/latencies/game_"+id+".csv", "pid, tick, latency\n", function (err) {if(err) throw err;})
+    fs.writeFile("data/latencies/game_"+id+".csv", "pid,tick,latency\n", function (err) {if(err) throw err;})
     game.gamecore.latencyStream = fs.createWriteStream("data/latencies/game_"+id+".csv", {'flags' : 'a'});
 
     // When workers are directed to the page, they specify which
