@@ -111,7 +111,6 @@ game_server.findGame = function(player) {
 // Will run when first player connects
 game_server.createGame = function(player) {
     // Figure out variables
-    var local_this = this;
     var game_params = this.param_guide[this.assignment].split(',')
     var par_id = parseInt(game_params[0])
     var players_threshold = parseInt(game_params[1])

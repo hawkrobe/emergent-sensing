@@ -325,9 +325,9 @@ game_core.prototype.create_physics_simulation = function() {
         }
 	var local_game = this;
 	if(this.game_clock == 2879) {
-	    _.map(local_game.get_active_players(), function(p){
-		    p.player.instance.send('s.end.')})
 	    local_game.stop_update()
+	    _.map(local_game.get_active_players(), function(p){
+		p.player.instance.disconnect()})
 	}
         // start new interval by updating clock, pinging
 	// people, and updating physics
