@@ -24,6 +24,12 @@
     <!-- Finally, Load the game client code. -->
     <script type="text/javascript" src="game.client.js"></script>
     <script type="text/javascript" src="drawing.js"></script>
+
+    <script type="text/javascript">
+    window.onbeforeunload = function() {
+        return "<strong>Please do not refresh the page.</strong>";
+    }
+    </script>
     </head>
 
   <body>
