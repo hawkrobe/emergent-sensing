@@ -115,7 +115,6 @@ game_server.createGame = function(player) {
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     var noise_id = Math.floor(Math.random() * 4) + '-2en01'
     var noise_location = '/home/rxdh/couzin_replication/light-fields/' + noise_id + '/'
-    this.assignment = (this.assignment + 1) % this.param_guide.length
 
     var d = new Date();
     var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()

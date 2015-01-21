@@ -39,17 +39,6 @@ app.get( '/*' , function( req, res ) {
     res.sendfile("./" + file);
 }); 
 
-// prep game_server object to assign players to conditions
-fs.readFile('./metadata/assignments.csv', {encoding: 'utf8'}, function(err,data) {
-    if(err) throw err;
-    // parse into lines
-    var lines = data.split(/\r?\n/);
-    if(lines[lines.length-1] == '') {
-	lines = lines.splice(0, lines.length-1)
-    }
-    game_server.param_guide = lines;
-})        
-
 // Socket.io will call this function when a client connects. We check
 // to see if the client supplied a id. If so, we distinguish them by
 // that, otherwise we assign them one at random
