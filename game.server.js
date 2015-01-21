@@ -111,15 +111,15 @@ game_server.findGame = function(player) {
 // Will run when first player connects
 game_server.createGame = function(player) {
     // Figure out variables
-    var game_params = this.param_guide[this.assignment].split(',')
-    var par_id = parseInt(game_params[0])
-    var players_threshold = parseInt(game_params[1])
-    var noise_location = game_params[2]
+    var thresholds = Array(1,1,1,1,1,1,1,1,2,2,2,2,4,4,8);
+    var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
+    var noise_id = Math.floor(Math.random() * 4) + '-2en01'
+    var noise_location = '/home/rxdh/couzin_replication/light-fields/' + noise_id + '/'
     this.assignment = (this.assignment + 1) % this.param_guide.length
-    
+
     var d = new Date();
-    var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getMilliseconds()
-    var id = par_id + '_' + start_time;
+    var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
+    var id = start_time + '_' + players_threshold + '_' + noise_id + '_' + Math.floor(Math.random() * 1e12);
     
     //Create a new game instance
     var game = {
