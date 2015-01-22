@@ -99,7 +99,7 @@ var game_player = function( game_instance, player_instance) {
     this.state = 'not-connected';
     this.visible = "visible"; // Tracks whether client is watching game
     this.message = '';
-    
+
     this.info_color = 'rgba(255,255,255,0)';
     this.id = '';
     this.curr_background = 0; // keep track of current background val
@@ -218,7 +218,7 @@ game_core.prototype.server_update_physics = function() {
             x : r1 * Math.cos(theta1), 
             y : r1 * Math.sin(theta1)
         };  
-        player.pos = player.game.v_add( player.old_state.pos, new_dir );
+        player.pos = local_gamecore.v_add( player.old_state.pos, new_dir );
 	if(player.pos) {
             player.game.check_collision( player );
 	}
@@ -270,12 +270,14 @@ game_core.prototype.server_newgame = function() {
     this.server_reset_positions();
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
-    _.map(local_gamecore.get_active_players(), function(p) {p.player.instance.send('s.begin_game.')})
+    _.map(local_gamecore.get_active_players(), function(p) {
+	p.player.instance.send('s.begin_game.')})
 
     // Launch game after countdown;
     setTimeout(function(){
         local_gamecore.good2write = true;
-        _.map(local_gamecore.get_active_players(), function(p) {p.player.speed = local_gamecore.min_speed});
+        _.map(local_gamecore.get_active_players(), function(p) {
+	    p.player.speed = local_gamecore.min_speed});
         local_gamecore.game_clock = 0;
     }, 3000);
 };
@@ -333,11 +335,17 @@ game_core.prototype.create_physics_simulation = function() {
 	// people, and updating physics
 	if(this.good2write) 
 	    this.game_clock += 1;
+	
 	var local_game = this; // need a new local game w/ game clock change
 	if(this.server & this.good2write) {
 	    _.map(local_game.get_active_players(), function(p){
 		    p.player.instance.emit('ping', {sendTime : Date.now(),
 					            tick_num: local_game.game_clock})})}
+	if(!this.server){
+	    if(game.get_player(my_id).angle) {
+		this.socket.send('a.' + this.get_player(my_id).angle)
+	    }
+	}
 	this.update_physics();	
     }.bind(this), this.tick_frequency);
 };
@@ -457,7 +465,7 @@ function zeros(dimensions) {
 //requestAnimationFrame polyfill by Erik Möller
 //fixes from Paul Irish and Tino Zijdel
 var frame_time = 60 / 1000; // run the local game at 16ms/ 60hz
-if('undefined' != typeof(global)) frame_time = 4; //on server we run at 45ms, 22hz
+if('undefined' != typeof(global)) frame_time = 8; //on server we run at 45ms, 22hz
 
 ( function () {
 

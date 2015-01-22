@@ -44,7 +44,7 @@ game_server.server_onMessage = function(client,message) {
         // Set their (server) angle 
         target.angle = message_parts[1];
     } else if (message_type == 's') {
-        target.speed = message_parts[1];
+        target.speed = message_parts[1].replace(/-/g,'.');;
     } else if (message_type == "h") { // Receive message when browser focus shifts
         target.visible = message_parts[1];
     } else if (message_type == 'pong') {

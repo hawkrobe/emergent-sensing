@@ -26,14 +26,12 @@ var speed_change = "none";
 left_turn = function() {
     var self = game.get_player(my_id);
     self.angle = (Number(self.angle) - 5) % 360;
-    game.socket.send("a." + self.angle);
 };
 
 // what happens when you press 'left'?
 right_turn = function() {
     var self = game.get_player(my_id);
     self.angle = (Number(self.angle) + 5) % 360;
-    game.socket.send("a." + self.angle);
 };
 
 // Function that gets called client-side when server disconnects someone
@@ -153,20 +151,20 @@ client_countdown = function() {
 }
 
 client_update = function() {
-    var player = game.get_player(my_id)
+    var player = game.get_player(my_id);
+
     //Clear the screen area
     game.ctx.clearRect(0,0,485,280);
 
     // Alter speeds
     if (speed_change != "none") {
-        var self = game.get_player(my_id);
-        self.speed = speed_change == "up" ? game.max_speed : game.min_speed;
-        game.socket.send("s." + self.speed);
+        player.speed = speed_change == "up" ? game.max_speed : game.min_speed;
+        game.socket.send("s." + String(player.speed).replace(/\./g,'-'));
         speed_change = "none"
     }
 
     // Turn if key is still being held... Don't do anything if both are held
-    if (active_keys.length < 2) {
+    if (active_keys.length == 1) {
         if(_.contains(active_keys, 'right')) right_turn();
         if(_.contains(active_keys, 'left')) left_turn() ;
     }
@@ -176,13 +174,9 @@ client_update = function() {
 
     //Draw opponent next (but only those in radius)
     _.map(game.get_others(my_id), function(p){
-	    //if(!game.hidden_enabled || game.distance_between(p.player.pos, player.pos) < game.visibility_radius)
-            draw_player(game, p.player)
-	    draw_label(game, p.player, "Player " + p.id.slice(0,4))
-	})
-	    //	else
-	    //draw_other_dot(game, player, p.player)});
-    
+        draw_player(game, p.player)
+	draw_label(game, p.player, "Player " + p.id.slice(0,4))
+    })
     
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
@@ -247,13 +241,29 @@ window.onload = function(){
     game.viewport.width = game.world.width;
     game.viewport.height = game.world.height;
 
-    // Keep track of which keys are being pressed
+    // Keep track of which keys are being pressed. Keys fire continuously while held.
     KeyboardJS.on('left', 
-        function(){if(!_.contains(active_keys, 'left')) active_keys.push('left');},//if(_.contains(active_keys, 'left')) ;}, 
-        function(){active_keys = _.without(active_keys, 'left');});//active_keys = _.without(active_keys, 'left');})
+	function(){ // Only notify on FIRST press
+	    if(!_.contains(active_keys, 'left')) {
+		active_keys.push('left');
+	    }
+	},
+	function(){ // Only notify on first release
+	    if(_.contains(active_keys, 'left')) {
+		game.socket.send('a.' + game.get_player(my_id).angle)
+	    }
+	    active_keys = _.without(active_keys, 'left');});
     KeyboardJS.on('right', 
-        function(){if(!_.contains(active_keys, 'right')) active_keys.push('right');}, 
-        function(){active_keys = _.without(active_keys, 'right');})
+        function(){ // Only notify on first press
+	    if(!_.contains(active_keys, 'right')) {
+		active_keys.push('right');
+	    }
+	}, 
+        function(){ // Only notify on first release
+	    if(_.contains(active_keys, 'right')) {
+		game.socket.send('a.' + game.get_player(my_id).angle)
+	    }
+	    active_keys = _.without(active_keys, 'right');})
     KeyboardJS.on('space', 
         function(){speed_change = "up"}, 
         function(){speed_change = "down"})
