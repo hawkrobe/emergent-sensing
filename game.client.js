@@ -182,9 +182,11 @@ client_update = function() {
         draw_player(game, p.player)
 	draw_label(game, p.player, "Player " + p.id.slice(0,4))
     })
-    
-    // Draw points scoreboard 
-    $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+
+    if(!game.debug) {
+	// Draw points scoreboard 
+	$("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+    }
 
     $("#curr_bonus").html("Current Score: <span style='color: " 
         + getColorForPercentage(player.curr_background) 

@@ -26,6 +26,8 @@ if( typeof _ === 'undefined' ) {
 
 var game_core = function(game_instance){
 
+    this.debug = true
+
     // Define some variables specific to our game to avoid
     // 'magic numbers' elsewhere
     this.self_color = '#2288cc';
@@ -40,11 +42,15 @@ var game_core = function(game_instance){
     //Dimensions of world -- Used in collision detection, etc.
     this.world = {width : 485, height : 280};  // 160cm * 3
 
-    // set maximum waiting room time (in minutes)
-    this.waiting_room_limit = 5
+    if(this.debug) {
+	this.waiting_room_limit = 1 // set maximum waiting room time (in minutes)
+	this.round_length = 1 // set how long each round will last (in minutes)
+    } else {
+	this.waiting_room_limit = 1 // set maximum waiting room time (in minutes)
+	this.round_length = 6 // set how long each round will last (in minutes)
+    }
 
-    // set how long each round will last (in minutes)
-    this.round_length = 2//6
+    this.max_bonus = 1.25; // total $ players can make in bonuses 
 
     // game lenght in seconds
     this.game_length = this.round_length*60*8
@@ -55,9 +61,6 @@ var game_core = function(game_instance){
     //The speed at which the clients move (e.g. # px/tick)
     this.min_speed = 21 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
     this.max_speed = 70 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
-    
-    this.base_pay = .125; // controls conversion b/w background val and cum. points
-    this.max_bonus = 1.25; // total $ players can make in bonuses 
 
     // This draws the circle in which players can see other players
     //this.visibility_radius = 1000; // 27.5cm * 3
@@ -382,14 +385,19 @@ game_core.prototype.update_physics = function() {
 						 }
 					     }
 					 });
-		      if(p.player && p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/10) {
-			  p.player.hidden_count += 1
-		      }
-		      if(p.player && p.player.kicked) {
-			  p.player.instance.disconnect()
-		      }
-		      if(p.player && p.player.hidden_count > local_game.game_length/10) {
-			  p.player.kicked = true
+		      if(p.player) {
+			  if(p.player.kicked) {
+			      p.player.instance.disconnect()
+			  } else {
+			      if(p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/10) {
+				  p.player.hidden_count += 1
+			      } else {
+				  p.player.hidden_count = 0
+			      }
+			      if(p.player.hidden_count > local_game.game_length/100) {
+				  p.player.kicked = true
+			      }
+			  }
 		      }
 		  });
 		      local_game.fs.close(fd, function(){})
