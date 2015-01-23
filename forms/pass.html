@@ -74,7 +74,11 @@
     
     <script type="text/javascript">
       document.getElementById("agree").onclick = function () {
-        var id = Math.floor(Math.random() * 1e12);
+      var name = Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10);
+      var id = name + '-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+      });
         location.replace("http://nospoon.mit.edu:8888/index.html?id=" + id);
       };
     </script>
