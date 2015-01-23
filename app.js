@@ -24,6 +24,8 @@ if (use_db) {
 
 game_server = require('./game.server.js');
 
+global_player_set = {}
+
 // Log something so we know that server-side setup succeeded
 console.log("info  - socket.io started");
 console.log('\t :: Express :: Listening on port ' + gameport );
@@ -35,8 +37,12 @@ app.get( '/*' , function( req, res ) {
     var file = req.params[0]; 
     console.log('\t :: Express :: file requested: ' + file);    
 
-    // give them what they want
-    res.sendfile("./" + file);
+    if(req.query.id && req.query.id in global_player_set) {
+	res.redirect('http://projects.csail.mit.edu/ci/turk/forms/duplicate.html')
+    } else {
+	// give them what they want
+	res.sendfile("./" + file);
+    }
 }); 
 
 // Socket.io will call this function when a client connects. We check
@@ -46,10 +52,13 @@ io.on('connection', function (client) {
     // Recover query string information and set condition
     var hs = client.handshake;    
     var query = require('url').parse(client.handshake.headers.referer, true).query;
-    var id = (query.id) ? query.id : UUID(); // use id from query string if exists
-    client.condition = query.condition;
-    console.log("user connecting...")
-    initialize(query, client, id);
+    if( !(query.id && query.id in global_player_set) ) {
+	global_player_set[query.id] = true
+	var id = (query.id) ? query.id : UUID(); // use id from query string if exists
+	client.condition = query.condition;
+	console.log("user connecting...")
+	initialize(query, client, id);
+    }
 });
 
 var initialize = function(query, client, id) {                        

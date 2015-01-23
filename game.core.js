@@ -404,23 +404,29 @@ game_core.prototype.update_physics = function() {
 		    var players = local_game.get_active_players()
 		    for (i=0; i < players.length; i++) {
 			var p = players[i];
-			var pos = p.player.pos;
+			var pos = null
+			if(p)
+			    pos = p.player.pos;
 			
-			var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
-			var buf = new Buffer(p.id.length + 4)
-			buf.write(p.id)
-			local_game.fs.read(fd, buf, p.id.length, 4, loc, 
-					   function(err, bytesRead, buffer) {
-					       var buf_string = buffer.toString('utf8')
-					       var pid = buf_string.slice(0,p.id.length)
-					       var val = buf_string.slice(p.id.length)
-					       if(err) 
-						   console.log(err)
-					       else {
-						   local_game.get_player(pid).curr_background=1-val
-					     }
-					 });
-		      
+			if(pos) {
+			    var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
+			    var buf = new Buffer(p.id.length + 4)
+			    buf.write(p.id)
+			    local_game.fs.read(fd, buf, p.id.length, 4, loc, 
+					       function(err, bytesRead, buffer) {
+						   var buf_string = buffer.toString('utf8')
+						   var pid = buf_string.slice(0,p.id.length)
+						   var val = buf_string.slice(p.id.length)
+						   if(err) 
+						       console.log(err)
+						   else {
+						       var player = local_game.get_player(pid)
+						       if(player) {
+							   player.curr_background = 1 - val
+						       }
+						   }
+					       });
+			}
 		      }
 		    local_game.fs.close(fd, function(){})
 		  })
