@@ -42,6 +42,9 @@ var game_core = function(game_instance){
     //Dimensions of world -- Used in collision detection, etc.
     this.world = {width : 485, height : 280};  // 160cm * 3
 
+    //How often the players move forward <global_speed>px in ms.
+    this.tick_frequency = 125;     //Update 8 times per second
+
     if(this.debug) {
 	this.waiting_room_limit = 1 // set maximum waiting room time (in minutes)
 	this.round_length = 1 // set how long each round will last (in minutes)
@@ -53,10 +56,7 @@ var game_core = function(game_instance){
     this.max_bonus = 1.25; // total $ players can make in bonuses 
 
     // game lenght in seconds
-    this.game_length = this.round_length*60*8
-
-    //How often the players move forward <global_speed>px in ms.
-    this.tick_frequency = 125;     //Update 8 times per second
+    this.game_length = this.round_length*60*(1000 / this.tick_frequency)
 
     //The speed at which the clients move (e.g. # px/tick)
     this.min_speed = 21 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
@@ -211,7 +211,7 @@ game_core.prototype.server_send_update = function(){
     //Send the snapshot to the players
     this.state = state;
     _.map(local_game.get_active_players(), function(p){
-	    p.player.instance.emit( 'onserverupdate', state)})
+	p.player.instance.emit( 'onserverupdate', state)})
 };
 
 // This is called every few ms and simulates the world state. This is
@@ -300,8 +300,6 @@ game_core.prototype.update = function() {
     //Update the game specifics
     if(!this.server) 
         client_update();
-    else 
-        this.server_send_update();
     
     //schedule the next update
     this.updateid = window.requestAnimationFrame(this.update.bind(this), 
@@ -331,6 +329,7 @@ game_core.prototype.stop_update = function() {
 game_core.prototype.create_physics_simulation = function() {    
     return setInterval(function(){
 	    // finish this interval by writing and checking whether it's the end
+	
         if (this.server & this.good2write) {
             this.writeData();
         }
@@ -340,6 +339,7 @@ game_core.prototype.create_physics_simulation = function() {
 	    _.map(local_game.get_active_players(), function(p){
 		p.player.instance.disconnect()})
 	}
+
         // start new interval by updating clock, pinging
 	// people, and updating physics
 	if(this.good2write) 
@@ -347,15 +347,44 @@ game_core.prototype.create_physics_simulation = function() {
 	
 	var local_game = this; // need a new local game w/ game clock change
 	if(this.server & this.good2write) {
-	    _.map(local_game.get_active_players(), function(p){
-		    p.player.instance.emit('ping', {sendTime : Date.now(),
-					            tick_num: local_game.game_clock})})}
+	    var active_players = local_game.get_active_players()
+	    for(i=0;i<active_players.length;i++) {
+		var p = active_players[i]
+		// ping players to estimate latencies
+		p.player.instance.emit('ping', {sendTime : Date.now(),
+					        tick_num: local_game.game_clock})
+		// fix scores...
+		if(local_game.check_collision(p.player))
+		    p.player.curr_background = 0 
+		p.player.avg_score = p.player.avg_score + p.player.curr_background
+		p.player.total_points = (p.player.avg_score/local_game.game_length 
+					 * local_game.max_bonus)
+		
+		// Handle hidden players...
+		if(p.player.kicked) {
+		    p.player.instance.disconnect()
+		} else {
+		    if(p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/10) {
+			p.player.hidden_count += 1
+		    } else {
+			p.player.hidden_count = 0
+		    }
+		    if(p.player.hidden_count > local_game.game_length/100) {
+			p.player.kicked = true
+		    }
+		}
+	    }
+	}
+	// If you're a player, tell the server about your angle only every 125ms
 	if(!this.server){
 	    if(game.get_player(my_id).angle) {
 		this.socket.send('a.' + this.get_player(my_id).angle)
 	    }
 	}
-	this.update_physics();	
+	if (this.server){
+	    this.update_physics();	
+            this.server_send_update();
+	}
     }.bind(this), this.tick_frequency);
 };
 
@@ -363,46 +392,37 @@ game_core.prototype.update_physics = function() {
     if(this.server) {
         this.server_update_physics();
         // start reading csv and updating background once game starts
-	if(this.good2write & this.game_clock < this.game_length) {
-           var local_game = this;
-           local_game.fs.open(local_game.noise_location+'t'+local_game.game_clock+'.csv',
+	if(this.good2write & 
+	   this.game_clock < this.game_length &
+	   this.game_clock % 2 == 0) {
+            var local_game = this;
+            local_game.fs.open(this.noise_location+'t'+this.game_clock+'.csv',
 			      'r', function(err, fd) {
-		  local_game.fs.fstat(fd, function(err, stats) {
-		  _.map(local_game.get_active_players(), function(p){
-		      var pos = p.player.pos;
-		      var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
-		      local_game.fs.read(fd, new Buffer(4), 0, 4, loc, 
-					 function(err, bytesRead, buffer) {
-					     if(err) 
-						 console.log(err)
-					     else {
-						 if(p.player && p.player.pos) {
-						     p.player.curr_background=(local_game.check_collision(p.player)
-									       ? 0 
-									       : 1-Number(buffer.toString('utf8')))
-						     p.player.avg_score = p.player.avg_score + p.player.curr_background
-						     p.player.total_points = p.player.avg_score/local_game.game_length * local_game.max_bonus
-						 }
+		local_game.fs.fstat(fd, function(err, stats) {
+		    var players = local_game.get_active_players()
+		    for (i=0; i < players.length; i++) {
+			var p = players[i];
+			var pos = p.player.pos;
+			
+			var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
+			var buf = new Buffer(p.id.length + 4)
+			buf.write(p.id)
+			local_game.fs.read(fd, buf, p.id.length, 4, loc, 
+					   function(err, bytesRead, buffer) {
+					       var buf_string = buffer.toString('utf8')
+					       var pid = buf_string.slice(0,p.id.length)
+					       var val = buf_string.slice(p.id.length)
+					       if(err) 
+						   console.log(err)
+					       else {
+						   local_game.get_player(pid).curr_background=1-val
 					     }
 					 });
-		      if(p.player) {
-			  if(p.player.kicked) {
-			      p.player.instance.disconnect()
-			  } else {
-			      if(p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/10) {
-				  p.player.hidden_count += 1
-			      } else {
-				  p.player.hidden_count = 0
-			      }
-			      if(p.player.hidden_count > local_game.game_length/100) {
-				  p.player.kicked = true
-			      }
-			  }
+		      
 		      }
-		  });
-		      local_game.fs.close(fd, function(){})
+		    local_game.fs.close(fd, function(){})
 		  })
-			      })
+	    })
 	}
     };
 }
@@ -488,7 +508,7 @@ function zeros(dimensions) {
 //requestAnimationFrame polyfill by Erik Möller
 //fixes from Paul Irish and Tino Zijdel
 var frame_time = 60 / 1000; // run the local game at 16ms/ 60hz
-if('undefined' != typeof(global)) frame_time = 8; //on server we run at 45ms, 22hz
+if('undefined' != typeof(global)) frame_time = 4; //on server we run at 45ms, 22hz
 
 ( function () {
 

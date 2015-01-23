@@ -174,10 +174,7 @@ client_update = function() {
         if(_.contains(active_keys, 'left')) left_turn() ;
     }
 
-    // Draw visibility radius
-    //if(player.pos) draw_visibility_radius(game, player)
-
-    //Draw opponent next (but only those in radius)
+    //Draw opponent next 
     _.map(game.get_others(my_id), function(p){
         draw_player(game, p.player)
 	draw_label(game, p.player, "Player " + p.id.slice(0,4))
