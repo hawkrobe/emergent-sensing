@@ -354,23 +354,25 @@ game_core.prototype.create_physics_simulation = function() {
 		p.player.instance.emit('ping', {sendTime : Date.now(),
 					        tick_num: local_game.game_clock})
 		// fix scores...
-		if(local_game.check_collision(p.player))
-		    p.player.curr_background = 0 
-		p.player.avg_score = p.player.avg_score + p.player.curr_background
-		p.player.total_points = (p.player.avg_score/local_game.game_length 
-					 * local_game.max_bonus)
-		
-		// Handle hidden players...
-		if(p.player.kicked) {
-		    p.player.instance.disconnect()
-		} else {
-		    if(p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/10) {
-			p.player.hidden_count += 1
+		if(p.player) {
+		    if(local_game.check_collision(p.player))
+			p.player.curr_background = 0 
+		    p.player.avg_score = p.player.avg_score + p.player.curr_background
+		    p.player.total_points = (p.player.avg_score/local_game.game_length 
+					     * local_game.max_bonus)
+		    
+		    // Handle hidden players...
+		    if(p.player.kicked) {
+			p.player.instance.disconnect()
 		    } else {
-			p.player.hidden_count = 0
-		    }
-		    if(p.player.hidden_count > local_game.game_length/100) {
-			p.player.kicked = true
+			if(p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/4) {
+			    p.player.hidden_count += 1
+			} else {
+			    p.player.hidden_count = 0
+			}
+			if(p.player.hidden_count > local_game.game_length/50) {
+			    p.player.kicked = true
+			}
 		    }
 		}
 	    }
