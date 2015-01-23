@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -48,17 +49,16 @@
 
       <div class="well">
       <center>
-      <strong>Do not refresh the page or open the page in multiple tabs at any point.  Doing so may forfeit your bonus.</strong>
+      <strong>Do not refresh the following page, do not press the back
+      button, and do not open this page or the following page in
+      multiple tabs.  Doing so may forfeit your bonus.</strong> 
 	</center>
       </div>
 
       <div class="well">
       <center>
-	If the page does not load after one minute, please submit the
-	HIT with the following code, and you will be compensated for
-	your time reading the instructions:
-	</br>
-	INSTRUCTIONS
+	  If you lose control of your character, try clicking inside
+      the playing area.
 	</center>
       </div>
 
@@ -73,7 +73,7 @@
     <script type="text/javascript">
       document.getElementById("agree").onclick = function () {
         var id = Math.floor(Math.random() * 1e12);
-        location.href = "http://nospoon.mit.edu:8888/index.html?id=" + id;
+        location.replace("http://nospoon.mit.edu:8888/index.html?id=" + id);
       };
     </script>
 
