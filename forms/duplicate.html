@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -33,47 +32,23 @@
 
       </br>
       <div class="progress">
-        <div class="progress-bar" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" style="width: 30%;"><span class="sr-only">40% Complete</span></div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"><span class="sr-only">0% Complete</span></div>
       </div>
 
       <div class="page-header">
-        <h1>Congratulations!  You passed the comprehension checks.</h1>
+        <h1>Invalid request.</h1>
       </div>
 
-      <div class="well">
-      <center>
-      <strong>Do not leave this window after the game has started.  If
-      you do, your browser will detect you are inactive in the game
-      window, you will be removed from the game, and your HIT will not
-      be approved.</strong>
-	</center>
-      </div>
-
-      <div class="well">
-      <center>
-	Click below to enter the waiting room. At the end of the game
-	you will receive a code to earn your bonus.
-	</center>
-      </div>
 
       <p>
-        <center><button id="agree" type="button" class="btn btn-sm btn-primary">START</button></center>
-	<noscript><strong>JavaScript must be enabled to start.</strong></noscript>
+	You have either refreshed the game page or opened the game
+	page in multiple tabs.  If you have opened the game in
+	multiple tabs, return to the first tab you opened.  If you
+	refreshed the page, there is no way to return to the game.  In
+	this case, please return the HIT.
       </p>
 
     </div> <!-- /container -->
-
-    
-    <script type="text/javascript">
-      document.getElementById("agree").onclick = function () {
-      var name = Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10);
-      var id = name + '-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-      return v.toString(16);
-      });
-        location.replace("http://nospoon.mit.edu:8888/index.html?id=" + id);
-      };
-    </script>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
