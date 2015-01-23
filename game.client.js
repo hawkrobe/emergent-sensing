@@ -34,13 +34,17 @@ right_turn = function() {
     self.angle = (Number(self.angle) + 5) % 360;
 };
 
-// Function that gets called client-side when server disconnects someone
 client_ondisconnect = function(data) {
     // Redirect to exit survey
     console.log("server booted")
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+    if(game.get_player(my_id).kicked) {
+        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/inactive.html';
+    } else {
+	var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+    }
     window.location.replace(URL);
 };
+
 
 /* 
 Note: If you add some new variable to your game that must be shared
@@ -75,6 +79,7 @@ client_onserverupdate_received = function(data){
 		    l_player.total_points = s_player.tot
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
+                    l_player.kicked = s_player.kicked
                 }
             })
     }
@@ -169,26 +174,31 @@ client_update = function() {
         if(_.contains(active_keys, 'left')) left_turn() ;
     }
 
-    // Draw visibility radius
-    //if(player.pos) draw_visibility_radius(game, player)
-
-    //Draw opponent next (but only those in radius)
+    //Draw opponent next 
     _.map(game.get_others(my_id), function(p){
         draw_player(game, p.player)
 	draw_label(game, p.player, "Player " + p.id.slice(0,4))
     })
-    
-    // Draw points scoreboard 
-    $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+
+    if(!game.debug) {
+	// Draw points scoreboard 
+	$("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+    }
 
     $("#curr_bonus").html("Current Score: <span style='color: " 
         + getColorForPercentage(player.curr_background) 
         +";'>" + Math.floor(player.curr_background*100) + "%</span>");
 
-    // Draw time remaining 
     var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))
-    $("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : "You are in the waiting room.");
-
+    // Draw time remaining 
+    if(time_remaining > 1) {
+	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : "You are in the waiting room.");
+    } else {
+	var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60)*6)/6
+	time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
+	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " seconds" : "You are in the waiting room.");
+    }
+    
     //And then we draw ourself so we're always in front
     if(player.pos) {
 	draw_player(game, player)
