@@ -8,12 +8,11 @@
     MIT Licensed.
 */
 
-require('look').start()
+//require('look').start()
 
     var
         use_db      = false,
         game_server = module.exports = { games : {}, game_count:0, assignment:0},
-        UUID        = require('node-uuid'),
         fs          = require('fs');
 	    
     if (use_db) {
