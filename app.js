@@ -14,8 +14,7 @@ var
     server          = app.listen(gameport),
     io              = require('socket.io')(server),
     _               = require('underscore'),
-    fs              = require('fs'),
-    UUID            = require('node-uuid');
+    fs              = require('fs');
 
 if (use_db) {
     database        = require(__dirname + "/database"),
@@ -36,12 +35,16 @@ app.get( '/*' , function( req, res ) {
     // this is the current file they have requested
     var file = req.params[0]; 
     console.log('\t :: Express :: file requested: ' + file);    
-
-    if(req.query.id && req.query.id in global_player_set) {
-	res.redirect('http://projects.csail.mit.edu/ci/turk/forms/duplicate.html')
+    
+    if(req.query.id && !valid_id(req.query.id)) {
+	res.redirect('http://projects.csail.mit.edu/ci/turk/forms/invalid.html')
     } else {
-	// give them what they want
-	res.sendfile("./" + file);
+	if(req.query.id && req.query.id in global_player_set) {
+	    res.redirect('http://projects.csail.mit.edu/ci/turk/forms/duplicate.html')
+	} else {
+	    // give them what they want
+	    res.sendfile("./" + file);
+	}
     }
 }); 
 
@@ -53,13 +56,32 @@ io.on('connection', function (client) {
     var hs = client.handshake;    
     var query = require('url').parse(client.handshake.headers.referer, true).query;
     if( !(query.id && query.id in global_player_set) ) {
-	global_player_set[query.id] = true
-	var id = (query.id) ? query.id : UUID(); // use id from query string if exists
-	client.condition = query.condition;
-	console.log("user connecting...")
-	initialize(query, client, id);
+	if(query.id) {
+	    global_player_set[query.id] = true
+	    var id = query.id; // use id from query string if exists
+	} else {
+	    var id = UUID();
+	}
+	if(valid_id(id)) {
+	    client.condition = query.condition;
+	    console.log("user connecting...")
+	    initialize(query, client, id);
+	}
     }
 });
+
+var valid_id = function(id) {
+    return id.length == 41;
+}
+
+var UUID = function() {
+    var name = Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10);
+      var id = name + '-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	  var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+	  return v.toString(16);
+      });
+    return id;
+}
 
 var initialize = function(query, client, id) {                        
     client.userid = id;
