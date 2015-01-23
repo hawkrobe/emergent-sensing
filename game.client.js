@@ -34,11 +34,14 @@ right_turn = function() {
     self.angle = (Number(self.angle) + 5) % 360;
 };
 
-// Function that gets called client-side when server disconnects someone
 client_ondisconnect = function(data) {
-    // Redirect to exit survey    
+    // Redirect to exit survey
     console.log("server booted")
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+    if(game.get_player(my_id).kicked) {
+        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/inactive.html';
+    } else {
+	var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+    }
     window.location.replace(URL);
 };
 
@@ -76,6 +79,7 @@ client_onserverupdate_received = function(data){
 		    l_player.total_points = s_player.tot
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
+                    l_player.kicked = s_player.kicked
                 }
             })
     }
