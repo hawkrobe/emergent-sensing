@@ -148,7 +148,7 @@ client_countdown = function() {
     setTimeout(function(){player.message = 'Begin in 1...';}, 
                2000);
     setTimeout(function(){
-        player.message = 'GO';     
+        player.message = 'GO!';     
         game.start_time = new Date();}, 
 	3000);
     setTimeout(function(){player.message = '';}, 
@@ -192,11 +192,11 @@ client_update = function() {
     var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))
     // Draw time remaining 
     if(time_remaining > 1) {
-	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : "You are in the waiting room.");
+	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : 'You are in the waiting room.');
     } else {
 	var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60)*6)/6
 	time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
-	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " seconds" : "You are in the waiting room.");
+	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " seconds" : 'You are in the waiting room.');
     }
     
     //And then we draw ourself so we're always in front
@@ -328,6 +328,7 @@ client_onjoingame = function(num_players) {
     game.get_player(my_id).color = game.self_color;
     // Start 'em moving
     game.get_player(my_id).speed = game.min_speed;
+    game.get_player(my_id).message = 'Please wait for more players to arrive.';
 }; 
 
 // Automatically registers whether user has switched tabs...
