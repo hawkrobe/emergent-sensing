@@ -46,10 +46,10 @@ var game_core = function(game_instance){
     this.tick_frequency = 125;     //Update 8 times per second
 
     if(this.debug) {
-	this.waiting_room_limit = 1 // set maximum waiting room time (in minutes)
+	this.waiting_room_limit = 0.5 // set maximum waiting room time (in minutes)
 	this.round_length = 1 // set how long each round will last (in minutes)
     } else {
-	this.waiting_room_limit = 2 // set maximum waiting room time (in minutes)
+	this.waiting_room_limit = 5 // set maximum waiting room time (in minutes)
 	this.round_length = 6 // set how long each round will last (in minutes)
     }
 
@@ -67,6 +67,8 @@ var game_core = function(game_instance){
    
     //If hiding_enabled is true, players will only see others in their visibility radius
     this.hiding_enabled = false;
+
+    this.waiting_start = new Date(); 
 
     //We create a player set, passing them the game that is running
     //them, as well. Both the server and the clients need separate
@@ -106,6 +108,8 @@ var game_player = function( game_instance, player_instance) {
     this.visible = "visible"; // Tracks whether client is watching game
     this.kicked = false
     this.hidden_count = 0
+    this.inactive = false
+    this.inactive_count = 0
     this.message = '';
 
     this.info_color = 'rgba(255,255,255,0)';
@@ -132,6 +136,8 @@ var game_player = function( game_instance, player_instance) {
         this.angle = null;
     }
     this.speed = this.game.min_speed;
+    this.old_speed = this.speed
+    this.old_angle = this.angle
     this.color = 'white';
 }; 
 
@@ -196,16 +202,27 @@ game_core.prototype.server_send_update = function(){
 			tot: p.player.total_points,
                         angle: p.player.angle,
                         speed: p.player.speed,
-			kicked: p.player.kicked}}
+			kicked: p.player.kicked,
+			inactive: p.player.inactive}}
         } else {
             return {id: p.id,
                     player: null}
         }
     })
-    var state = {
-        de  : this.hiding_enabled,                  // true to see angle
-        g2w : this.good2write,                      // true when game's started
-    };
+    if(this.good2write) {
+	var state = {
+            de  : this.hiding_enabled,                  // true to see angle
+            g2w : this.good2write,                      // true when game's started
+	};
+    } else {
+	var state = {
+            de  : this.hiding_enabled,                  // true to see angle
+            g2w : this.good2write,                      // true when game's started
+	    pt : this.players_threshold,
+	    pc : this.player_count,
+	    wr : new Date() - this.waiting_start
+	};
+    }
     _.extend(state, {players: player_packet})
     
     //Send the snapshot to the players
@@ -355,14 +372,15 @@ game_core.prototype.create_physics_simulation = function() {
 					        tick_num: local_game.game_clock})
 		// fix scores...
 		if(p.player) {
-		    if(local_game.check_collision(p.player))
+		    var on_wall = local_game.check_collision(p.player)
+		    if(on_wall)
 			p.player.curr_background = 0 
 		    p.player.avg_score = p.player.avg_score + p.player.curr_background
 		    p.player.total_points = (p.player.avg_score/local_game.game_length 
 					     * local_game.max_bonus)
 		    
-		    // Handle hidden players...
-		    if(p.player.kicked) {
+		    // Handle inactive or hidden players...
+		    if(p.player.kicked || p.player.inactive) {
 			p.player.instance.disconnect()
 		    } else {
 			if(p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/4) {
@@ -372,6 +390,19 @@ game_core.prototype.create_physics_simulation = function() {
 			}
 			if(p.player.hidden_count > local_game.game_length/50) {
 			    p.player.kicked = true
+			    console.log('Player ' + p.id + ' will be disconnected for being hidden.')
+			}
+			var not_changing = p.player.last_speed == p.player.speed && p.player.last_angle == p.player.angle;
+			p.player.last_speed = p.player.speed
+			p.player.last_angle = p.player.angle
+			if(on_wall && not_changing && local_game.game_clock > local_game.game_length/4) {
+			    p.player.inactive_count += 1
+			} else {
+			    p.player.inactive_count = 0
+			}
+			if(p.player.inactive_count > local_game.game_length/10) {
+			    p.player.inactive = true
+			    console.log('Player ' + p.id + ' will be disconnected for inactivity.')
 			}
 		    }
 		}

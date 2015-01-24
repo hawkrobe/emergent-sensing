@@ -90,6 +90,7 @@ game_server.findGame = function(player) {
 
                 // notify existing players that someone new is joining
                 _.map(gamecore.get_others(player.userid), function(p){p.player.instance.send( 's.add_player.' + player.userid)})
+		gamecore.player_count = game.player_count;
                 gamecore.server_send_update();
                 gamecore.update();
 		
@@ -111,8 +112,8 @@ game_server.findGame = function(player) {
 // Will run when first player connects
 game_server.createGame = function(player) {
     // Figure out variables
-//    var thresholds = Array(1,1,1,1,1,1,1,1,2,2,2,2,4,4,8);
-    var thresholds = Array(8,8);
+    var thresholds = Array(1,1,1,1,1,1,1,1,2,2,2,2,4,4,8);
+    //var thresholds = Array(8,8);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     var noise_id = Math.floor(Math.random() * 4) + '-2en01'
     var noise_location = '/home/rxdh/couzin_replication/light-fields/' + noise_id + '/'
@@ -130,7 +131,7 @@ game_server.createGame = function(player) {
 	//for simple checking of state
         player_count: 1             
     };
-
+    
     
     //Create a new game core instance (defined in game.core.js)
     game.gamecore = new game_core(game);
@@ -138,6 +139,7 @@ game_server.createGame = function(player) {
     // Tell the game about its own id
     game.gamecore.game_id = id;
     game.gamecore.players_threshold = players_threshold
+    game.gamecore.player_count = 1
     game.gamecore.noise_location = noise_location
 
     // Set up the filesystem variable we'll use later, and write headers
@@ -195,8 +197,12 @@ game_server.endGame = function(gameid, userid) {
             thegame.gamecore.players[i].player = null;
 
             // If the game hasn't started yet, allow more players to fill their place. after it starts, don't.
-            if (!thegame.active) 
+            if (!thegame.active) {
                 thegame.player_count--;
+		thegame.gamecore.player_count = thegame.player_count;
+                thegame.gamecore.server_send_update();
+                thegame.gamecore.update();
+	    }
         } else {
             // If the game only has one player and they leave, remove it.
             thegame.gamecore.stop_update();

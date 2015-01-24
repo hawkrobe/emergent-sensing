@@ -21,6 +21,7 @@ var my_id = null;
 var visible;
 var active_keys = []; 
 var speed_change = "none";
+var started = false;
 
 // what happens when you press 'left'?
 left_turn = function() {
@@ -38,6 +39,8 @@ client_ondisconnect = function(data) {
     // Redirect to exit survey
     console.log("server booted")
     if(game.get_player(my_id).kicked) {
+        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
+    } else if(game.get_player(my_id).inactive) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/inactive.html';
     } else {
 	var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
@@ -80,6 +83,7 @@ client_onserverupdate_received = function(data){
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
                     l_player.kicked = s_player.kicked
+                    l_player.inactive = s_player.inactive
                 }
             })
     }
@@ -87,6 +91,9 @@ client_onserverupdate_received = function(data){
     game.condition = data.cond;
     game.draw_enabled = data.de;
     game.good2write = data.g2w;
+    game.players_threshold = data.pt;
+    game.player_count = data.pc;
+    game.waiting_remaining = data.wr;
 
 }; 
 
@@ -137,6 +144,7 @@ client_onMessage = function(data) {
 client_newgame = function() {
     // Initiate countdown (with timeouts)
     game.get_player(my_id).angle = null;
+    started = true;
     client_countdown();
 }; 
 
@@ -189,14 +197,19 @@ client_update = function() {
         + getColorForPercentage(player.curr_background) 
         +";'>" + Math.floor(player.curr_background*100) + "%</span>");
 
-    var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60))
-    // Draw time remaining 
-    if(time_remaining > 1) {
-	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " minutes" : 'You are in the waiting room.');
+    if(!started) {
+	var left = timeRemaining(game.waiting_remaining, game.waiting_room_limit)
+	var diff = game.players_threshold - game.player_count
+	game.get_player(my_id).message = 'Waiting for ' + diff + ' more players or ' + left['t'] + ' more ' + left['unit'] + '.';
+    }
+    
+    if(game.good2write) {
+	var left = new Date() - game.start_time;
+	left = timeRemaining(left, game.round_length);
+	// Draw time remaining 
+	$("#time").html("Time remaining: " + left['t'] + " " + left['unit']);
     } else {
-	var time_remaining = game.round_length - Math.floor((new Date() - game.start_time) / (1000 * 60)*6)/6
-	time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
-	$("#time").html(game.good2write ? "Time remaining: " + time_remaining + " seconds" : 'You are in the waiting room.');
+	$("#time").html('You are in the waiting room.');
     }
     
     //And then we draw ourself so we're always in front
@@ -206,6 +219,19 @@ client_update = function() {
     }
 
 };
+
+var timeRemaining = function(remaining, limit) {
+    var time_remaining = limit - Math.floor(remaining / (1000*60));
+    if(time_remaining > 1) {
+	return {t: time_remaining, unit: 'minutes'}
+    } else {
+	time_remaining = limit - Math.floor(remaining / (1000 * 60)*6)/6
+	time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
+	console.log(time_remaining)
+	return {t: time_remaining, unit: 'seconds'}
+    }
+
+}
 
 var percentColors = [
     { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
