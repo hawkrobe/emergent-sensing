@@ -22,6 +22,7 @@ var visible;
 var active_keys = []; 
 var speed_change = "none";
 var started = false;
+var ending = false;
 
 // what happens when you press 'left'?
 left_turn = function() {
@@ -42,6 +43,8 @@ client_ondisconnect = function(data) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
     } else if(game.get_player(my_id).inactive) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/inactive.html';
+    } else if(game.get_player(my_id).lagging) {
+        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + my_id;
     } else {
 	var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
     }
@@ -82,15 +85,15 @@ client_onserverupdate_received = function(data){
 		    l_player.total_points = s_player.tot
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
+		    l_player.onwall = s_player.onwall
                     l_player.kicked = s_player.kicked
                     l_player.inactive = s_player.inactive
+                    l_player.lagging = s_player.lagging
                 }
             })
     }
     
-    game.condition = data.cond;
-    game.draw_enabled = data.de;
-    game.good2write = data.g2w;
+    game.game_started = data.gs;
     game.players_threshold = data.pt;
     game.player_count = data.pc;
     game.waiting_remaining = data.wr;
@@ -131,7 +134,6 @@ client_onMessage = function(data) {
             console.log("adding player" + commanddata)
             game.players.push({id: commanddata, player: new game_player(game)}); break;
         case 'begin_game' :
-            game.hidden_enabled = true;
             client_newgame(); break;
         case 'blink' : //blink title
             flashTitle("GO!");  break;
@@ -188,23 +190,36 @@ client_update = function() {
 	draw_label(game, p.player, "Player " + p.id.slice(0,4))
     })
 
-    if(!game.debug) {
-	// Draw points scoreboard 
-	$("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+    // Draw points scoreboard 
+    $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+
+    onwall = player.onwall;
+    if(onwall) {
+	$("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
+    } else {
+	if(game.game_started) {
+	    $("#curr_bonus").html("Current Score: <span style='color: " 
+				  + getColorForPercentage(player.curr_background) 
+				  +";'>" + Math.floor(player.curr_background*100) + "%</span>");
+	} else {
+	    $("#curr_bonus").html("Current Score: <span style='color: " 
+				  + getColorForPercentage(0) 
+				  +";'>---</span>");	
+	}
     }
-
-    $("#curr_bonus").html("Current Score: <span style='color: " 
-        + getColorForPercentage(player.curr_background) 
-        +";'>" + Math.floor(player.curr_background*100) + "%</span>");
-
+    
     if(!started) {
 	var left = timeRemaining(game.waiting_remaining, game.waiting_room_limit)
 	var diff = game.players_threshold - game.player_count
-	game.get_player(my_id).message = 'Waiting for ' + diff + ' more players or ' + left['t'] + ' more ' + left['unit'] + '.';
+	//game.get_player(my_id).message = 'Waiting for ' + diff + ' more players or ' + left['t'] + ' more ' + left['unit'] + '.';
     }
     
-    if(game.good2write) {
+    if(game.game_started) {
 	var left = new Date() - game.start_time;
+	if((game.round_length*60 - Math.floor(left/1000)) < 6) {
+	    var remainder = game.round_length*60 - Math.floor(left/1000);
+	    player.message = 'Ending in ' + remainder;
+	}
 	left = timeRemaining(left, game.round_length);
 	// Draw time remaining 
 	$("#time").html("Time remaining: " + left['t'] + " " + left['unit']);
@@ -223,19 +238,18 @@ client_update = function() {
 var timeRemaining = function(remaining, limit) {
     var time_remaining = limit - Math.floor(remaining / (1000*60));
     if(time_remaining > 1) {
-	return {t: time_remaining, unit: 'minutes'}
+	return {t: time_remaining, unit: 'minutes', actual: (limit - remaining/1000)}
     } else {
 	time_remaining = limit - Math.floor(remaining / (1000 * 60)*6)/6
 	time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
-	console.log(time_remaining)
-	return {t: time_remaining, unit: 'seconds'}
+	return {t: time_remaining, unit: 'seconds', actual: (limit - remaining/1000)}
     }
 
 }
 
 var percentColors = [
-    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
-    { pct: 0.5, color: { r: 0xff, g: 0xff, b: 0xff } },
+//    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
+    { pct: 0.0, color: { r: 0xff, g: 0xff, b: 0xff } },
     { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
  
 var getColorForPercentage = function(pct) {
@@ -354,7 +368,7 @@ client_onjoingame = function(num_players) {
     game.get_player(my_id).color = game.self_color;
     // Start 'em moving
     game.get_player(my_id).speed = game.min_speed;
-    game.get_player(my_id).message = 'Please wait for more players to arrive.';
+    game.get_player(my_id).message = 'Please remain active while you wait.';
 }; 
 
 // Automatically registers whether user has switched tabs...

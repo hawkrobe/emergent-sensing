@@ -49,8 +49,14 @@ game_server.server_onMessage = function(client,message) {
         target.visible = message_parts[1];
     } else if (message_type == 'pong') {
 	var latency = (Date.now() - message_parts[1])/2;
-	client.game.gamecore.latencyStream.write(String(client.userid)+","+message_parts[2]+","+latency+"\n",
-			   function(err) { if(err) throw err; });
+	target.latency = latency;
+	if(client.game.gamecore.game_started) {
+	    client.game.gamecore.latencyStream.write(String(client.userid)+","+message_parts[2]+","+latency+"\n",
+						     function(err) { if(err) throw err; });
+	} else {
+	    client.game.gamecore.waitingLatencyStream.write(String(client.userid)+","+message_parts[2]+","+latency+"\n",
+						     function(err) { if(err) throw err; });
+	}
     }
 };
 
@@ -144,15 +150,15 @@ game_server.createGame = function(player) {
 
     // Set up the filesystem variable we'll use later, and write headers
     game.gamecore.fs = fs;
-    fs.writeFile("data/games/game_" +id+ ".csv", "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
-    game.gamecore.gameDataStream = fs.createWriteStream("data/games/game_" +id+ ".csv", {'flags' : 'a'});
-    fs.writeFile("data/latencies/game_"+id+".csv", "pid,tick,latency\n", function (err) {if(err) throw err;})
-    game.gamecore.latencyStream = fs.createWriteStream("data/latencies/game_"+id+".csv", {'flags' : 'a'});
-
-    // When workers are directed to the page, they specify which
-    // version of the task they're running. 
-    game.gamecore.condition = player.condition;
-
+    fs.writeFile("data/waiting_games/" +id+ ".csv", "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
+    game.gamecore.waitingDataStream = fs.createWriteStream("data/waiting_games/" +id+ ".csv", {'flags' : 'a'});
+    fs.writeFile("data/waiting_latencies/"+id+".csv", "pid,tick,latency\n", function (err) {if(err) throw err;})
+    game.gamecore.waitingLatencyStream = fs.createWriteStream("data/waiting_latencies/"+id+".csv", {'flags' : 'a'});
+    fs.writeFile("data/games/" +id+ ".csv", "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
+    game.gamecore.gameDataStream = fs.createWriteStream("data/games/" +id+ ".csv", {'flags' : 'a'});
+    fs.writeFile("data/latencies/"+id+".csv", "pid,tick,latency\n", function (err) {if(err) throw err;})
+    game.gamecore.latencyStream = fs.createWriteStream("data/latencies/"+id+".csv", {'flags' : 'a'});
+    
     // tell the player that they have joined a game
     // The client will parse this message in the "client_onMessage" function
     // in game.client.js, which redirects to other functions based on the command

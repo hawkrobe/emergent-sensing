@@ -44,31 +44,33 @@ var game_core = function(game_instance){
 
     //How often the players move forward <global_speed>px in ms.
     this.tick_frequency = 125;     //Update 8 times per second
+    this.ticks_per_sec = 1000/125
 
     if(this.debug) {
 	this.waiting_room_limit = 0.5 // set maximum waiting room time (in minutes)
-	this.round_length = 1 // set how long each round will last (in minutes)
+	this.round_length = 1; // set how long each round will last (in minutes)
+	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
+	this.booting = false;
     } else {
 	this.waiting_room_limit = 5 // set maximum waiting room time (in minutes)
 	this.round_length = 6 // set how long each round will last (in minutes)
+	this.max_bonus = 1.25; // total $ players can make in bonuses 
+	this.booting = true;
     }
 
-    this.max_bonus = 1.25; // total $ players can make in bonuses 
-
-    // game lenght in seconds
-    this.game_length = this.round_length*60*(1000 / this.tick_frequency)
+    // game and waiting length in seconds
+    this.game_length = this.round_length*60*this.ticks_per_sec;
 
     //The speed at which the clients move (e.g. # px/tick)
-    this.min_speed = 21 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
-    this.max_speed = 70 / (1000 / this.tick_frequency); // 7.5cm * 3 * .5s 
+    this.min_speed = 21 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
+    this.max_speed = 70 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
 
-    // This draws the circle in which players can see other players
-    //this.visibility_radius = 1000; // 27.5cm * 3
-   
-    //If hiding_enabled is true, players will only see others in their visibility radius
-    this.hiding_enabled = false;
-
+    // minimun wage per tick
+    var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency))
+    this.waiting_background = us_min_wage_per_tick * this.game_length / this.max_bonus
     this.waiting_start = new Date(); 
+
+    this.game_clock = 0;
 
     //We create a player set, passing them the game that is running
     //them, as well. Both the server and the clients need separate
@@ -79,7 +81,6 @@ var game_core = function(game_instance){
             id: this.instance.player_instances[0].id, 
             player: new game_player(this,this.instance.player_instances[0].player)
         }];
-        this.game_clock = 0;
     } else {
         this.players = [{
             id: null, 
@@ -106,10 +107,13 @@ var game_player = function( game_instance, player_instance) {
     this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
     this.state = 'not-connected';
     this.visible = "visible"; // Tracks whether client is watching game
-    this.kicked = false
-    this.hidden_count = 0
-    this.inactive = false
-    this.inactive_count = 0
+    this.onwall = false;
+    this.kicked = false;
+    this.hidden_count = 0;
+    this.inactive = false;
+    this.inactive_count = 0;
+    this.lagging = false;
+    this.lag_count = 0;
     this.message = '';
 
     this.info_color = 'rgba(255,255,255,0)';
@@ -202,22 +206,22 @@ game_core.prototype.server_send_update = function(){
 			tot: p.player.total_points,
                         angle: p.player.angle,
                         speed: p.player.speed,
+			onwall: p.player.onwall,
 			kicked: p.player.kicked,
-			inactive: p.player.inactive}}
+			inactive: p.player.inactive,
+			lagging: p.player.lagging}}
         } else {
             return {id: p.id,
                     player: null}
         }
     })
-    if(this.good2write) {
+    if(this.game_started) {
 	var state = {
-            de  : this.hiding_enabled,                  // true to see angle
-            g2w : this.good2write,                      // true when game's started
+            gs : this.game_started,                      // true when game's started
 	};
     } else {
 	var state = {
-            de  : this.hiding_enabled,                  // true to see angle
-            g2w : this.good2write,                      // true when game's started
+            gs : this.game_started,                      // true when game's started
 	    pt : this.players_threshold,
 	    pc : this.player_count,
 	    wr : new Date() - this.waiting_start
@@ -258,22 +262,27 @@ game_core.prototype.server_update_physics = function() {
 game_core.prototype.writeData = function() {
     var local_game = this;
     _.map(local_game.get_active_players(), function(p) {
-	    var player_angle = p.player.angle;
-	    if (player_angle < 0) 
-		player_angle = parseInt(player_angle, 10) + 360;
-	    //also, keyboard inputs,  list of players in visibility radius?
-	    var line = String(p.id) + ',';
-	    line += String(local_game.game_clock) + ',';
-	    line += p.player.visible + ',';
-	    line += p.player.pos.x +',';
-	    line += p.player.pos.y +',';
-	    line += p.player.speed +',';
-	    line += player_angle +',';
-	    line += p.player.curr_background +',';
-	    line += p.player.total_points.fixed(2) ;
+	var player_angle = p.player.angle;
+	if (player_angle < 0) 
+	    player_angle = parseInt(player_angle, 10) + 360;
+	//also, keyboard inputs,  list of players in visibility radius?
+	var line = String(p.id) + ',';
+	line += String(local_game.game_clock) + ',';
+	line += p.player.visible + ',';
+	line += p.player.pos.x +',';
+	line += p.player.pos.y +',';
+	line += p.player.speed +',';
+	line += player_angle +',';
+	line += p.player.curr_background +',';
+	line += p.player.total_points.fixed(2) ;
+	if(local_game.game_started) {
 	    local_game.gameDataStream.write(String(line) + "\n",
 					    function (err) {if(err) throw err;});
-	})
+	} else {
+	    local_game.waitingDataStream.write(String(line) + "\n",
+					    function (err) {if(err) throw err;});
+	}
+    })
 };
 
 // This is a really important function -- it gets called when a round
@@ -282,18 +291,12 @@ game_core.prototype.writeData = function() {
 // something, we'll still know what to pay them.
 game_core.prototype.server_newgame = function() {
     var local_gamecore = this;
-
+    
     // Don't want players moving during countdown
-    _.map(local_gamecore.get_active_players(), function(p) {p.player.speed = 0;})
-
-    // Don't want to write to file during countdown -- too confusing
-    this.good2write = false;
-
-    // Don't want people signalling until after countdown/validated input
-    this.hidden_enabled = true;
-
+    //_.map(local_gamecore.get_active_players(), function(p) {p.player.speed = 0;})
+        
     //Reset positions
-    this.server_reset_positions();
+    //this.server_reset_positions();
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
     _.map(local_gamecore.get_active_players(), function(p) {
@@ -301,10 +304,10 @@ game_core.prototype.server_newgame = function() {
 
     // Launch game after countdown;
     setTimeout(function(){
-        local_gamecore.good2write = true;
-        _.map(local_gamecore.get_active_players(), function(p) {
-	    p.player.speed = local_gamecore.min_speed});
-        local_gamecore.game_clock = 0;
+        local_gamecore.game_started = true;
+	local_gamecore.game_clock = 0;
+//        _.map(local_gamecore.get_active_players(), function(p) {
+//	    p.player.speed = local_gamecore.min_speed});
     }, 3000);
 };
 
@@ -346,63 +349,67 @@ game_core.prototype.stop_update = function() {
 game_core.prototype.create_physics_simulation = function() {    
     return setInterval(function(){
 	    // finish this interval by writing and checking whether it's the end
-	
-        if (this.server & this.good2write) {
-            this.writeData();
-        }
-	var local_game = this;
-	if(this.game_clock == this.game_length - 1) {
-	    local_game.stop_update()
-	    _.map(local_game.get_active_players(), function(p){
-		p.player.instance.disconnect()})
-	}
 
-        // start new interval by updating clock, pinging
-	// people, and updating physics
-	if(this.good2write) 
-	    this.game_clock += 1;
+	if (this.server){
+	    this.update_physics();
+	}
 	
 	var local_game = this; // need a new local game w/ game clock change
-	if(this.server & this.good2write) {
+	if(this.server) {
 	    var active_players = local_game.get_active_players()
 	    for(i=0;i<active_players.length;i++) {
 		var p = active_players[i]
 		// ping players to estimate latencies
 		p.player.instance.emit('ping', {sendTime : Date.now(),
 					        tick_num: local_game.game_clock})
-		// fix scores...
+		// compute scores
 		if(p.player) {
+
 		    var on_wall = local_game.check_collision(p.player)
-		    if(on_wall)
-			p.player.curr_background = 0 
-		    p.player.avg_score = p.player.avg_score + p.player.curr_background
-		    p.player.total_points = (p.player.avg_score/local_game.game_length 
-					     * local_game.max_bonus)
-		    
-		    // Handle inactive or hidden players...
-		    if(p.player.kicked || p.player.inactive) {
-			p.player.instance.disconnect()
+		    if(on_wall) {
+			p.player.curr_background = 0;
+			p.player.onwall = true;
+		    } else if(!this.game_started) {
+			p.player.curr_background = local_game.waiting_background;
+			p.player.onwall = false;
 		    } else {
-			if(p.player.visible == 'hidden' && local_game.game_clock > local_game.game_length/4) {
+			p.player.onwall = false;
+		    }
+		    
+		    p.player.avg_score = p.player.avg_score + p.player.curr_background/local_game.game_length;
+		    p.player.total_points = p.player.avg_score * local_game.max_bonus;
+		    
+		    // Handle inactive, hidden, or high latency players...
+		    if(p.player.kicked || p.player.inactive || p.player.lagging) {
+			p.player.instance.disconnect();
+		    } else {
+			if(p.player.visible == 'hidden') {
 			    p.player.hidden_count += 1
-			} else {
-			    p.player.hidden_count = 0
 			}
-			if(p.player.hidden_count > local_game.game_length/50) {
-			    p.player.kicked = true
-			    console.log('Player ' + p.id + ' will be disconnected for being hidden.')
+			if(p.player.hidden_count > local_game.ticks_per_sec*15) { // kick after being hidden for 15 seconds
+			    if(local_game.booting) {
+				p.player.kicked = true
+				console.log('Player ' + p.id + ' will be disconnected for being hidden.')
+			    }
 			}
 			var not_changing = p.player.last_speed == p.player.speed && p.player.last_angle == p.player.angle;
 			p.player.last_speed = p.player.speed
 			p.player.last_angle = p.player.angle
-			if(on_wall && not_changing && local_game.game_clock > local_game.game_length/4) {
+			if(on_wall && not_changing) {
 			    p.player.inactive_count += 1
-			} else {
-			    p.player.inactive_count = 0
 			}
-			if(p.player.inactive_count > local_game.game_length/10) {
-			    p.player.inactive = true
-			    console.log('Player ' + p.id + ' will be disconnected for inactivity.')
+			if(p.player.inactive_count > local_game.ticks_per_sec*30) {  // kick after being inactive for 30 seconds
+			    if(local_game.booting) {
+				p.player.inactive = true
+				console.log('Player ' + p.id + ' will be disconnected for inactivity.')
+			    }
+			}
+			if(p.player.latency > this.tick_frequency) {
+			    p.player.lag_count += 1
+			}
+			if(p.player.lag_count > local_game.game_length*0.2) {
+			    p.player.lagging = true
+			    console.log('Player ' + p.id + ' will be disconnected because of latency.')
 			}
 		    }
 		}
@@ -415,54 +422,68 @@ game_core.prototype.create_physics_simulation = function() {
 	    }
 	}
 	if (this.server){
-	    this.update_physics();	
             this.server_send_update();
+            this.writeData();
 	}
+	
+	local_game.game_clock += 1;
+	
+	var local_game = this;
+	if(this.server && this.game_started && this.game_clock == this.game_length) {
+	    local_game.stop_update()
+	    _.map(local_game.get_active_players(), function(p){
+		p.player.instance.disconnect()})
+	}
+	
+
     }.bind(this), this.tick_frequency);
 };
 
 game_core.prototype.update_physics = function() {
     if(this.server) {
         this.server_update_physics();
+	var t = 0;
         // start reading csv and updating background once game starts
-	if(this.good2write & 
-	   this.game_clock < this.game_length &
-	   this.game_clock % 2 == 0) {
-            var local_game = this;
-            local_game.fs.open(this.noise_location+'t'+this.game_clock+'.csv',
-			      'r', function(err, fd) {
-		local_game.fs.fstat(fd, function(err, stats) {
-		    var players = local_game.get_active_players()
-		    for (i=0; i < players.length; i++) {
-			var p = players[i];
-			var pos = null
-			if(p)
-			    pos = p.player.pos;
-			
-			if(pos) {
-			    var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
-			    var buf = new Buffer(p.id.length + 4)
-			    buf.write(p.id)
-			    local_game.fs.read(fd, buf, p.id.length, 4, loc, 
-					       function(err, bytesRead, buffer) {
-						   var buf_string = buffer.toString('utf8')
-						   var pid = buf_string.slice(0,p.id.length)
-						   var val = buf_string.slice(p.id.length)
-						   if(err) 
-						       console.log(err)
-						   else {
-						       var player = local_game.get_player(pid)
-						       if(player) {
-							   player.curr_background = 1 - val
-						       }
-						   }
-					       });
-			}
-		      }
-		    local_game.fs.close(fd, function(){})
-		  })
-	    })
+	if(this.game_started && this.game_clock < this.game_length) {
+	    t = this.game_clock;
 	}
+	if(t % 1 == 0) {
+            var local_game = this;
+            local_game.fs.open(this.noise_location+'t'+t+'.csv',
+			       'r', function(err, fd) {
+				   local_game.fs.fstat(fd, function(err, stats) {
+				       var players = local_game.get_active_players()
+				       for (i=0; i < players.length; i++) {
+					   var p = players[i];
+					   var pos = null
+					   if(p)
+					       pos = p.player.pos;
+					   
+					   if(pos) {
+					       var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
+					       var buf = new Buffer(p.id.length + 4)
+					       buf.write(p.id)
+					       local_game.fs.read(fd, buf, p.id.length, 4, loc, 
+								  function(err, bytesRead, buffer) {
+								      var buf_string = buffer.toString('utf8')
+								      var pid = buf_string.slice(0,p.id.length)
+								      var val = buf_string.slice(p.id.length)
+								      if(err) 
+									  console.log('update_physics:' + err)
+								      else {
+									  var player = local_game.get_player(pid)
+									  if(player) {
+									      player.curr_background = 1 - val
+									  }
+								      }
+								  });
+					   }
+				       }
+				       local_game.fs.close(fd, function(){})
+				   })
+			       })
+	}
+	
     };
 }
 

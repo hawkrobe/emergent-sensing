@@ -63,7 +63,6 @@ io.on('connection', function (client) {
 	    var id = UUID();
 	}
 	if(valid_id(id)) {
-	    client.condition = query.condition;
 	    console.log("user connecting...")
 	    initialize(query, client, id);
 	}
