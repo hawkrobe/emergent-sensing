@@ -218,6 +218,8 @@ client_update = function() {
 	var left = new Date() - game.start_time;
 	if((game.round_length*60 - Math.floor(left/1000)) < 6) {
 	    var remainder = game.round_length*60 - Math.floor(left/1000);
+	    if(remainder < 0) 
+		remainder = 0
 	    player.message = 'Ending in ' + remainder;
 	}
 	left = timeRemaining(left, game.round_length);
