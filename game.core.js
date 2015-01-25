@@ -450,7 +450,6 @@ game_core.prototype.update_physics = function() {
 	if(t % 1 == 0) {
             var local_game = this;
 	    var this_file = this.noise_location+'t'+t+'.csv'
-	    console.log(this_file)
             local_game.fs.open(this_file,
 			       'r', function(err, fd) {
 				   var players = local_game.get_active_players()

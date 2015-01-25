@@ -1,1 +1,0 @@
-node app.js >> data/log 2>&1
