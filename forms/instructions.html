@@ -13,8 +13,6 @@
 
     <!-- Bootstrap core CSS -->
     <link href="../dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap theme -->
-    <link href="../dist/css/bootstrap-theme.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <link href="theme.css" rel="stylesheet">
@@ -27,7 +25,7 @@
   </head>
 
   <body role="document">
-
+    
     <div class="container theme-showcase" role="main">
 
       </br>
@@ -100,7 +98,7 @@
       Note: You will only have one chance to pass the quiz.
 	</p>
 
-      <form name="quiz" onsubmit="return validateForm()">
+      <form name="quiz" method="post" action="test_form.php" onsubmit="this.submit(); this.reset(); return false;">
 
 	</br>
 	Your goal in this game is to
@@ -174,9 +172,6 @@
 		  </br>
 		  </br>
       </form>
-      
-	<noscript><strong>JavaScript must be enabled to submit.</strong></noscript>
-
 
     </div> <!-- /container -->
 
@@ -188,8 +183,5 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="../dist/js/bootstrap.min.js"></script>
-    <script src="../assets/js/docs.min.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="../assets/js/ie10-viewport-bug-workaround.js"></script>
   </body>
 </html>
