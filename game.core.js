@@ -47,8 +47,8 @@ var game_core = function(game_instance){
     this.ticks_per_sec = 1000/125
 
     if(this.debug) {
-	this.waiting_room_limit = 0.5 // set maximum waiting room time (in minutes)
-	this.round_length = 1; // set how long each round will last (in minutes)
+	this.waiting_room_limit = 0.1 // set maximum waiting room time (in minutes)
+	this.round_length = 0.1; // set how long each round will last (in minutes)
 	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
 	this.booting = false;
     } else {
@@ -62,8 +62,8 @@ var game_core = function(game_instance){
     this.game_length = this.round_length*60*this.ticks_per_sec;
 
     //The speed at which the clients move (e.g. # px/tick)
-    this.min_speed = 21 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
-    this.max_speed = 70 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
+    this.min_speed = 17 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
+    this.max_speed = 57 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
 
     // minimun wage per tick
     var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency))
@@ -449,38 +449,39 @@ game_core.prototype.update_physics = function() {
 	}
 	if(t % 1 == 0) {
             var local_game = this;
-            local_game.fs.open(this.noise_location+'t'+t+'.csv',
+	    var this_file = this.noise_location+'t'+t+'.csv'
+	    console.log(this_file)
+            local_game.fs.open(this_file,
 			       'r', function(err, fd) {
-				   local_game.fs.fstat(fd, function(err, stats) {
-				       var players = local_game.get_active_players()
-				       for (i=0; i < players.length; i++) {
-					   var p = players[i];
-					   var pos = null
-					   if(p)
-					       pos = p.player.pos;
-					   
-					   if(pos) {
-					       var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
-					       var buf = new Buffer(p.id.length + 4)
-					       buf.write(p.id)
-					       local_game.fs.read(fd, buf, p.id.length, 4, loc, 
-								  function(err, bytesRead, buffer) {
-								      var buf_string = buffer.toString('utf8')
-								      var pid = buf_string.slice(0,p.id.length)
-								      var val = buf_string.slice(p.id.length)
-								      if(err) 
-									  console.log('update_physics:' + err)
-								      else {
-									  var player = local_game.get_player(pid)
-									  if(player) {
-									      player.curr_background = 1 - val
-									  }
+				   var players = local_game.get_active_players()
+				   for (i=0; i < players.length; i++) {
+				       var p = players[i];
+				       var pos = null
+				       if(p)
+					   pos = p.player.pos;
+				       
+				       if(pos) {
+					   var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
+					   var buf = new Buffer(p.id.length + 4)
+					   buf.write(p.id)
+					   local_game.fs.read(fd, buf, p.id.length, 4, loc, 
+							      function(err, bytesRead, buffer) {
+								  var buf_string = buffer.toString('utf8')
+								  var pid = buf_string.slice(0,p.id.length)
+								  var val = buf_string.slice(p.id.length)
+								  if(err) 
+								      console.log('update_physics: ' + err + ' pos.x: ' + pos.x + ' pos.y: ' + pos.y + ' loc: ' + loc)
+								  else {
+								      var player = local_game.get_player(pid)
+								      if(player) {
+									  player.curr_background = 1 - val
 								      }
-								  });
-					   }
+								  }
+							      });
 				       }
-				       local_game.fs.close(fd, function(){})
-				   })
+				   }
+				   local_game.fs.close(fd, function(){})
+				   
 			       })
 	}
 	
