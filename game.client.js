@@ -79,7 +79,7 @@ client_onserverupdate_received = function(data){
                 } else {
                     var s_player = z[0].player
                     var l_player = z[1].player
-                    if(z[0].id != my_id | l_player.angle == null) 
+                    if(z[0].id != my_id || l_player.angle == null) 
 			l_player.angle = s_player.angle
                     l_player.curr_background = s_player.cbg
 		    l_player.total_points = s_player.tot
