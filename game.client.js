@@ -42,7 +42,7 @@ client_ondisconnect = function(data) {
     if(game.get_player(my_id).kicked) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
     } else if(game.get_player(my_id).inactive) {
-        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/inactive.html';
+        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + my_id;
     } else if(game.get_player(my_id).lagging) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + my_id;
     } else {
