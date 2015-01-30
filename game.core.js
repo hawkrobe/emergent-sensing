@@ -400,7 +400,7 @@ game_core.prototype.create_physics_simulation = function() {
 			}
 			if(p.player.inactive_count > local_game.ticks_per_sec*30) {  // kick after being inactive for 30 seconds
 			    if(local_game.booting) {
-				if(p.player.lag_count > local_game.game_clock*0.2) {
+				if(p.player.lag_count > local_game.game_clock*0.1) {
 				    p.player.lagging = true
 				    console.log('Player ' + p.id + ' will be disconnected because of latency.')
 				} else {
@@ -414,7 +414,7 @@ game_core.prototype.create_physics_simulation = function() {
 				p.player.lag_count += 1
 			    }
 			}
-			if(p.player.lag_count > local_game.game_length*0.2) {
+			if(p.player.lag_count > local_game.game_length*0.1) {
 			    p.player.lagging = true
 			    console.log('Player ' + p.id + ' will be disconnected because of latency.')
 			}
