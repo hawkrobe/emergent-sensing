@@ -22,6 +22,9 @@
 
 global.window = global.document = global;
 require('./game.core.js');
+utils = require('./utils.js');
+
+counter = 0
 
 // This is the function where the server parses and acts on messages
 // sent from 'clients' aka the browsers of people playing the
@@ -75,7 +78,7 @@ game_server.findGame = function(player) {
             if(!this.games.hasOwnProperty(gameid)) continue;
             var game = this.games[gameid];
             var gamecore = game.gamecore;
-            if(game.player_count < gamecore.players_threshold && !game.active) { 
+            if(game.player_count < gamecore.players_threshold && !game.active && !game.holding) { 
                joined_a_game = true;
                 // player instances are array of actual client handles
                 game.player_instances.push({
@@ -101,7 +104,7 @@ game_server.findGame = function(player) {
                 gamecore.update();
 		
                 if (game.player_count == gamecore.players_threshold) {
-                    this.startGame(game)
+                    this.holdGame(game)
                 }
             }
         }
@@ -118,15 +121,17 @@ game_server.findGame = function(player) {
 // Will run when first player connects
 game_server.createGame = function(player) {
     // Figure out variables
-    var thresholds = Array(1,1,2,2,2,2,4,4,8);
-    //var thresholds = Array(8,8);
+    var thresholds = Array(5,5);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
-    var noise_id = Math.floor(Math.random() * 4) + '-2en01'
+    //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
+    var noise_id = '5-1en01'
     var noise_location = '/home/rxdh/couzin_replication/light-fields/' + noise_id + '/'
 
     var d = new Date();
     var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
-    var id = start_time + '_' + players_threshold + '_' + noise_id + '_' + Math.floor(Math.random() * 1e12);
+    var id = utils.UUID();
+
+    var name = start_time + '_' + players_threshold + '_' + noise_id + '_' + id;
     
     //Create a new game instance
     var game = {
@@ -149,15 +154,15 @@ game_server.createGame = function(player) {
     game.gamecore.noise_location = noise_location
 
     // Set up the filesystem variable we'll use later, and write headers
+    var game_f = "data/waiting_games/" + name + ".csv"
+    var latency_f = "data/waiting_latencies/" + name + ".csv"
+    
     game.gamecore.fs = fs;
-    fs.writeFile("data/waiting_games/" +id+ ".csv", "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
-    game.gamecore.waitingDataStream = fs.createWriteStream("data/waiting_games/" +id+ ".csv", {'flags' : 'a'});
-    fs.writeFile("data/waiting_latencies/"+id+".csv", "pid,tick,latency\n", function (err) {if(err) throw err;})
-    game.gamecore.waitingLatencyStream = fs.createWriteStream("data/waiting_latencies/"+id+".csv", {'flags' : 'a'});
-    fs.writeFile("data/games/" +id+ ".csv", "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
-    game.gamecore.gameDataStream = fs.createWriteStream("data/games/" +id+ ".csv", {'flags' : 'a'});
-    fs.writeFile("data/latencies/"+id+".csv", "pid,tick,latency\n", function (err) {if(err) throw err;})
-    game.gamecore.latencyStream = fs.createWriteStream("data/latencies/"+id+".csv", {'flags' : 'a'});
+    
+    fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
+    game.gamecore.waitingDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
+    fs.writeFile(latency_f, "pid,tick,latency\n", function (err) {if(err) throw err;})
+    game.gamecore.waitingLatencyStream = fs.createWriteStream(latency_f, {'flags' : 'a'});
     
     // tell the player that they have joined a game
     // The client will parse this message in the "client_onMessage" function
@@ -172,10 +177,17 @@ game_server.createGame = function(player) {
     this.games[ game.id ] = game;
     this.game_count++;
     if(game.gamecore.players_threshold == 1) {
-	this.startGame(game)
+	this.holdGame(game)
     }
     
     var game_server = this
+
+    // schedule the game to stop receing new players
+    setTimeout(function() {
+	    if(!game.active) {
+		game_server.holdGame(game);
+	    }
+	}, game.gamecore.waiting_room_limit*60*1000*4/5.0)
 
     // schedule the game to start to prevent players from waiting too long
     setTimeout(function() {
@@ -220,10 +232,51 @@ game_server.endGame = function(gameid, userid) {
         this.log('that game was not found!');
     }   
 }; 
+
+// When the threshold is exceeded or time has passed, stop receiving new players and schedule game start
+game_server.holdGame = function(game) {
+    game.holding = true;
+    setTimeout(function() {
+	if(!game.active) {
+	    game_server.startGame(game);
+	}
+    }, game.gamecore.waiting_room_limit*60*1000/5.0)
+};
     
 // When the threshold is exceeded, this gets called
 game_server.startGame = function(game) {
+
     game.active = true;
+    
+    if(game.player_count == 5) { 
+	var noises = Array(1,2);
+	var noise_id = (counter % 2) + 1 + '-1en01'
+	counter += 1
+    } else if(game.player_count == 4) {
+	var noise_id = '0-1en01'
+    } else if(game.player_count == 3) {
+	var noise_id = '3-1en01'
+    } else {
+	var noise_id = Math.floor(Math.random() * 4) + '-1en01'
+    }
+    var noise_location = '/home/rxdh/couzin_replication/light-fields/' + noise_id + '/'
+    game.gamecore.noise_location = noise_location
+
+    var d = new Date();
+    var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
+    
+    var name = start_time + '_' + game.player_count + '_' + noise_id + '_' + game.id;
+    
+    var game_f = "data/games/" + name + ".csv"
+    var latency_f = "data/latencies/" + name + ".csv"
+    
+    fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
+    game.gamecore.gameDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
+    fs.writeFile(latency_f, "pid,tick,latency\n", function (err) {if(err) throw err;})
+    game.gamecore.latencyStream = fs.createWriteStream(latency_f, {'flags' : 'a'});
+
+    console.log('game ' + game.id + ' starting with ' + game.player_count + ' players...')
+    
     game.gamecore.server_newgame(); 
 };
 

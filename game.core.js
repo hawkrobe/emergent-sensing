@@ -47,8 +47,8 @@ var game_core = function(game_instance){
     this.ticks_per_sec = 1000/125
 
     if(this.debug) {
-	this.waiting_room_limit = 0.1 // set maximum waiting room time (in minutes)
-	this.round_length = 0.1; // set how long each round will last (in minutes)
+	this.waiting_room_limit = 0.5 // set maximum waiting room time (in minutes)
+	this.round_length = 0.5; // set how long each round will last (in minutes)
 	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
 	this.booting = false;
     } else {
@@ -311,11 +311,7 @@ game_core.prototype.server_newgame = function() {
     }, 3000);
 };
 
-/*
-  The following code should NOT need to be changed
-*/
-
-//Main update loop -- don't worry about it
+//Main update loop
 game_core.prototype.update = function() {
     //Update the game specifics
     if(!this.server) 

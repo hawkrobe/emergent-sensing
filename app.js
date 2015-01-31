@@ -22,6 +22,7 @@ if (use_db) {
 }
 
 game_server = require('./game.server.js');
+utils = require('./utils.js');
 
 global_player_set = {}
 
@@ -60,7 +61,7 @@ io.on('connection', function (client) {
 	    global_player_set[query.id] = true
 	    var id = query.id; // use id from query string if exists
 	} else {
-	    var id = UUID();
+	    var id = utils.UUID();
 	}
 	if(valid_id(id)) {
 	    console.log("user connecting...")
@@ -71,15 +72,6 @@ io.on('connection', function (client) {
 
 var valid_id = function(id) {
     return id.length == 41;
-}
-
-var UUID = function() {
-    var name = Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10);
-      var id = name + '-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-	  var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-	  return v.toString(16);
-      });
-    return id;
 }
 
 var initialize = function(query, client, id) {                        
