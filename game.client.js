@@ -145,7 +145,7 @@ client_onMessage = function(data) {
 // Restarts things on the client side. Necessary for iterated games.
 client_newgame = function() {
     // Initiate countdown (with timeouts)
-    game.get_player(my_id).angle = null;
+    //game.get_player(my_id).angle = null;
     started = true;
     client_countdown();
 }; 
