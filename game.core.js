@@ -26,7 +26,7 @@ if( typeof _ === 'undefined' ) {
 
 var game_core = function(game_instance){
 
-    this.debug = false
+    this.debug = true
 
     // Define some variables specific to our game to avoid
     // 'magic numbers' elsewhere
@@ -47,10 +47,10 @@ var game_core = function(game_instance){
     this.ticks_per_sec = 1000/125
 
     if(this.debug) {
-	this.waiting_room_limit = 0.5 // set maximum waiting room time (in minutes)
-	this.round_length = 0.5; // set how long each round will last (in minutes)
+	this.waiting_room_limit = 0.25; // set maximum waiting room time (in minutes)
+	this.round_length = 1; // set how long each round will last (in minutes)
 	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
-	this.booting = false;
+	this.booting = true;
     } else {
 	this.waiting_room_limit = 5 // set maximum waiting room time (in minutes)
 	this.round_length = 6 // set how long each round will last (in minutes)
@@ -432,7 +432,7 @@ game_core.prototype.create_physics_simulation = function() {
 	local_game.game_clock += 1;
 	
 	var local_game = this;
-	if(this.server && this.game_started && this.game_clock == this.game_length) {
+	if(this.server && this.game_started && this.game_clock >= this.game_length) {
 	    local_game.stop_update()
 	    _.map(local_game.get_active_players(), function(p){
 		p.player.instance.disconnect()})

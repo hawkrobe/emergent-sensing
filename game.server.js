@@ -24,7 +24,9 @@ global.window = global.document = global;
 require('./game.core.js');
 utils = require('./utils.js');
 
-counter = 0
+var five_counter = 0
+var four_counter = 0
+var three_counter = 0
 
 // This is the function where the server parses and acts on messages
 // sent from 'clients' aka the browsers of people playing the
@@ -249,13 +251,18 @@ game_server.startGame = function(game) {
     game.active = true;
     
     if(game.player_count == 5) { 
-	var noises = Array(1,2);
-	var noise_id = (counter % 2) + 1 + '-1en01'
-	counter += 1
+	var noise_id = (five_counter % 2) + 1 + '-1en01'
+	five_counter += 1
     } else if(game.player_count == 4) {
-	var noise_id = '0-1en01'
+	if(four_counter % 2 == 0) {
+	    var noise_id = '0-1en01'
+	} else {
+	    var noise_id = '3-1en01'
+	}
+	four_counter += 1
     } else if(game.player_count == 3) {
-	var noise_id = '3-1en01'
+	var noise_id = (three_counter % 2) + 2 + '-1en01'
+	three_counter += 1
     } else {
 	var noise_id = Math.floor(Math.random() * 4) + '-1en01'
     }
