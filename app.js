@@ -9,7 +9,7 @@
 
 var 
     use_db          = false,
-    gameport        = 8888,
+    gameport        = 8000,
     app             = require('express')(),
     server          = app.listen(gameport),
     io              = require('socket.io')(server),

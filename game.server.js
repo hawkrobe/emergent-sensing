@@ -123,14 +123,14 @@ game_server.findGame = function(player) {
 // Will run when first player connects
 game_server.createGame = function(player) {
     // Figure out variables
-    var thresholds = Array(5,5);
+    var thresholds = Array(3,3);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
-    var noise_id = '5-1en01'
-    var noise_location = '/home/rxdh/couzin_replication/light-fields/' + noise_id + '/'
+    var noise_id = '0-1en01'
+    var noise_location = '/home/pkrafft/couzin_copy/light-fields/' + noise_id + '/'
 
     var d = new Date();
-    var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
+    var start_time = d.getFullYear() + '-' + (parseInt(d.getMonth()) + 1) + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
     var id = utils.UUID();
 
     var name = start_time + '_' + players_threshold + '_' + noise_id + '_' + id;
@@ -242,7 +242,7 @@ game_server.holdGame = function(game) {
 	if(!game.active) {
 	    game_server.startGame(game);
 	}
-    }, game.gamecore.waiting_room_limit*60*1000/5.0)
+    }, 0.0) // game.gamecore.waiting_room_limit*60*1000/5.0)
 };
     
 // When the threshold is exceeded, this gets called
@@ -266,7 +266,8 @@ game_server.startGame = function(game) {
     } else {
 	var noise_id = Math.floor(Math.random() * 4) + '-1en01'
     }
-    var noise_location = '/home/rxdh/couzin_replication/light-fields/' + noise_id + '/'
+    var noise_id = '0-1en01'
+    var noise_location = '/home/pkrafft/couzin_copy/light-fields/' + noise_id + '/'
     game.gamecore.noise_location = noise_location
 
     var d = new Date();

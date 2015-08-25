@@ -26,7 +26,7 @@ if( typeof _ === 'undefined' ) {
 
 var game_core = function(game_instance){
 
-    this.debug = true
+    this.debug = false
 
     // Define some variables specific to our game to avoid
     // 'magic numbers' elsewhere
@@ -55,7 +55,7 @@ var game_core = function(game_instance){
 	this.waiting_room_limit = 5 // set maximum waiting room time (in minutes)
 	this.round_length = 6 // set how long each round will last (in minutes)
 	this.max_bonus = 1.25; // total $ players can make in bonuses 
-	this.booting = true;
+	this.booting = false;
     }
 
     // game and waiting length in seconds
