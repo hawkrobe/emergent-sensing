@@ -20,6 +20,7 @@ var has_require = typeof require !== 'undefined';
 if( typeof _ === 'undefined' ) {
   if( has_require ) {
     _ = require('underscore')
+    fs = require("fs");
   }
   else throw new Error('mymodule requires underscore, see http://underscorejs.org');
 }
@@ -79,13 +80,20 @@ var game_core = function(game_instance){
   if(this.server) {
     this.players = [{
       id: this.instance.player_instances[0].id, 
-      player: new game_player(this,this.instance.player_instances[0].player)
+      player: new game_player(this,this.instance.player_instances[0].player,false)
     }];
+    input = fs.readFileSync('../metadata/spot-spot-far-bots.csv', 'utf8') // TODO: randomly assign to appropriate condition
+    var lines = input.toString().split('\n');
+    this.bots = [];
+    for (var i = 0; i < lines.length; i++) {
+      this.bots.push(lines[i].toString().split(','));
+    }
   } else {
     this.players = [{
       id: null, 
-      player: new game_player(this)
+      player: new game_player(this,null,false)
     }];
+    this.bots = null
   }
 
   //Start a physics loop, this is separate to the rendering
@@ -99,10 +107,11 @@ var game_core = function(game_instance){
  as well as to draw that state when required.
  */
 
-var game_player = function( game_instance, player_instance) {
+var game_player = function( game_instance, player_instance, bot) {
   //Store the instance, if any
   this.instance = player_instance;
   this.game = game_instance;
+  this.bot = bot
 
   //Set up initial values for our state information
   this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
@@ -171,7 +180,17 @@ game_core.prototype.get_others = function(id) {
 // Method to get whole list of players
 game_core.prototype.get_active_players = function() {
   return _.without(_.map(this.players, function(p){
+    return p.player && !p.player.bot ? p : null}), null)
+};
+
+game_core.prototype.get_active_players_and_bots = function() {
+  return _.without(_.map(this.players, function(p){
     return p.player ? p : null}), null)
+};
+
+game_core.prototype.get_bots = function() {
+  return _.without(_.map(this.players, function(p){
+    return p.player.bot ? p : null}), null)
 };
 
 // Takes two location objects and computes the distance between them
@@ -262,6 +281,22 @@ game_core.prototype.server_update_physics = function() {
   });
 };
 
+game_core.prototype.update_bots = function() {
+  var local_this = this;
+  _.forEach(this.get_bots(), function(p){
+    var player = p.player;
+    
+    var x = local_this.bots[local_this.game_clock + 1][3]
+    var y = local_this.bots[local_this.game_clock + 1][4]
+    var angle = local_this.bots[local_this.game_clock + 1][6]
+    
+    player.pos = {x:x,y:y}
+    player.angle = angle;
+    player.game.check_collision( player );
+  });
+};
+
+
 game_core.prototype.distance_between = function(obj1, obj2) {
   var x1 = obj1.x;
   var x2 = obj2.x;
@@ -275,7 +310,7 @@ game_core.prototype.distance_between = function(obj1, obj2) {
 // can analyze the data to an arbitrary precision later on.
 game_core.prototype.writeData = function() {
   var local_game = this;
-  _.map(local_game.get_active_players(), function(p) {
+  _.map(local_game.get_active_players_and_bots(), function(p) {
     var player_angle = p.player.angle;
     if (player_angle < 0) 
       player_angle = parseInt(player_angle, 10) + 360;
@@ -362,6 +397,7 @@ game_core.prototype.create_physics_simulation = function() {
 
     if (this.server){
       this.update_physics();
+      this.update_bots();
     }
     
     var local_game = this; // need a new local game w/ game clock change

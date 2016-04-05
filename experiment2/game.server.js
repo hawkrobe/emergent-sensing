@@ -14,7 +14,7 @@
         use_db      = false,
         game_server = module.exports = { games : {}, game_count:0, assignment:0},
         fs          = require('fs');
-	    
+
     if (use_db) {
 	    database    = require(__dirname + "/database"),
 	    connection  = database.getConnection();
@@ -78,16 +78,16 @@ game_server.findGame = function(player) {
       var gamecore = game.gamecore;
       if(game.player_count < gamecore.players_threshold && !game.active && !game.holding) { 
         joined_a_game = true;
+        game.player_count++;
         // player instances are array of actual client handles
         game.player_instances.push({
           id: player.userid, 
           player: player
         });
-        game.player_count++;
         // players are array of player objects
         game.gamecore.players.push({
           id: player.userid, 
-          player: new game_player(gamecore,player)
+          player: new game_player(gamecore,player,false)
         });
         // Attach game to player so server can look at it later
         player.game = game;
@@ -119,7 +119,7 @@ game_server.findGame = function(player) {
 // Will run when first player connects
 game_server.createGame = function(player) {
   // Figure out variables
-  var thresholds = Array(3,3);
+  var thresholds = Array(1,1);
   var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
   //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
   var noise_id = '0-1en01'
@@ -150,6 +150,19 @@ game_server.createGame = function(player) {
   game.gamecore.players_threshold = players_threshold
   game.gamecore.player_count = 1
   game.gamecore.noise_location = noise_location
+
+  for (i = 0; i < 4; i++) { 
+    game.player_count++;
+    var pid = utils.UUID();
+    game.player_instances.push({
+      id: pid, 
+      player: 'bot'
+    });
+    game.gamecore.players.push({
+      id: id, 
+      player: new game_player(game.gamecore, 'bot', true)
+    });
+  }
 
   // Set up the filesystem variable we'll use later, and write headers
   var game_f = "data/waiting_games/" + name + ".csv"

@@ -143,7 +143,7 @@ function client_onMessage(data) {
       client_onjoingame(num_players); break;
     case 'add_player' : // New player joined... Need to add them to our list.
       console.log("adding player" + commanddata)
-      game.players.push({id: commanddata, player: new game_player(game)}); break;
+      game.players.push({id: commanddata, player: new game_player(game,null,false)}); break;
     case 'begin_game' :
       client_newgame(); break;
     case 'blink' : //blink title
@@ -385,7 +385,7 @@ function client_onconnected(data) {
 
 function client_onjoingame(num_players) {
   // Need client to know how many players there are, so they can set up the appropriate data structure
-  _.map(_.range(num_players - 1), function(i){game.players.unshift({id: null, player: new game_player(game)})});
+  _.map(_.range(num_players - 1), function(i){game.players.unshift({id: null, player: new game_player(game,null,false)})});
   // Set self color, leave others default white
   game.get_player(my_id).color = game.self_color;
   // Start 'em moving
