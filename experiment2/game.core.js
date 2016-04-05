@@ -287,9 +287,9 @@ game_core.prototype.update_bots = function() {
   _.forEach(this.get_bots(), function(p){
     var player = p.player;
     
-    var x = local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][3]
-    var y = local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][4]
-    var angle = local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][6]
+    var x = parseFloat(local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][3])
+    var y = parseFloat(local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][4])
+    var angle = parseFloat(local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][6])
     
     player.pos = {x:x,y:y}
     player.angle = angle;

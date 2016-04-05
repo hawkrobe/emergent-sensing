@@ -159,7 +159,7 @@ game_server.createGame = function(player) {
       player: 'bot'
     });
     game.gamecore.players.push({
-      id: id, 
+      id: pid, 
       player: new game_player(game.gamecore, 'bot', true, i)
     });
   }
