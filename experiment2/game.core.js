@@ -107,11 +107,12 @@ var game_core = function(game_instance){
  as well as to draw that state when required.
  */
 
-var game_player = function( game_instance, player_instance, bot) {
+var game_player = function( game_instance, player_instance, bot, index) {
   //Store the instance, if any
   this.instance = player_instance;
   this.game = game_instance;
   this.bot = bot
+  this.index = index
 
   //Set up initial values for our state information
   this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
@@ -286,9 +287,9 @@ game_core.prototype.update_bots = function() {
   _.forEach(this.get_bots(), function(p){
     var player = p.player;
     
-    var x = local_this.bots[local_this.game_clock + 1][3]
-    var y = local_this.bots[local_this.game_clock + 1][4]
-    var angle = local_this.bots[local_this.game_clock + 1][6]
+    var x = local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][3]
+    var y = local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][4]
+    var angle = local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][6]
     
     player.pos = {x:x,y:y}
     player.angle = angle;
