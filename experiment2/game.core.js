@@ -19,27 +19,15 @@ var has_require = typeof require !== 'undefined';
 
 if( typeof _ === 'undefined' ) {
   if( has_require ) {
-    _ = require('underscore')
-    fs = require("fs");
+    var _ = require('underscore');
+    var fs = require("fs");
   }
   else throw new Error('mymodule requires underscore, see http://underscorejs.org');
 }
 
-var game_core = function(game_instance){
-
-  this.debug = false;
-
-  // Define some variables specific to our game to avoid
-  // 'magic numbers' elsewhere
-  this.self_color = '#2288cc';
-  this.other_color = 'white';
+var game_core = function(options){
+  this.server = options.server;
   
-  //Store the instance, if any (passed from game.server.js)
-  this.instance = game_instance;
-
-  //Store a flag if we are the server instance
-  this.server = this.instance !== undefined;
-
   //Dimensions of world -- Used in collision detection, etc.
   this.world = {width : 485, height : 280};  // 160cm * 3
 
@@ -65,6 +53,8 @@ var game_core = function(game_instance){
   //The speed at which the clients move (e.g. # px/tick)
   this.min_speed = 17 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
   this.max_speed = 57 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
+  this.self_color = '#2288cc';
+  this.other_color = 'white';
 
   // minimun wage per tick
   var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency));
@@ -78,27 +68,21 @@ var game_core = function(game_instance){
   //instances of both players, but the server has more information
   //about who is who. Clients will be given this info later.
   if(this.server) {
+    this.id = options.id;
+    this.expName = options.expName;
+    this.player_count = options.player_count;
     this.players = [{
-      id: this.instance.player_instances[0].id, 
-      player: new game_player(this,this.instance.player_instances[0].player,false)
+      id: options.player_instances[0].id,
+      instance: options.player_instances[0].player,
+      player: new game_player(this,options.player_instances[0].player,false)
     }];
-    input = fs.readFileSync('../metadata/spot-spot-far-bots.csv', 'utf8') // TODO: randomly assign to appropriate condition
-    var lines = input.toString().split('\n');
-    this.bots = [];
-    for (var i = 0; i < lines.length; i++) {
-      this.bots.push(lines[i].toString().split(','));
-    }
+    this.addBots(options.numBots);
+    this.server_send_update();
   } else {
-    this.players = [{
-      id: null, 
-      player: new game_player(this,null,false)
-    }];
-    this.bots = null
+    // Have to create a client-side player array of same length as server-side
+    this.players = this.initializeClientPlayers(options.numBots);
   }
 
-  //Start a physics loop, this is separate to the rendering
-  //as this happens at a fixed frequency. Capture the id so
-  //we can shut it down at end.
   this.physics_interval_id = this.create_physics_simulation();
 }; 
 
@@ -111,8 +95,11 @@ var game_player = function( game_instance, player_instance, bot, index) {
   //Store the instance, if any
   this.instance = player_instance;
   this.game = game_instance;
-  this.bot = bot
-  this.index = index
+  this.bot = bot;
+  if(bot) {
+    this.index = index;
+    this.movementInfo = this.game.getBotInfo(index);
+  };
 
   //Set up initial values for our state information
   this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
@@ -166,16 +153,48 @@ if('undefined' != typeof global) {
 
 // HELPER FUNCTIONS
 
+game_core.prototype.initializeClientPlayers = function(numBots) {
+  var players = [];
+  for (var i = 0; i < numBots + 1; i++) {
+    players.push({
+      id: null,
+      instance: null,
+      player: new game_player(this,null,false)
+    });
+  }
+  return players;
+};
+
+game_core.prototype.addBots = function(numBots) {
+  for (var i = 0; i < numBots; i++) { 
+    this.player_count++;
+    var pid = utils.UUID();
+    this.players.push({
+      id: pid,
+      instance : 'bot',
+      player: new game_player(this, 'bot', true, i)
+    });
+  }
+};
+
+game_core.prototype.getBotInfo = function(index) {
+  // TODO: randomly assign to appropriate condition  
+  var botInput = utils.readCSV('../metadata/spot-spot-far-bots.csv');
+  return _.filter(botInput, function(line) {
+    return parseInt(line.pid) === index;
+  });
+};
+
 // Method to easily look up player 
 game_core.prototype.get_player = function(id) {
   var result = _.find(this.players, function(e){ return e.id == id; });
-  return result.player
+  return result.player;
 };
 
 // Method to get list of players that aren't the given id
 game_core.prototype.get_others = function(id) {
-  return _.without(_.map(_.filter(this.players, function(e){return e.id != id}), 
-			 function(p){return p.player ? p : null}), null)
+  return _.without(_.map(_.filter(this.players, function(e){return e.id != id;}), 
+			 function(p){return p.player ? p : null;}), null);
 };
 
 // Method to get whole list of players
@@ -215,11 +234,9 @@ game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y
 // Notifies clients of changes on the server side. Server totally
 // handles position and points.
 game_core.prototype.server_send_update = function(){
-  //Make a snapshot of the current state, for updating the clients
-  var local_game = this;
-  
+
   // Add info about all players
-  var player_packet = _.map(local_game.players, function(p){
+  var player_packet = _.map(this.players, function(p){
     if(p.player){
       return {id: p.id,
               player: {
@@ -232,15 +249,15 @@ game_core.prototype.server_send_update = function(){
 		onwall: p.player.onwall,
 		kicked: p.player.kicked,
 		inactive: p.player.inactive,
-		lagging: p.player.lagging}}
+		lagging: p.player.lagging}};
     } else {
       return {id: p.id,
-              player: null}
+              player: null};
     }
-  })
+  });
   if(this.game_started) {
     var state = {
-      gs : this.game_started,                      // true when game's started
+      gs : this.game_started                      // true when game's started
     };
   } else {
     var state = {
@@ -250,12 +267,13 @@ game_core.prototype.server_send_update = function(){
       wr : new Date() - this.waiting_start
     };
   }
-  _.extend(state, {players: player_packet})
+  _.extend(state, {players: player_packet});
   
   //Send the snapshot to the players
   this.state = state;
-  _.map(local_game.get_active_players(), function(p){
-    p.player.instance.emit( 'onserverupdate', state)})
+  _.map(this.get_active_players(), function(p){
+    p.player.instance.emit( 'onserverupdate', state);
+  });
 };
 
 // This is called every few ms and simulates the world state. This is
@@ -283,15 +301,13 @@ game_core.prototype.server_update_physics = function() {
 };
 
 game_core.prototype.update_bots = function() {
-  var local_this = this;
+  var stepNum = this.game_clock + 1;
   _.forEach(this.get_bots(), function(p){
     var player = p.player;
-    
-    var x = parseFloat(local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][3])
-    var y = parseFloat(local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][4])
-    var angle = parseFloat(local_this.bots[local_this.game_clock*5 + 1 + (player.index + 1)][6])
-    
-    player.pos = {x:x,y:y}
+    var x = parseFloat(player.movementInfo[stepNum]["x_pos"]);
+    var y = parseFloat(player.movementInfo[stepNum]["y_pos"]);
+    var angle = parseFloat(player.movementInfo[stepNum]["angle"]);
+    player.pos = {x:x,y:y};
     player.angle = angle;
     player.game.check_collision( player );
   });
@@ -325,39 +341,27 @@ game_core.prototype.writeData = function() {
     line += player_angle +',';
     line += p.player.curr_background +',';
     line += p.player.total_points.fixed(2) ;
-    if(local_game.game_started) {
-      local_game.gameDataStream.write(String(line) + "\n",
-				      function (err) {if(err) throw err;});
-    } else {
-      local_game.waitingDataStream.write(String(line) + "\n",
-					 function (err) {if(err) throw err;});
-    }
-  })
+    // if(local_game.game_started) {
+    //   local_game.gameDataStream.write(String(line) + "\n",
+    // 				      function (err) {if(err) throw err;});
+    // } else {
+    //   local_game.waitingDataStream.write(String(line) + "\n",
+    // 					 function (err) {if(err) throw err;});
+    // }
+  });
 };
 
-// This is a really important function -- it gets called when a round
-// has been completed, and updates the database with how much money
-// people have made so far. This way, if somebody gets disconnected or
-// something, we'll still know what to pay them.
 game_core.prototype.server_newgame = function() {
   var local_gamecore = this;
   
-  // Don't want players moving during countdown
-  //_.map(local_gamecore.get_active_players(), function(p) {p.player.speed = 0;})
-  
-  //Reset positions
-  //this.server_reset_positions();
-
-  //Tell clients about it so they can call their newgame procedure (which does countdown)
   _.map(local_gamecore.get_active_players(), function(p) {
-    p.player.instance.send('s.begin_game.')})
+    p.player.instance.send('s.begin_game.');
+  });
 
   // Launch game after countdown;
   setTimeout(function(){
     local_gamecore.game_started = true;
     local_gamecore.game_clock = 0;
-    //        _.map(local_gamecore.get_active_players(), function(p) {
-    //	    p.player.speed = local_gamecore.min_speed});
   }, 3000);
 };
 
@@ -366,7 +370,7 @@ game_core.prototype.update = function() {
   //Update the game specifics
   if(!this.server) 
     client_update();
-  
+
   //schedule the next update
   this.updateid = window.requestAnimationFrame(this.update.bind(this), 
                                                this.viewport);
@@ -395,7 +399,6 @@ game_core.prototype.stop_update = function() {
 game_core.prototype.create_physics_simulation = function() {    
   return setInterval(function(){
     // finish this interval by writing and checking whether it's the end
-
     if (this.server){
       this.update_physics();
       this.update_bots();
@@ -403,12 +406,12 @@ game_core.prototype.create_physics_simulation = function() {
     
     var local_game = this; // need a new local game w/ game clock change
     if(this.server) {
-      var active_players = local_game.get_active_players()
+      var active_players = local_game.get_active_players();
       for(i=0;i<active_players.length;i++) {
-	var p = active_players[i]
+	var p = active_players[i];
 	// ping players to estimate latencies
 	p.player.instance.emit('ping', {sendTime : Date.now(),
-					tick_num: local_game.game_clock})
+					tick_num: local_game.game_clock});
 	// compute scores
 	if(p.player) {
 
@@ -469,12 +472,7 @@ game_core.prototype.create_physics_simulation = function() {
 	}
       }
     }
-    // If you're a player, tell the server about your angle only every 125ms
-    // if(!this.server){
-    //   if(game.get_player(my_id).angle) {
-    // 	this.socket.send('a.' + this.get_player(my_id).angle)
-    //   }
-    // }
+
     if (this.server){
       this.server_send_update();
       this.writeData();
@@ -482,14 +480,12 @@ game_core.prototype.create_physics_simulation = function() {
     
     local_game.game_clock += 1;
     
-    var local_game = this;
     if(this.server && this.game_started && this.game_clock >= this.game_length) {
-      local_game.stop_update()
-      _.map(local_game.get_active_players(), function(p){
-	p.player.instance.disconnect()})
+      this.stop_update();
+      _.map(this.get_active_players(), function(p){
+	p.player.instance.disconnect();
+      });
     }
-    
-
   }.bind(this), this.tick_frequency);
 };
 

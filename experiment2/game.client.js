@@ -33,7 +33,6 @@ function client_on_click(game, newX, newY ) {
   var dx = newX - oldX;
   var dy = newY - oldY;
 
-  console.log("clicked at loc " + newX + ", " + newY);
   self.destination = {x : Math.round(newX), y : Math.round(newY)};
   self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
 
@@ -43,10 +42,9 @@ function client_on_click(game, newX, newY ) {
   game.socket.send(info_packet);
 };
 
-
 function client_ondisconnect(data) {
   // Redirect to exit survey
-  console.log("server booted")
+  console.log("server booted");
   if(game.get_player(my_id).kicked) {
     var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
   } else if(game.get_player(my_id).inactive) {
@@ -60,24 +58,11 @@ function client_ondisconnect(data) {
 };
 
 
-/* 
- Note: If you add some new variable to your game that must be shared
- across server and client, add it both here and the server_send_update
- function in game.core.js to make sure it syncs 
-
- Explanation: This function is at the center of the problem of
- networking -- everybody has different INSTANCES of the game. The
- server has its own, and both players have theirs too. This can get
- confusing because the server will update a variable, and the variable
- of the same name won't change in the clients (because they have a
- different instance of it). To make sure everybody's on the same page,
- the server regularly sends news about its variables to the clients so
- that they can update their variables to reflect changes.
- */
 function client_onserverupdate_received(data){
 
   // Update client versions of variables with data received from
   // server_send_update function in game.core.js
+  console.log(data);
   if(data.players) {
     _.forEach(_.zip(data.players, game.players), function(z){
       z[1].id = z[0].id;
@@ -87,16 +72,16 @@ function client_onserverupdate_received(data){
         var s_player = z[0].player;
         var l_player = z[1].player;
         if(z[0].id != my_id || l_player.angle == null) {
-	  l_player.angle = s_player.angle;
-	}
-	if(l_player.destination == null) {
-	  l_player.destination = s_player.destination;
-	}
+    	  l_player.angle = s_player.angle;
+    	}
+    	if(l_player.destination == null) {
+    	  l_player.destination = s_player.destination;
+    	}
         l_player.curr_background = s_player.cbg;
-	l_player.total_points = s_player.tot;
+    	l_player.total_points = s_player.tot;
         l_player.pos = game.pos(s_player.pos);
         l_player.speed = s_player.speed;
-	l_player.onwall = s_player.onwall;
+    	l_player.onwall = s_player.onwall;
         l_player.kicked = s_player.kicked;
         l_player.inactive = s_player.inactive;
         l_player.lagging = s_player.lagging;
@@ -291,7 +276,7 @@ var getColorForPercentage = function(pct) {
 // drawing canvases, and initiate a game instance.
 window.onload = function(){
   //Create our game client instance.
-  game = new game_core();
+  game = new game_core({server: false, numBots : 4});
   
   //Connect to the socket.io server!
   client_connect_to_server(game);
@@ -303,29 +288,6 @@ window.onload = function(){
   game.viewport.width = game.world.width;
   game.viewport.height = game.world.height;
 
-  // Keep track of which keys are being pressed. Keys fire continuously while held.
-  // KeyboardJS.on('left', 
-  // 	function(){ // Only notify on FIRST press
-  // 	    if(!_.contains(active_keys, 'left')) {
-  // 		active_keys.push('left');
-  // 	    }
-  // 	},
-  // 	function(){ // Only notify on first release
-  // 	    if(_.contains(active_keys, 'left')) {
-  // 		game.socket.send('a.' + game.get_player(my_id).angle)
-  // 	    }
-  // 	    active_keys = _.without(active_keys, 'left');});
-  // KeyboardJS.on('right', 
-  //     function(){ // Only notify on first press
-  // 	    if(!_.contains(active_keys, 'right')) {
-  // 		active_keys.push('right');
-  // 	    }
-  // 	}, 
-  //     function(){ // Only notify on first release
-  // 	    if(_.contains(active_keys, 'right')) {
-  // 		game.socket.send('a.' + game.get_player(my_id).angle)
-  // 	    }
-  // 	    active_keys = _.without(active_keys, 'right');})
   $('#viewport').click(function(e){
     e.preventDefault();
     // e.pageX is relative to whole page -- we want
@@ -362,8 +324,9 @@ function client_connect_to_server(game) {
     //        game.state = 'connecting';
   }.bind(game));
 
-  game.socket.on('ping', function(data){
-    game.socket.send('pong.' + data.sendTime + "." + data.tick_num)})
+  // game.socket.on('ping', function(data){
+  //   game.socket.send('pong.' + data.sendTime + "." + data.tick_num);
+  // });
   //Sent when we are disconnected (network, server down, etc)
   game.socket.on('disconnect', client_ondisconnect.bind(game));
   //Sent each tick of the server simulation. This is our authoritive update
@@ -377,15 +340,16 @@ function client_connect_to_server(game) {
 function client_onconnected(data) {
   //The server responded that we are now in a game,
   //this lets us store the information about ourselves  
-  // so that we remember who we are.  
+  // so that we remember who we are.
+  console.log("setting id to " + data.id);
   my_id = data.id;
   game.players[0].id = my_id;
   game.get_player(my_id).online = true;
 };
 
 function client_onjoingame(num_players) {
-  // Need client to know how many players there are, so they can set up the appropriate data structure
-  _.map(_.range(num_players - 1), function(i){game.players.unshift({id: null, player: new game_player(game,null,false)})});
+  console.log(game.players);
+  console.log(my_id);
   // Set self color, leave others default white
   game.get_player(my_id).color = game.self_color;
   // Start 'em moving
