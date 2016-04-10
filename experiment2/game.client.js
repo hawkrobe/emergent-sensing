@@ -14,9 +14,7 @@
 */
 
 // A window global for our game root variable.
-var game = {};
-// A window global for our id, which we can use to look ourselves up
-var my_id = null;
+var globalGame = {};
 // Keeps track of whether player is paying attention...
 var visible;
 var active_keys = []; 
@@ -24,10 +22,14 @@ var speed_change = "none";
 var started = false;
 var ending = false;
 
+function getSelf () {
+  return globalGame.get_player(globalGame.my_id);
+};
+
 function client_on_click(game, newX, newY ) {
   // Auto-correcting input, but only between rounds
 
-  var self = game.get_player(my_id);
+  var self = getSelf();
   var oldX = self.pos.x;
   var oldY = self.pos.y;
   var dx = newX - oldX;
@@ -45,33 +47,33 @@ function client_on_click(game, newX, newY ) {
 function client_ondisconnect(data) {
   // Redirect to exit survey
   console.log("server booted");
-  if(game.get_player(my_id).kicked) {
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
-  } else if(game.get_player(my_id).inactive) {
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + my_id;
-  } else if(game.get_player(my_id).lagging) {
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + my_id;
+  var self = getSelf();
+  var URL;
+  if(self.kicked) {
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
+  } else if(self.inactive) {
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + self.id;
+  } else if(self.lagging) {
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + self.id;
   } else {
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + self.id;
   }
   window.location.replace(URL);
 };
 
 
 function client_onserverupdate_received(data){
-
   // Update client versions of variables with data received from
   // server_send_update function in game.core.js
-  console.log(data);
   if(data.players) {
-    _.forEach(_.zip(data.players, game.players), function(z){
+    _.forEach(_.zip(data.players, globalGame.players), function(z){
       z[1].id = z[0].id;
       if (z[0].player == null) {
         z[1].player = null;
       } else {
         var s_player = z[0].player;
         var l_player = z[1].player;
-        if(z[0].id != my_id || l_player.angle == null) {
+        if(z[0].id != globalGame.my_id || l_player.angle == null) {
     	  l_player.angle = s_player.angle;
     	}
     	if(l_player.destination == null) {
@@ -79,7 +81,7 @@ function client_onserverupdate_received(data){
     	}
         l_player.curr_background = s_player.cbg;
     	l_player.total_points = s_player.tot;
-        l_player.pos = game.pos(s_player.pos);
+        l_player.pos = globalGame.pos(s_player.pos);
         l_player.speed = s_player.speed;
     	l_player.onwall = s_player.onwall;
         l_player.kicked = s_player.kicked;
@@ -89,10 +91,10 @@ function client_onserverupdate_received(data){
     });
   }
   
-  game.game_started = data.gs;
-  game.players_threshold = data.pt;
-  game.player_count = data.pc;
-  game.waiting_remaining = data.wr;
+  globalGame.game_started = data.gs;
+  globalGame.players_threshold = data.pt;
+  globalGame.player_count = data.pc;
+  globalGame.waiting_remaining = data.wr;
 
 }; 
 
@@ -117,8 +119,8 @@ function client_onMessage(data) {
     switch(subcommand) {    
     case 'end' :
       // Redirect to exit survey
-      console.log("received end message...")
-      var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+      console.log("received end message...");
+      var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
       window.location.replace(URL); break;
     case 'alert' : // Not in database, so you can't play...
       alert('You did not enter an ID'); 
@@ -127,8 +129,8 @@ function client_onMessage(data) {
       var num_players = commanddata;
       client_onjoingame(num_players); break;
     case 'add_player' : // New player joined... Need to add them to our list.
-      console.log("adding player" + commanddata)
-      game.players.push({id: commanddata, player: new game_player(game,null,false)}); break;
+      console.log("adding player" + commanddata);
+      this.players.push({id: commanddata, player: new game_player(this,null,false)}); break;
     case 'begin_game' :
       client_newgame(); break;
     case 'blink' : //blink title
@@ -140,63 +142,54 @@ function client_onMessage(data) {
 
 // Restarts things on the client side. Necessary for iterated games.
 function client_newgame() {
-  // Initiate countdown (with timeouts)
-  //game.get_player(my_id).angle = null;
   started = true;
   client_countdown();
 }; 
 
 function client_countdown() {
-  var player = game.get_player(my_id);
-  player.message = 'Begin in 3...';
-  setTimeout(function(){player.message = 'Begin in 2...';}, 
+  var self = getSelf();
+  self.message = 'Begin in 3...';
+  setTimeout(function(){self.message = 'Begin in 2...';}, 
              1000);
-  setTimeout(function(){player.message = 'Begin in 1...';}, 
+  setTimeout(function(){self.message = 'Begin in 1...';}, 
              2000);
   setTimeout(function(){
-    player.message = 'GO!';     
-    game.start_time = new Date();}, 
+    self.message = 'GO!';     
+    globalGame.start_time = new Date();}, 
 	     3000);
-  setTimeout(function(){player.message = '';}, 
+  setTimeout(function(){self.message = '';}, 
              4000);
 }
 
 function client_update() {
-  var player = game.get_player(my_id);
+  var self = getSelf();
 
   //Clear the screen area
-  game.ctx.clearRect(0,0,485,280);
+  globalGame.ctx.clearRect(0,0,485,280);
 
   // Alter speeds
   if (speed_change != "none") {
-    player.speed = speed_change == "up" ? game.max_speed : game.min_speed;
-    game.socket.send("s." + String(player.speed).replace(/\./g,'-'));
-    speed_change = "none"
+    self.speed = speed_change == "up" ? globalGame.max_speed : globalGame.min_speed;
+    globalGame.socket.send("s." + String(self.speed).replace(/\./g,'-'));
+    speed_change = "none";
   }
 
-  // Turn if key is still being held... Don't do anything if both are held
-  // if (active_keys.length == 1) {
-  //     if(_.contains(active_keys, 'right')) right_turn();
-  //     if(_.contains(active_keys, 'left')) left_turn() ;
-  // }
-
   //Draw opponent next 
-  _.map(game.get_others(my_id), function(p){
-    draw_player(game, p.player)
-    draw_label(game, p.player, "Player " + p.id.slice(0,4))
-  })
+  _.map(globalGame.get_others(globalGame.my_id), function(p){
+    draw_player(globalGame, p.player);
+    draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
+  });
 
   // Draw points scoreboard 
-  $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+  $("#cumulative_bonus").html("Total bonus so far: $" + (self.total_points).fixed(2));
 
-  onwall = player.onwall;
-  if(onwall) {
+  if(self.onwall) {
     $("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
   } else {
-    if(game.game_started) {
+    if(globalGame.game_started) {
       $("#curr_bonus").html("Current Score: <span style='color: " 
-			    + getColorForPercentage(player.curr_background) 
-			    +";'>" + Math.floor(player.curr_background*100) + "%</span>");
+			    + getColorForPercentage(self.curr_background) 
+			    +";'>" + Math.floor(self.curr_background*100) + "%</span>");
     } else {
       $("#curr_bonus").html("Current Score: <span style='color: " 
 			    + getColorForPercentage(0) 
@@ -205,19 +198,19 @@ function client_update() {
   }
   
   if(!started) {
-    var left = timeRemaining(game.waiting_remaining, game.waiting_room_limit)
-    var diff = game.players_threshold - game.player_count
+    var left = timeRemaining(globalGame.waiting_remaining, globalGame.waiting_room_limit);
+    var diff = globalGame.players_threshold - globalGame.player_count;
   }
   
-  if(game.game_started) {
-    var left = new Date() - game.start_time;
-    if((game.round_length*60 - Math.floor(left/1000)) < 6) {
-      var remainder = game.round_length*60 - Math.floor(left/1000);
+  if(globalGame.game_started) {
+    var left = new Date() - globalGame.start_time;
+    if((globalGame.round_length*60 - Math.floor(left/1000)) < 6) {
+      var remainder = globalGame.round_length*60 - Math.floor(left/1000);
       if(remainder < 0) 
-	remainder = 0
-      player.message = 'Ending in ' + remainder;
+	remainder = 0;
+      self.message = 'Ending in ' + remainder;
     }
-    left = timeRemaining(left, game.round_length);
+    left = timeRemaining(left, globalGame.round_length);
     // Draw time remaining 
     $("#time").html("Time remaining: " + left['t'] + " " + left['unit']);
   } else {
@@ -225,10 +218,10 @@ function client_update() {
   }
   
   //And then we draw ourself so we're always in front
-  if(player.pos) {
-    draw_destination(game, player);
-    draw_player(game, player);
-    draw_label(game, player, "YOU");
+  if(self.pos) {
+    draw_destination(globalGame, self);
+    draw_player(globalGame, self);
+    draw_label(globalGame, self, "YOU");
   }
 };
 
@@ -276,17 +269,17 @@ var getColorForPercentage = function(pct) {
 // drawing canvases, and initiate a game instance.
 window.onload = function(){
   //Create our game client instance.
-  game = new game_core({server: false, numBots : 4});
+  globalGame = new game_core({server: false, numBots : 4});
   
   //Connect to the socket.io server!
-  client_connect_to_server(game);
+  client_connect_to_server(globalGame);
   
   //Fetch the viewport
-  game.viewport = document.getElementById('viewport');
+  globalGame.viewport = document.getElementById('viewport');
   
   //Adjust its size
-  game.viewport.width = game.world.width;
-  game.viewport.height = game.world.height;
+  globalGame.viewport.width = globalGame.world.width;
+  globalGame.viewport.height = globalGame.world.height;
 
   $('#viewport').click(function(e){
     e.preventDefault();
@@ -295,7 +288,7 @@ window.onload = function(){
     var offset = $(this).offset();
     var relX = e.pageX - offset.left;
     var relY = e.pageY - offset.top;
-    client_on_click(game, relX, relY);
+    client_on_click(globalGame, relX, relY);
   });
   
   KeyboardJS.on('space', 
@@ -304,13 +297,13 @@ window.onload = function(){
 
 
   //Fetch the rendering contexts
-  game.ctx = game.viewport.getContext('2d');
+  globalGame.ctx = globalGame.viewport.getContext('2d');
 
   //Set the draw style for the font
-  game.ctx.font = '11px "Helvetica"';
+  globalGame.ctx.font = '11px "Helvetica"';
 
   //Finally, start the loop
-  game.update();
+  globalGame.update();
 };
 
 // Associates callback functions corresponding to different socket messages
@@ -330,7 +323,7 @@ function client_connect_to_server(game) {
   //Sent when we are disconnected (network, server down, etc)
   game.socket.on('disconnect', client_ondisconnect.bind(game));
   //Sent each tick of the server simulation. This is our authoritive update
-  game.socket.on('onserverupdate', client_onserverupdate_received);
+  game.socket.on('onserverupdate', client_onserverupdate_received.bind(game));
   //Handle when we connect to the server, showing state and storing id's.
   game.socket.on('onconnected', client_onconnected.bind(game));
   //On message from the server, we parse the commands and send it to the handlers
@@ -342,19 +335,16 @@ function client_onconnected(data) {
   //this lets us store the information about ourselves  
   // so that we remember who we are.
   console.log("setting id to " + data.id);
-  my_id = data.id;
-  game.players[0].id = my_id;
-  game.get_player(my_id).online = true;
+  this.my_id = data.id;
+  this.players[0].id = data.id;
 };
 
 function client_onjoingame(num_players) {
-  console.log(game.players);
-  console.log(my_id);
   // Set self color, leave others default white
-  game.get_player(my_id).color = game.self_color;
-  // Start 'em moving
-  game.get_player(my_id).speed = game.min_speed;
-  game.get_player(my_id).message = 'Please remain active while you wait.';
+  var self = getSelf();
+  self.color = globalGame.self_color;
+  self.speed = globalGame.min_speed;
+  self.message = 'Please remain active while you wait.';
 }; 
 
 // Automatically registers whether user has switched tabs...
@@ -391,7 +381,7 @@ function onchange (evt) {
     document.body.className = evt.target.hidden ? "hidden" : "visible";
   }
   visible = document.body.className;
-  game.socket.send("h." + document.body.className);
+  globalGame.socket.send("h." + document.body.className);
 };
 
 // Flashes title to notify user that game has started
