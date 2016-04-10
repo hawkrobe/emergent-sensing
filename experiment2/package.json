@@ -7,7 +7,8 @@
     "express": "~4.0.0",
     "socket.io": "~1.2.0",
     "node-uuid": "1.4.1",
-    "csv-parse": "~0.0.6"
+    "csv-parse": "~0.0.6",
+    "babyparse": "0.4.5"
   }
 }
 
