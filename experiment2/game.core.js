@@ -35,18 +35,13 @@ var game_core = function(options){
   this.tick_frequency = 125;     //Update 8 times per second
   this.ticks_per_sec = 1000/125;
 
-  if(this.debug) {
-    this.waiting_room_limit = 0.25; // set maximum waiting room time (in minutes)
-    this.round_length = 1; // set how long each round will last (in minutes)
-    this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
-    this.booting = true;
-  } else {
-    this.waiting_room_limit = 5; // set maximum waiting room time (in minutes)
-    this.round_length = 6; // set how long each round will last (in minutes)
-    this.max_bonus = 1.25; // total $ players can make in bonuses 
-    this.booting = false;
-  }
+  this.waiting_room_limit = 5; // set maximum waiting room time (in minutes)
+  this.round_length = 0.25; // set how long each round will last (in minutes)
+  this.max_bonus = 12.5 / 60 * this.round_length; // total $ players can make in bonuses 
+  this.booting = false;
 
+  this.players_threshold = 1;
+    
   // game and waiting length in seconds
   this.game_length = this.round_length*60*this.ticks_per_sec;
 
@@ -58,7 +53,7 @@ var game_core = function(options){
 
   // minimun wage per tick
   var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency));
-  this.waiting_background = us_min_wage_per_tick * this.game_length / this.max_bonus;
+  this.waiting_background = 0.5;//us_min_wage_per_tick * this.game_length / this.max_bonus;
   this.waiting_start = new Date(); 
 
   this.game_clock = 0;
@@ -284,9 +279,10 @@ game_core.prototype.server_update_physics = function() {
     var player = p.player;
 
     // Stop at destination
-    var r = (local_this.distance_between(player.pos, player.destination) < 8 ?
-	     0 :
-	     player.speed);
+    // var r = (local_this.distance_between(player.pos, player.destination) < 8 ?
+	  //    0 :
+	  //          player.speed);
+    var r = player.speed;
     var theta = (player.angle - 90) * Math.PI / 180;
     var new_dir = {
       x : r * Math.cos(theta), 
@@ -327,7 +323,7 @@ game_core.prototype.distance_between = function(obj1, obj2) {
 // can analyze the data to an arbitrary precision later on.
 game_core.prototype.writeData = function() {
   var local_game = this;
-  _.map(local_game.get_active_players_and_bots(), function(p) {
+  _.map(local_game.get_active_players(), function(p) {
     var player_angle = p.player.angle;
     if (player_angle < 0) 
       player_angle = parseInt(player_angle, 10) + 360;
@@ -340,14 +336,12 @@ game_core.prototype.writeData = function() {
     line += p.player.speed +',';
     line += player_angle +',';
     line += p.player.curr_background +',';
-    line += p.player.total_points.fixed(2) ;
-    // if(local_game.game_started) {
-    //   local_game.gameDataStream.write(String(line) + "\n",
-    // 				      function (err) {if(err) throw err;});
-    // } else {
-    //   local_game.waitingDataStream.write(String(line) + "\n",
-    // 					 function (err) {if(err) throw err;});
-    // }
+    line += p.player.total_points.fixed(2) +',';
+    line += p.player.curr_background +',';
+    line += p.player.destination.x +',';
+    line += p.player.destination.y;
+    local_game.gameDataStream.write(String(line) + "\n",
+    				                        function (err) {if(err) throw err;});
   });
 };
 

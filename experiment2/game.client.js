@@ -204,21 +204,21 @@ function client_update() {
   
   if(globalGame.game_started) {
     var left = new Date() - globalGame.start_time;
-    if((globalGame.round_length*60 - Math.floor(left/1000)) < 6) {
-      var remainder = globalGame.round_length*60 - Math.floor(left/1000);
-      if(remainder < 0) 
-	remainder = 0;
-      self.message = 'Ending in ' + remainder;
-    }
+  //   if((globalGame.round_length*60 - Math.floor(left/1000)) < 6) {
+  //     var remainder = globalGame.round_length*60 - Math.floor(left/1000);
+  //     if(remainder < 0) 
+	// remainder = 0;
+  //     self.message = 'Ending in ' + remainder;
+  //   }
     left = timeRemaining(left, globalGame.round_length);
     // Draw time remaining 
     $("#time").html("Time remaining: " + left['t'] + " " + left['unit']);
   } else {
-    $("#time").html('You are in the waiting room.');
+    $("#time").html('You will join the game soon.');
   }
   
   //And then we draw ourself so we're always in front
-  if(self.pos) {
+  if(globalGame.game_started && self.pos) {
     draw_destination(globalGame, self);
     draw_player(globalGame, self);
     draw_label(globalGame, self, "YOU");
@@ -230,8 +230,8 @@ var timeRemaining = function(remaining, limit) {
   if(time_remaining > 1) {
     return {t: time_remaining, unit: 'minutes', actual: (limit - remaining/1000)}
   } else {
-    time_remaining = limit - Math.floor(remaining / (1000 * 60)*6)/6
-    time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
+    time_remaining = 60 * limit - Math.floor(remaining / 1000)
+    //time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
     return {t: time_remaining, unit: 'seconds', actual: (limit - remaining/1000)}
   }
 
@@ -344,7 +344,8 @@ function client_onjoingame(num_players) {
   var self = getSelf();
   self.color = globalGame.self_color;
   self.speed = globalGame.min_speed;
-  self.message = 'Please remain active while you wait.';
+  self.message = '';
+  //self.message = 'Please remain active while you wait.';    
 }; 
 
 // Automatically registers whether user has switched tabs...

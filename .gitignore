@@ -4,3 +4,6 @@ db/*
 .DS_Store
 light-fields/*
 node_modules/*
+*/node_modules/*
+*/data/games/* 
+*/data/latencies/*

@@ -45,13 +45,13 @@ game_server.server_onMessage = function(client,message) {
   } else if (message_type == "h") { 
     target.visible = message_parts[1];
   } else if (message_type == 'pong') {
-    // var latency = (Date.now() - message_parts[1])/2;
-    // target.latency = latency;
-    // var data = String(client.userid) + "," + message_parts[2] + "," + latency + "\n";
-    // var stream = (client.game.game_started ?
-    // 		  client.game.latencyStream :
-    // 		  client.game.waitingLatencyStream);
-    // stream.write(data, function(err) { if(err) throw err; });
+    var latency = (Date.now() - message_parts[1])/2;
+    target.latency = latency;
+    var data = String(client.userid) + "," + message_parts[2] + "," + latency + "\n";
+    var stream = (client.game.game_started ?
+    		          client.game.latencyStream :
+    		          client.game.waitingLatencyStream);
+    stream.write(data, function(err) { if(err) throw err; });
   }
 };
 
@@ -192,27 +192,23 @@ game_server.startGame = function(game) {
   
   game.active = true;
   
-  // var d = new Date();
-  // var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
+  var d = new Date();
+  var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
   
-  // var name = start_time + '_' + game.player_count + '_' + game.id;
+  var name = start_time + '_' + game.player_count + '_' + game.id;
   
-  // var game_f = "data/games/" + name + ".csv"
-  // var latency_f = "data/latencies/" + name + ".csv"
+  var game_f = "data/games/" + name + ".csv"
+  var latency_f = "data/latencies/" + name + ".csv"
 
-  //   // Set up the filesystem variable we'll use later, and write headers
-  // var game_f = "data/waiting_games/" + name + ".csv"
-  // var latency_f = "data/waiting_latencies/" + name + ".csv"
+  game.fs = fs;
   
-  // game.gamecore.fs = fs;
+  fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y\n", function (err) {if(err) throw err;})
+  game.gameDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
   
-  // fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
-  // game.gamecore.gameDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
-  
-  // fs.writeFile(latency_f, "pid,tick,latency\n", function (err) {if(err) throw err;})
-  // game.gamecore.latencyStream = fs.createWriteStream(latency_f, {'flags' : 'a'});
+  fs.writeFile(latency_f, "pid,tick,latency\n", function (err) {if(err) throw err;})
+  game.latencyStream = fs.createWriteStream(latency_f, {'flags' : 'a'});
 
-  // console.log('game ' + game.id + ' starting with ' + game.player_count + ' players...')
+  console.log('game ' + game.id + ' starting with ' + game.player_count + ' players...')
   
   game.server_newgame(); 
 };
