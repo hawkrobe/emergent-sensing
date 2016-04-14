@@ -60,7 +60,7 @@ function client_ondisconnect(data) {
     //URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/next.html?id=' + this.my_id;
   }
-  //window.location.replace(URL);
+  window.location.replace(URL);
 };
 
 
