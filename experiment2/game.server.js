@@ -159,7 +159,7 @@ game_server.endGame = function(gameid, userid) {
       // If the game hasn't started yet, allow more players to fill their place. after it starts, don't.
       if (!thegame.active) {
         thegame.player_count--;
-	thegame.player_count = thegame.player_count;
+	      thegame.player_count = thegame.player_count;
         thegame.server_send_update();
         thegame.update();
       }

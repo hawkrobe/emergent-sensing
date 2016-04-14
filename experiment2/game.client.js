@@ -52,13 +52,15 @@ function client_ondisconnect(data) {
   if(self.kicked) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
   } else if(self.inactive) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + self.id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + this.my_id;
   } else if(self.lagging) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + self.id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + this.my_id;
   } else {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + self.id;
+    //URL = './index.html?id=' + this.my_id;
+    //URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/next.html?id=' + this.my_id;
   }
-  window.location.replace(URL);
+  //window.location.replace(URL);
 };
 
 

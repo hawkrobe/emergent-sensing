@@ -36,7 +36,7 @@ var game_core = function(options){
   this.ticks_per_sec = 1000/125;
 
   this.waiting_room_limit = 5; // set maximum waiting room time (in minutes)
-  this.round_length = 0.25; // set how long each round will last (in minutes)
+  this.round_length = 0.2; // set how long each round will last (in minutes)
   this.max_bonus = 12.5 / 60 * this.round_length; // total $ players can make in bonuses 
   this.booting = false;
 
@@ -432,8 +432,8 @@ game_core.prototype.create_physics_simulation = function() {
 	    }
 	    if(p.player.hidden_count > local_game.ticks_per_sec*15) { // kick after being hidden for 15 seconds
 	      if(local_game.booting) {
-		p.player.kicked = true
-		console.log('Player ' + p.id + ' will be disconnected for being hidden.')
+		      p.player.kicked = true
+		      console.log('Player ' + p.id + ' will be disconnected for being hidden.')
 	      }
 	    }
 	    var not_changing = p.player.last_speed == p.player.speed && p.player.last_angle == p.player.angle;
@@ -477,7 +477,7 @@ game_core.prototype.create_physics_simulation = function() {
     if(this.server && this.game_started && this.game_clock >= this.game_length) {
       this.stop_update();
       _.map(this.get_active_players(), function(p){
-	p.player.instance.disconnect();
+	      p.player.instance.disconnect();
       });
     }
   }.bind(this), this.tick_frequency);
