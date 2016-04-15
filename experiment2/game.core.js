@@ -39,7 +39,7 @@ var game_core = function(options){
   this.round_length = 0.2; // set how long each round will last (in minutes)
   this.max_bonus = 12.5 / 60 * this.round_length; // total $ players can make in bonuses 
   this.booting = false;
-
+  
   this.players_threshold = 1;
   
   // game and waiting length in seconds
@@ -72,6 +72,7 @@ var game_core = function(options){
       player: new game_player(this,options.player_instances[0].player,false)
     }];
     this.addBots(options.numBots);
+    this.scoreLocs = this.getScoreInfo();
     this.server_send_update();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -178,6 +179,12 @@ game_core.prototype.getBotInfo = function(index) {
   return _.filter(botInput, function(line) {
     return parseInt(line.pid) === index;
   });
+};
+
+game_core.prototype.getScoreInfo = function() {
+  // TODO: randomly assign to appropriate condition  
+  var scoreInput = utils.readCSV('../metadata/spot-spot-far_player_bg.csv');
+  return scoreInput;
 };
 
 // Method to easily look up player 
@@ -492,8 +499,15 @@ game_core.prototype.update_physics = function() {
       t = this.game_clock;
     }
     if(t % 1 == 0) {
-      _.forEach(this.get_active_players(), function(p) {
-	      p.player.curr_background = .5;
+      var local_game = this;
+      _.forEach(local_game.get_active_players(), function(p) {
+        loc = {x:local_game.scoreLocs[t]["x_pos"], y:local_game.scoreLocs[t]["y_pos"]};
+        dist = local_game.distance_between(loc, p.player.pos);
+        if(dist < 50) {
+          p.player.curr_background = 1.0;
+        } else {
+	        p.player.curr_background = 0.5;
+        }
       });
     }    
   };
