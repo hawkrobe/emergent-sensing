@@ -57,27 +57,34 @@ io.on('connection', function (client) {
   // Recover query string information and set condition
   var hs = client.handshake;    
   var query = require('url').parse(client.handshake.headers.referer, true).query;
-  if( !(query.id && query.id in global_player_set) ) {
-	  if(query.id) {
-	    global_player_set[query.id] = true
-	    var id = query.id; // use id from query string if exists
-	  } else {
-	    var id = utils.UUID();
-	  }
-	  if(valid_id(id)) {
-	    console.log("user connecting...")
-	    initialize(query, client, id);
-	  }
-  }
+  //if( !(query.id && query.id in global_player_set) ) {
+	if(query.id) {
+	  global_player_set[query.id] = true
+	  var id = query.id; // use id from query string if exists
+	} else {
+	  var id = utils.UUID();
+	}
+  if(query.condition) {
+	  var condition = query.condition;
+	} else {
+	  var condition = 'initial';
+	}
+	if(valid_id(id)) {
+	  console.log("user connecting...")
+	  initialize(query, client, id, condition);
+	}
+  //}
 });
 
 var valid_id = function(id) {
-    return id.length == 41;
+  return true;//id.length == 41;
 }
 
-var initialize = function(query, client, id) {                        
+var initialize = function(query, client, id, condition) {
+  
   client.userid = id;
-  client.emit('onconnected', { id: client.userid } );
+  client.condition = condition;
+  client.emit('onconnected', { id: client.userid, condition: client.condition } );
   
   // Good to know when they connected
   console.log('\t socket.io:: player ' + client.userid + ' connected');

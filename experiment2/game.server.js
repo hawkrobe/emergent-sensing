@@ -67,20 +67,20 @@ game_server.findGame = function(player) {
     if(game.player_count < game.players_threshold && !game.active && !game.holding) {
       // End search
       joined_a_game = true;
-
+      
       // Add player to game
       game.player_count++;
       game.players.push({id: player.userid,
-			 instance: player,
-			 player: new game_player(game, player)});
-
+			                   instance: player,
+			                   player: new game_player(game, player)});
+      
       // Add game to player
       player.game = game;
       player.send('s.join.' + game.players.length);
 
       // notify existing players that someone new is joining
       _.map(game.get_others(player.userid), function(p){
-	p.player.instance.send( 's.add_player.' + player.userid);
+	      p.player.instance.send( 's.add_player.' + player.userid);
       });
       
       // Start game

@@ -56,9 +56,13 @@ function client_ondisconnect(data) {
   } else if(self.lagging) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + this.my_id;
   } else {
-    //URL = './index.html?id=' + this.my_id;
+    if (this.condition == 'initial') {
+      URL = './index.html?condition=next&id=' + this.my_id; 
+    } else {
+      URL = './index.html?condition=final&id=' + this.my_id; 
+    }
     //URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/next.html?id=' + this.my_id;
+    //URL = 'http://projects.csail.mit.edu/ci/turk/forms/next.html?id=' + this.my_id;
   }
   window.location.replace(URL);
 };
@@ -76,16 +80,16 @@ function client_onserverupdate_received(data){
         var s_player = z[0].player;
         var l_player = z[1].player;
         if(z[0].id != globalGame.my_id || l_player.angle == null) {
-    	  l_player.angle = s_player.angle;
-    	}
-    	if(l_player.destination == null) {
-    	  l_player.destination = s_player.destination;
-    	}
+    	    l_player.angle = s_player.angle;
+    	  }
+    	  if(l_player.destination == null) {
+    	    l_player.destination = s_player.destination;
+    	  }
         l_player.curr_background = s_player.cbg;
-    	l_player.total_points = s_player.tot;
+    	  l_player.total_points = s_player.tot;
         l_player.pos = globalGame.pos(s_player.pos);
         l_player.speed = s_player.speed;
-    	l_player.onwall = s_player.onwall;
+    	  l_player.onwall = s_player.onwall;
         l_player.kicked = s_player.kicked;
         l_player.inactive = s_player.inactive;
         l_player.lagging = s_player.lagging;
@@ -185,7 +189,7 @@ function client_update() {
   // Draw points scoreboard 
   $("#cumulative_bonus").html("Total bonus so far: $" + (self.total_points).fixed(2));
 
-  if(self.onwall) {
+  if(self.onwall && globalGame.game_started) {
     $("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
   } else {
     if(globalGame.game_started) {
@@ -338,6 +342,7 @@ function client_onconnected(data) {
   // so that we remember who we are.
   console.log("setting id to " + data.id);
   this.my_id = data.id;
+  this.condition = data.condition;
   this.players[0].id = data.id;
 };
 
