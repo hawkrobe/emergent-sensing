@@ -187,7 +187,7 @@ function client_update() {
   });
 
   // Draw points scoreboard 
-  $("#cumulative_bonus").html("Total bonus so far: $" + (self.total_points).fixed(2));
+  $("#cumulative_bonus").html("Total bonus this round: $" + (self.total_points).fixed(2));
 
   if(self.onwall && globalGame.game_started) {
     $("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
