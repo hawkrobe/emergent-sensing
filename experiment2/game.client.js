@@ -47,6 +47,7 @@ function client_on_click(game, newX, newY ) {
 function client_ondisconnect(data) {
   // Redirect to exit survey
   console.log("server booted");
+  
   var self = getSelf();
   var URL;
   if(self.kicked) {
@@ -56,7 +57,7 @@ function client_ondisconnect(data) {
   } else if(self.lagging) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + this.my_id;
   } else {
-    if (this.condition == 'initial') {
+    if (window.condition == 'initial') {
       URL = './index.html?condition=next&id=' + this.my_id; 
     } else {
       URL = './index.html?condition=final&id=' + this.my_id; 
@@ -173,6 +174,10 @@ function client_update() {
   //Clear the screen area
   globalGame.ctx.clearRect(0,0,485,280);
 
+  if (window.condition == 'initial') {
+    draw_spot(globalGame);
+  }
+    
   // Alter speeds
   if (speed_change != "none") {
     self.speed = speed_change == "up" ? globalGame.max_speed : globalGame.min_speed;
@@ -180,11 +185,13 @@ function client_update() {
     speed_change = "none";
   }
 
-  //Draw opponent next 
-  _.map(globalGame.get_others(globalGame.my_id), function(p){
-    draw_player(globalGame, p.player);
-    draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
-  });
+  if (window.condition == 'final') {
+    //Draw opponent next 
+    _.map(globalGame.get_others(globalGame.my_id), function(p){
+      draw_player(globalGame, p.player);
+      draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
+    });
+  }
 
   // Draw points scoreboard 
   $("#cumulative_bonus").html("Total bonus this round: $" + (self.total_points).fixed(2));
@@ -243,29 +250,6 @@ var timeRemaining = function(remaining, limit) {
 
 }
 
-var percentColors = [
-  //    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
-  { pct: 0.0, color: { r: 0xff, g: 0xff, b: 0xff } },
-  { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
-
-var getColorForPercentage = function(pct) {
-  for (var i = 0; i < percentColors.length; i++) {
-    if (pct <= percentColors[i].pct) {
-      var lower = percentColors[i - 1] || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } };
-      var upper = percentColors[i];
-      var range = upper.pct - lower.pct;
-      var rangePct = (pct - lower.pct) / range;
-      var pctLower = 1 - rangePct;
-      var pctUpper = rangePct;
-      var color = {
-        r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
-        g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
-        b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
-      };
-      return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
-    }
-  }
-}
 
 /*
  The following code should NOT need to be changed
@@ -342,8 +326,8 @@ function client_onconnected(data) {
   // so that we remember who we are.
   console.log("setting id to " + data.id);
   this.my_id = data.id;
-  this.condition = data.condition;
   this.players[0].id = data.id;
+  window.condition = data.condition;
 };
 
 function client_onjoingame(num_players) {

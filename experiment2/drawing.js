@@ -82,3 +82,49 @@ function draw_info(game, info) {
   //Reset the style back to full white.
   game.ctx.fillStyle = 'rgba(255,255,255,1)';
 }; 
+
+var percentColors = [
+  //    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
+  { pct: 0.0, color: { r: 0xff, g: 0xff, b: 0xff } },
+  { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
+
+var getColorForPercentage = function(pct) {
+  for (var i = 0; i < percentColors.length; i++) {
+    if (pct <= percentColors[i].pct) {
+      var lower = percentColors[i - 1] || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } };
+      var upper = percentColors[i];
+      var range = upper.pct - lower.pct;
+      var rangePct = (pct - lower.pct) / range;
+      var pctLower = 1 - rangePct;
+      var pctUpper = rangePct;
+      var color = {
+        r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+        g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+        b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+      };
+      return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+    }
+  }
+}
+
+function draw_spot(game){
+
+  var centerX = 400;
+  var centerY = 200;
+  var radius = 50;
+
+  // game.ctx.save();
+  // game.ctx.rect(0,0,game.world.width,game.world.height);
+  // game.ctx.fillStyle = getColorForPercentage(0.5);
+  // game.ctx.fill();
+  // game.ctx.restore();
+  
+  game.ctx.save();
+  game.ctx.beginPath();
+  game.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+  game.ctx.fillStyle = getColorForPercentage(1.0);
+  game.ctx.fill();
+  game.ctx.restore();
+
+
+};
