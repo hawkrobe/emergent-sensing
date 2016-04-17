@@ -22,6 +22,9 @@ function draw_player(game, player){
   game.ctx.beginPath();
   game.ctx.restore();
 
+};
+
+function draw_message(game, player){
   // Draw message in center (for countdown, e.g.)
   game.ctx.font = "bold 12pt Helvetica";
   game.ctx.fillStyle = 'red';
@@ -113,11 +116,11 @@ function draw_spot(game){
   var centerY = 200;
   var radius = 50;
 
-  // game.ctx.save();
-  // game.ctx.rect(0,0,game.world.width,game.world.height);
-  // game.ctx.fillStyle = getColorForPercentage(0.5);
-  // game.ctx.fill();
-  // game.ctx.restore();
+  game.ctx.save();
+  game.ctx.rect(0,0,game.world.width,game.world.height);
+  game.ctx.fillStyle = getColorForPercentage(0.1);
+  game.ctx.fill();
+  game.ctx.restore();
   
   game.ctx.save();
   game.ctx.beginPath();
@@ -126,5 +129,12 @@ function draw_spot(game){
   game.ctx.fill();
   game.ctx.restore();
 
+  game.ctx.save();
+  game.ctx.beginPath();
+  game.ctx.lineWidth="6";
+  game.ctx.rect(0,0,game.world.width,game.world.height);
+  game.ctx.strokeStyle = 'red';//getColorForPercentage(0.0);
+  game.ctx.stroke();
+  game.ctx.restore();  
 
 };

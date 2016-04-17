@@ -57,11 +57,9 @@ function client_ondisconnect(data) {
   } else if(self.lagging) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + this.my_id;
   } else {
-    if (window.condition == 'initial') {
-      URL = './index.html?condition=next&id=' + this.my_id; 
-    } else {
-      URL = './index.html?condition=final&id=' + this.my_id; 
-    }
+    next = {'initial':'next','next':'first','first':'second','second':'third','third':'fourth','fourth':'initial'}
+    window.expInfo['condition'] = next[window.expInfo['condition']];
+    URL = './index.html?id=' + this.my_id + dict_to_query_string(window.expInfo);
     //URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
     //URL = 'http://projects.csail.mit.edu/ci/turk/forms/next.html?id=' + this.my_id;
   }
@@ -72,6 +70,7 @@ function client_ondisconnect(data) {
 function client_onserverupdate_received(data){
   // Update client versions of variables with data received from
   // server_send_update function in game.core.js
+  
   if(data.players) {
     _.forEach(_.zip(data.players, globalGame.players), function(z){
       z[1].id = z[0].id;
@@ -114,7 +113,7 @@ function client_onserverupdate_received(data){
 // The corresponding function where the server parses messages from
 // clients, look for "server_onMessage" in game.server.js.
 function client_onMessage(data) {
-
+  
   var commands = data.split('.');
   var command = commands[0];
   var subcommand = commands[1] || null;
@@ -135,9 +134,9 @@ function client_onMessage(data) {
     case 'join' : //join a game requested
       var num_players = commanddata;
       client_onjoingame(num_players); break;
-    case 'add_player' : // New player joined... Need to add them to our list.
-      console.log("adding player" + commanddata);
-      this.players.push({id: commanddata, player: new game_player(this,null,false)}); break;
+    // case 'add_player' : // New player joined... Need to add them to our list.
+    //   console.log("adding player" + commanddata);
+    //   this.players.push({id: commanddata, player: new game_player(this,null,false)}); break;
     case 'begin_game' :
       client_newgame(); break;
     case 'blink' : //blink title
@@ -174,7 +173,7 @@ function client_update() {
   //Clear the screen area
   globalGame.ctx.clearRect(0,0,485,280);
 
-  if (window.condition == 'initial') {
+  if (window.expInfo && window.expInfo['condition'] == 'initial' && globalGame.game_started) {
     draw_spot(globalGame);
   }
     
@@ -185,7 +184,7 @@ function client_update() {
     speed_change = "none";
   }
 
-  if (window.condition == 'final') {
+  if (window.expInfo && window.expInfo['condition'] != 'initial' && window.expInfo['condition'] != 'next') {
     //Draw opponent next 
     _.map(globalGame.get_others(globalGame.my_id), function(p){
       draw_player(globalGame, p.player);
@@ -232,10 +231,13 @@ function client_update() {
   
   //And then we draw ourself so we're always in front
   if(globalGame.game_started && self.pos) {
-    draw_destination(globalGame, self);
+    //draw_destination(globalGame, self);
     draw_player(globalGame, self);
     draw_label(globalGame, self, "YOU");
   }
+
+  draw_message(globalGame, self);
+  
 };
 
 var timeRemaining = function(remaining, limit) {
@@ -327,7 +329,7 @@ function client_onconnected(data) {
   console.log("setting id to " + data.id);
   this.my_id = data.id;
   this.players[0].id = data.id;
-  window.condition = data.condition;
+  window.expInfo = $.extend({}, data.info);
 };
 
 function client_onjoingame(num_players) {
@@ -375,6 +377,15 @@ function onchange (evt) {
   visible = document.body.className;
   globalGame.socket.send("h." + document.body.className);
 };
+
+function dict_to_query_string(info) {
+  out = '';
+  for (var key in info) {
+    var value = info[key];
+    out += '&' + key + '=' + value
+  }
+  return out;
+}
 
 // Flashes title to notify user that game has started
 (function () {

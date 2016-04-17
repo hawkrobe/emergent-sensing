@@ -37,7 +37,7 @@ var game_core = function(options){
 
   this.waiting_room_limit = 5; // set maximum waiting room time (in minutes)
   this.round_length = 0.2; // set how long each round will last (in minutes)
-  this.max_bonus = 12.5 / 60 * this.round_length; // total $ players can make in bonuses 
+  this.max_bonus = 15.0 / 60 * this.round_length; // total $ players can make in bonuses 
   this.booting = false;
   
   this.players_threshold = 1;
@@ -53,7 +53,7 @@ var game_core = function(options){
 
   // minimun wage per tick
   var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency));
-  this.waiting_background = 0.5;//us_min_wage_per_tick * this.game_length / this.max_bonus;
+  this.waiting_background = 0.10;//us_min_wage_per_tick * this.game_length / this.max_bonus;
   this.waiting_start = new Date(); 
 
   this.game_clock = 0;
@@ -65,11 +65,12 @@ var game_core = function(options){
   if(this.server) {
     this.id = options.id;
     this.expName = options.expName;
+    this.expInfo = options.experiment_info;
     this.player_count = options.player_count;
     this.players = [{
       id: options.player_instances[0].id,
       instance: options.player_instances[0].player,
-      player: new game_player(this,options.player_instances[0].player,false)
+      player: new game_player(this,options.player_instances[0].player,false,0)
     }];
     this.addBots(options.numBots);
     this.scoreLocs = this.getScoreInfo();
@@ -96,7 +97,7 @@ var game_player = function( game_instance, player_instance, bot, index) {
     this.index = index;
     this.movementInfo = this.game.getBotInfo(index);
   };
-
+  
   //Set up initial values for our state information
   this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
   this.state = 'not-connected';
@@ -127,7 +128,8 @@ var game_player = function( game_instance, player_instance, bot, index) {
     y_max: this.game.world.height - this.size.hy
   };
   if (this.game.server) {
-    this.pos = get_random_position(this.game.world);
+    this.pos = this.game.getInitPos(index);
+    //this.pos = get_random_position(this.game.world);
     this.angle = get_random_angle();
   } else {
     this.pos = null;
@@ -162,7 +164,7 @@ game_core.prototype.initializeClientPlayers = function(numBots) {
 };
 
 game_core.prototype.addBots = function(numBots) {
-  for (var i = 0; i < numBots; i++) { 
+  for (var i = 1; i < numBots + 1; i++) { 
     this.player_count++;
     var pid = utils.UUID();
     this.players.push({
@@ -173,17 +175,36 @@ game_core.prototype.addBots = function(numBots) {
   }
 };
 
+
+game_core.prototype.getInitPos = function(index) {
+
+  var my_type = this.expInfo['bg_type'];
+  var group = this.expInfo[this.expInfo['condition']];
+  
+  var pos = utils.readCSV('../metadata/' + my_type + '-' + group + '_init.csv');
+  
+  return {x:parseFloat(pos[index]['x_pos']),y:parseFloat(pos[index]['y_pos'])};
+};
+
 game_core.prototype.getBotInfo = function(index) {
-  // TODO: randomly assign to appropriate condition  
-  var botInput = utils.readCSV('../metadata/spot-spot-far-bots.csv');
+
+  var my_type = this.expInfo['bg_type']
+  var group = this.expInfo[this.expInfo['condition']]
+  
+  var botInput = utils.readCSV('../metadata/' + my_type + '-' + group + '_simulation-0-non-social.csv');
+  
   return _.filter(botInput, function(line) {
     return parseInt(line.pid) === index;
   });
 };
 
 game_core.prototype.getScoreInfo = function() {
-  // TODO: randomly assign to appropriate condition  
-  var scoreInput = utils.readCSV('../metadata/spot-spot-far_player_bg.csv');
+
+  var my_type = this.expInfo['bg_type']
+  var group = this.expInfo[this.expInfo['condition']]
+  
+  var scoreInput = utils.readCSV('../metadata/' + my_type + '-' + group + '_player_bg.csv');
+  
   return scoreInput;
 };
 
@@ -506,7 +527,7 @@ game_core.prototype.update_physics = function() {
         if(dist < 50) {
           p.player.curr_background = 1.0;
         } else {
-	        p.player.curr_background = 0.5;
+	        p.player.curr_background = 0.10;
         }
       });
     }    

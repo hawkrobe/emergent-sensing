@@ -62,31 +62,31 @@ game_server.server_onMessage = function(client,message) {
 game_server.findGame = function(player) {
   this.log('looking for a game. We have : ' + this.game_count);
   var joined_a_game = false;
-  for (var gameid in this.games) {
-    var game = this.games[gameid];
-    if(game.player_count < game.players_threshold && !game.active && !game.holding) {
-      // End search
-      joined_a_game = true;
+  // for (var gameid in this.games) {
+  //   var game = this.games[gameid];
+  //   if(game.player_count < game.players_threshold && !game.active && !game.holding) {
+  //     // End search
+  //     joined_a_game = true;
       
-      // Add player to game
-      game.player_count++;
-      game.players.push({id: player.userid,
-			                   instance: player,
-			                   player: new game_player(game, player)});
+  //     // Add player to game
+  //     game.player_count++;
+  //     game.players.push({id: player.userid,
+	// 		                   instance: player,
+	// 		                   player: new game_player(game, player)});
       
-      // Add game to player
-      player.game = game;
-      player.send('s.join.' + game.players.length);
+  //     // Add game to player
+  //     player.game = game;
+  //     player.send('s.join.' + game.players.length);
 
-      // notify existing players that someone new is joining
-      _.map(game.get_others(player.userid), function(p){
-	      p.player.instance.send( 's.add_player.' + player.userid);
-      });
+  //     // notify existing players that someone new is joining
+  //     _.map(game.get_others(player.userid), function(p){
+	//       p.player.instance.send( 's.add_player.' + player.userid);
+  //     });
       
-      // Start game
-      this.startGame(game);
-    }
-  }
+  //     // Start game
+  //     this.startGame(game);
+  //   }
+  // }
 
   // If you couldn't find a game to join, create a new one
   if(!joined_a_game) {
@@ -103,7 +103,8 @@ game_server.createGame = function(player) {
     server: true,
     id : utils.UUID(),
     player_instances: [{id: player.userid, player: player}],
-    player_count: 1
+    player_count: 1,
+    experiment_info: player.info
   };
 
   var game = new game_core(options);

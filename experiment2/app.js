@@ -64,14 +64,31 @@ io.on('connection', function (client) {
 	} else {
 	  var id = utils.UUID();
 	}
+  var permutations = utils.shuffle(['spot-close','spot-far','wall-close','wall-far']);
   if(query.condition) {
-	  var condition = query.condition;
+    var info = {"condition":query.condition,
+                "bg_type":query.bg_type,
+                "initial":query.initial,
+                "next":query.next,
+                "first":query.first,
+                "second":query.second,
+                "third":query.third,
+                "fourth":query.fourth};
 	} else {
 	  var condition = 'initial';
+    var bg_choices = ['spot','wall'];    
+    var info = {"condition":"initial",
+                "bg_type":'wall',//bg_choices[Math.floor(Math.random() * bg_choices.length)],
+                "initial":'wall-far',//TODO: randomize
+                "next":'wall-far',//TODO: randomize
+                "first":permutations[0],
+                "second":permutations[1],
+                "third":permutations[2],
+                "fourth":permutations[3]};
 	}
 	if(valid_id(id)) {
 	  console.log("user connecting...")
-	  initialize(query, client, id, condition);
+	  initialize(query, client, id, info);
 	}
   //}
 });
@@ -80,11 +97,11 @@ var valid_id = function(id) {
   return true;//id.length == 41;
 }
 
-var initialize = function(query, client, id, condition) {
+var initialize = function(query, client, id, info) {
   
   client.userid = id;
-  client.condition = condition;
-  client.emit('onconnected', { id: client.userid, condition: client.condition } );
+  client.info = info;
+  client.emit('onconnected', { id: client.userid, info: client.info } );
   
   // Good to know when they connected
   console.log('\t socket.io:: player ' + client.userid + ' connected');
