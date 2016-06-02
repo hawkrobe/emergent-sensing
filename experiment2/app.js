@@ -58,12 +58,12 @@ io.on('connection', function (client) {
   var hs = client.handshake;    
   var query = require('url').parse(client.handshake.headers.referer, true).query;
   //if( !(query.id && query.id in global_player_set) ) {
-	if(query.id) {
-	  global_player_set[query.id] = true
-	  var id = query.id; // use id from query string if exists
-	} else {
-	  var id = utils.UUID();
-	}
+  if(query.id) {
+    global_player_set[query.id] = true
+    var id = query.id; // use id from query string if exists
+  } else {
+    var id = utils.UUID();
+  }
   var permutations = utils.shuffle(['spot-close','spot-far','wall-close','wall-far']);
   if(query.condition) {
     var info = {"condition":query.condition,
@@ -74,22 +74,22 @@ io.on('connection', function (client) {
                 "second":query.second,
                 "third":query.third,
                 "fourth":query.fourth};
-	} else {
-	  var condition = 'initial';
+  } else {
+    var condition = 'initial';
     var bg_choices = ['spot','wall'];    
     var info = {"condition":"initial",
-                "bg_type":'wall',//bg_choices[Math.floor(Math.random() * bg_choices.length)],
-                "initial":'wall-far',//TODO: randomize
-                "next":'wall-far',//TODO: randomize
+                "bg_type":'spot',//bg_choices[Math.floor(Math.random() * bg_choices.length)],
+                "initial":'spot-far',//TODO: randomize
+                "next":'spot-far',//TODO: randomize
                 "first":permutations[0],
                 "second":permutations[1],
                 "third":permutations[2],
                 "fourth":permutations[3]};
-	}
-	if(valid_id(id)) {
-	  console.log("user connecting...")
-	  initialize(query, client, id, info);
-	}
+  }
+  if(valid_id(id)) {
+    console.log("user connecting...")
+    initialize(query, client, id, info);
+  }
   //}
 });
 

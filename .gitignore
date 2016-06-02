@@ -5,5 +5,5 @@ db/*
 light-fields/*
 node_modules/*
 */node_modules/*
-*/data/games/* 
-*/data/latencies/*
+*/data/games/*.csv 
+*/data/latencies/*.csv
