@@ -59,7 +59,7 @@ io.on('connection', function (client) {
   var query = require('url').parse(client.handshake.headers.referer, true).query;
   //if( !(query.id && query.id in global_player_set) ) {
   if(query.id) {
-    global_player_set[query.id] = true
+    global_player_set[query.id] = true;
     var id = query.id; // use id from query string if exists
   } else {
     var id = utils.UUID();
@@ -87,10 +87,9 @@ io.on('connection', function (client) {
                 "fourth":permutations[3]};
   }
   if(valid_id(id)) {
-    console.log("user connecting...")
+    console.log("user connecting...");
     initialize(query, client, id, info);
   }
-  //}
 });
 
 var valid_id = function(id) {
@@ -98,7 +97,6 @@ var valid_id = function(id) {
 }
 
 var initialize = function(query, client, id, info) {
-  
   client.userid = id;
   client.info = info;
   client.emit('onconnected', { id: client.userid, info: client.info } );
@@ -124,10 +122,11 @@ var initialize = function(query, client, id, info) {
     
     //If the client was in a game set by game_server.findGame,
     //we can tell the game server to update that game state.
-    if(client.userid && client.game && client.game.id) 
-	    console.log("calling end game...")
-    //player leaving a game should change that game
-    game_server.endGame(client.game.id, client.userid);            
+    if(client.userid && client.game && client.game.id) {
+      console.log("calling end game...");
+      //player leaving a game should change that game
+      game_server.endGame(client.game.id, client.userid);
+    }
   });
 };
 

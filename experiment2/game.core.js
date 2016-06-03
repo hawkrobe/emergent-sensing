@@ -72,8 +72,7 @@ var game_core = function(options){
       instance: options.player_instances[0].player,
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
-    this.addBots(options.numBots);
-    this.scoreLocs = this.getScoreInfo();
+    this.trialList = this.makeTrialList();
     this.server_send_update();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -175,7 +174,6 @@ game_core.prototype.addBots = function(numBots) {
   }
 };
 
-
 game_core.prototype.getInitPos = function(index) {
 
   var my_type = this.expInfo['bg_type'];
@@ -234,6 +232,24 @@ game_core.prototype.get_active_players_and_bots = function() {
 game_core.prototype.get_bots = function() {
   return _.without(_.map(this.players, function(p){
     return p.player.bot ? p : null}), null)
+};
+
+game_core.prototype.getRandomizedConditions = function() {
+  var initial = {name: "initial",
+		 numBots: 0,
+		 botPositions : null,
+		 scoreField: "spot-spot-far_player_bg.csv"};
+  return [initial].concat(
+    _.shuffle(
+      ["far-bots", "far_player_bg"]));
+};
+
+game_core.prototype.makeTrialList = function() {
+  var conditionList = this.getRandomizedConditions();
+  return _.map(conditionList, function(condition) {
+    this.addBots(options.numBots);
+    this.scoreLocs = this.getScoreInfo();
+  });
 };
 
 // Takes two location objects and computes the distance between them
@@ -430,68 +446,68 @@ game_core.prototype.create_physics_simulation = function() {
     if(this.server) {
       var active_players = local_game.get_active_players();
       for(i=0;i<active_players.length;i++) {
-	      var p = active_players[i];
-	      // ping players to estimate latencies
-	      p.player.instance.emit('ping', {sendTime : Date.now(),
-					                              tick_num: local_game.game_clock});
-	      // compute scores
-	      if(p.player) {
+	var p = active_players[i];
+	// ping players to estimate latencies
+	p.player.instance.emit('ping', {sendTime : Date.now(),
+					tick_num: local_game.game_clock});
+	// compute scores
+	if(p.player) {
 
-	        var on_wall = local_game.check_collision(p.player)
-	        if(on_wall) {
-	          p.player.curr_background = 0;
-	          p.player.onwall = true;
-	        } else if(!this.game_started) {
-	          p.player.curr_background = local_game.waiting_background;
-	          p.player.onwall = false;
-	        } else {
-	          p.player.onwall = false;
-	        }
-	        
-	        p.player.avg_score = p.player.avg_score + p.player.curr_background/local_game.game_length;
-	        p.player.total_points = p.player.avg_score * local_game.max_bonus;
-	        
-	        // Handle inactive, hidden, or high latency players...
-	        if(p.player.kicked || p.player.inactive || p.player.lagging) {
-	          p.player.instance.disconnect();
-	        } else {
-	          if(p.player.visible == 'hidden') {
-	            p.player.hidden_count += 1
-	          }
-	          if(p.player.hidden_count > local_game.ticks_per_sec*15) { // kick after being hidden for 15 seconds
-	            if(local_game.booting) {
-		            p.player.kicked = true
-		            console.log('Player ' + p.id + ' will be disconnected for being hidden.')
-	            }
-	          }
-	          var not_changing = p.player.last_speed == p.player.speed && p.player.last_angle == p.player.angle;
-	          p.player.last_speed = p.player.speed
-	          p.player.last_angle = p.player.angle
-	          if(on_wall && not_changing) {
-	            p.player.inactive_count += 1
-	          }
-	          if(p.player.inactive_count > local_game.ticks_per_sec*30) {  // kick after being inactive for 30 seconds
-	            if(local_game.booting) {
-		            if(p.player.lag_count > local_game.game_clock*0.1) {
-		              p.player.lagging = true
-		              console.log('Player ' + p.id + ' will be disconnected because of latency.')
-		            } else {
-		              p.player.inactive = true
-		              console.log('Player ' + p.id + ' will be disconnected for inactivity.')
-		            }
-	            }
-	          }
-	          if(p.player.latency > this.tick_frequency) {
-	            if(p.player.visible != 'hidden') {
-		            p.player.lag_count += 1
-	            }
-	          }
-	          if(p.player.lag_count > local_game.game_length*0.1) {
-	            p.player.lagging = true
-	            console.log('Player ' + p.id + ' will be disconnected because of latency.')
-	          }
-	        }
+	  var on_wall = local_game.check_collision(p.player)
+	  if(on_wall) {
+	    p.player.curr_background = 0;
+	    p.player.onwall = true;
+	  } else if(!this.game_started) {
+	    p.player.curr_background = local_game.waiting_background;
+	    p.player.onwall = false;
+	  } else {
+	    p.player.onwall = false;
+	  }
+	  
+	  p.player.avg_score = p.player.avg_score + p.player.curr_background/local_game.game_length;
+	  p.player.total_points = p.player.avg_score * local_game.max_bonus;
+	  
+	  // Handle inactive, hidden, or high latency players...
+	  if(p.player.kicked || p.player.inactive || p.player.lagging) {
+	    p.player.instance.disconnect();
+	  } else {
+	    if(p.player.visible == 'hidden') {
+	      p.player.hidden_count += 1
+	    }
+	    if(p.player.hidden_count > local_game.ticks_per_sec*15) { // kick after being hidden for 15 seconds
+	      if(local_game.booting) {
+		p.player.kicked = true
+		console.log('Player ' + p.id + ' will be disconnected for being hidden.')
 	      }
+	    }
+	    var not_changing = p.player.last_speed == p.player.speed && p.player.last_angle == p.player.angle;
+	    p.player.last_speed = p.player.speed
+	    p.player.last_angle = p.player.angle
+	    if(on_wall && not_changing) {
+	      p.player.inactive_count += 1
+	    }
+	    if(p.player.inactive_count > local_game.ticks_per_sec*30) {  // kick after being inactive for 30 seconds
+	      if(local_game.booting) {
+		if(p.player.lag_count > local_game.game_clock*0.1) {
+		  p.player.lagging = true
+		  console.log('Player ' + p.id + ' will be disconnected because of latency.')
+		} else {
+		  p.player.inactive = true
+		  console.log('Player ' + p.id + ' will be disconnected for inactivity.')
+		}
+	      }
+	    }
+	    if(p.player.latency > this.tick_frequency) {
+	      if(p.player.visible != 'hidden') {
+		p.player.lag_count += 1
+	      }
+	    }
+	    if(p.player.lag_count > local_game.game_length*0.1) {
+	      p.player.lagging = true
+	      console.log('Player ' + p.id + ' will be disconnected because of latency.')
+	    }
+	  }
+	}
       }
     }
 

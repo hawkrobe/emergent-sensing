@@ -1,14 +1,13 @@
 TODO:
 
-* Convert to 1 player game
 * Read in other player positions
 * Read in new csv of just scorefield centroid
   -- set to 1 in 20 pixel radius of that centroid, .5 elsewhere, 0 at edges
-* Click to move instead of arrow keys
-* Press button to stop instead of speed up
 
 COMPLETED:
 
+* Convert to 1 player game (expert)
+* Click to move instead of arrow keys
 * Allow more than 2 people to be in a room together
   -- Don't need separate function for 'host' and 'other', since players are identical
   -- Notify and update clients when new player joins
