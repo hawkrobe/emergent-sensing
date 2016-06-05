@@ -73,6 +73,7 @@ var game_core = function(options){
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
     this.trialList = this.makeTrialList();
+    console.log(this.trialList);
     this.server_send_update();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -87,15 +88,11 @@ var game_core = function(options){
    as well as to draw that state when required.
 */
 
-var game_player = function( game_instance, player_instance, bot, index) {
+var game_player = function( game_instance, player_instance, index) {
   //Store the instance, if any
   this.instance = player_instance;
   this.game = game_instance;
-  this.bot = bot;
-  if(bot) {
-    this.index = index;
-    this.movementInfo = this.game.getBotInfo(index);
-  };
+  this.index = index;
   
   //Set up initial values for our state information
   this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
@@ -126,20 +123,26 @@ var game_player = function( game_instance, player_instance, bot, index) {
     y_min: this.size.hy,
     y_max: this.game.world.height - this.size.hy
   };
-  if (this.game.server) {
-    this.pos = this.game.getInitPos(index);
-    //this.pos = get_random_position(this.game.world);
-    this.angle = get_random_angle();
-  } else {
+  // if (this.game.server) {
+  //   this.pos = this.game.getInitPos(index);
+  //   this.angle = get_random_angle(); //TODO: use init angle?
+  // } else {
     this.pos = null;
     this.angle = null;
-  }
+//  }
   this.speed = this.game.min_speed;
   this.destination = this.pos;
   this.old_speed = this.speed;
   this.old_angle = this.angle;
   this.color = 'white';
 }; 
+
+var bot = function(game_instance, condition, index) {
+  this.base = game_player;
+  this.base(game_instance, null, index);
+  this.bot = true;
+  this.movementInfo = this.game.getBotInfo(condition, index);
+};
 
 // server side we set the 'game_core' class to a global type, so that
 // it can use it in other files (specifically, game.server.js)
@@ -162,48 +165,42 @@ game_core.prototype.initializeClientPlayers = function(numBots) {
   return players;
 };
 
-game_core.prototype.addBots = function(numBots) {
-  for (var i = 1; i < numBots + 1; i++) { 
-    this.player_count++;
+game_core.prototype.initializePlayers = function(trialInfo) {
+  var humanPlayer = _.extend(this.players[0], {
+    pos : this.getInitPos(trialInfo, 0),
+    angle : get_random_angle()
+  });
+  return humanPlayer.concat(this.initializeBots(this.trialInfo));
+};
+
+game_core.prototype.initializeBots = function(trialInfo) {
+  var that = this;
+  return _.map(_.range(trialInfo.numBots), function(index) {
     var pid = utils.UUID();
-    this.players.push({
+    return {
       id: pid,
-      instance : 'bot',
-      player: new game_player(this, 'bot', true, i)
-    });
-  }
+      instance : 'bot' + index,
+      player: new bot(that, trialInfo, index)
+    };
+  });
 };
 
-game_core.prototype.getInitPos = function(index) {
-
-  var my_type = this.expInfo['bg_type'];
-  var group = this.expInfo[this.expInfo['condition']];
-  
-  var pos = utils.readCSV('../metadata/' + my_type + '-' + group + '_init.csv');
-  
-  return {x:parseFloat(pos[index]['x_pos']),y:parseFloat(pos[index]['y_pos'])};
+game_core.prototype.getInitPos = function(condition, index) {
+  // Note: utils.readCSV might be syncronous & blocking
+  var pos = utils.readCSV("../metadata/" + condition.botPositions + ".csv");
+  return {x: parseFloat(pos[index]['x_pos']),
+	  y: parseFloat(pos[index]['y_pos'])};
 };
 
-game_core.prototype.getBotInfo = function(index) {
-
-  var my_type = this.expInfo['bg_type']
-  var group = this.expInfo[this.expInfo['condition']]
-  
-  var botInput = utils.readCSV('../metadata/' + my_type + '-' + group + '_simulation-0-non-social.csv');
-  
+game_core.prototype.getBotInfo = function(condition, index) {
+  var botInput = utils.readCSV("../metadata/" + condition.botPositions + ".csv");
   return _.filter(botInput, function(line) {
     return parseInt(line.pid) === index;
   });
 };
 
-game_core.prototype.getScoreInfo = function() {
-
-  var my_type = this.expInfo['bg_type']
-  var group = this.expInfo[this.expInfo['condition']]
-  
-  var scoreInput = utils.readCSV('../metadata/' + my_type + '-' + group + '_player_bg.csv');
-  
-  return scoreInput;
+game_core.prototype.getScoreInfo = function(condition) {
+  return utils.readCSV("../metadata/" + condition.background + ".csv");  
 };
 
 // Method to easily look up player 
@@ -215,40 +212,83 @@ game_core.prototype.get_player = function(id) {
 // Method to get list of players that aren't the given id
 game_core.prototype.get_others = function(id) {
   return _.without(_.map(_.filter(this.players, function(e){return e.id != id;}), 
-			                   function(p){return p.player ? p : null;}), null);
+			 function(p){return p.player ? p : null;}), null);
 };
 
 // Method to get whole list of players
 game_core.prototype.get_active_players = function() {
   return _.without(_.map(this.players, function(p){
-    return p.player && !p.player.bot ? p : null}), null)
+    return p.player && !p.player.bot ? p : null;
+  }), null);
 };
 
 game_core.prototype.get_active_players_and_bots = function() {
   return _.without(_.map(this.players, function(p){
-    return p.player ? p : null}), null)
+    return p.player ? p : null;
+  }), null);
 };
 
 game_core.prototype.get_bots = function() {
   return _.without(_.map(this.players, function(p){
-    return p.player.bot ? p : null}), null)
+    return p.player.bot ? p : null;
+  }), null);
 };
 
-game_core.prototype.getRandomizedConditions = function() {
-  var initial = {name: "initial",
-		 numBots: 0,
-		 botPositions : null,
-		 scoreField: "spot-spot-far_player_bg.csv"};
-  return [initial].concat(
-    _.shuffle(
-      ["far-bots", "far_player_bg"]));
+game_core.prototype.newRound = function() {
+  // If you've reached the planned number of rounds, end the game  
+  if(this.roundNum == this.numRounds - 1) {
+    _.map(this.get_active_players(), function(p){
+      p.player.instance.disconnect();
+    });
+  } else {
+    // Otherwise, set stuff up for next round
+    this.roundNum += 1;
+    this.trialInfo = this.trialList[this.roundNum];
+    console.log(this.trialInfo);
+    this.players = this.initializePlayers(this.trialInfo);
+    console.log(this.players);
+    this.scoreLocs = this.getScoreInfo(this.trialInfo);
+    this.server_send_update();
+  }
+};
+
+game_core.prototype.getFixedConds = function() {
+  return [{
+    name: "initialVisible",
+    showBackground : true,
+    showBots : false,
+    botPositions : null,
+    background: "spot-spot-far_player_bg.csv"
+  }, {
+    name: "initialInvisible",
+    showBots: false,
+    botPositions : null,
+    background: "spot-spot-far_player_bg.csv"
+  }];
+};
+
+game_core.prototype.getShuffledConds = function(conditions) {
+  return _.map(conditions, function(condition) {
+    var localBackground = Math.random() < .5 ? "wall" : "spot";
+    var simulationNum = Math.floor(Math.random() * 30);
+    var simulationExtension = "_simulation-" + simulationNum + "-non-social.csv";
+    return {
+      name : condition,
+      botPositions : localBackground + "-" + condition + simulationExtension,
+      background : localBackground + "-" + condition + "_player_bg.csv"
+    };
+  });
 };
 
 game_core.prototype.makeTrialList = function() {
-  var conditionList = this.getRandomizedConditions();
-  return _.map(conditionList, function(condition) {
-    this.addBots(options.numBots);
-    this.scoreLocs = this.getScoreInfo();
+  var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far']);
+  var defaults = {showBackground : false,
+		  showBots: true,
+		  numBots: 4};
+  var fixedConds = this.getFixedConds();
+  var shuffledConds = this.getShuffledConds(conditions);
+  return _.map([fixedConds].concat(shuffledConds), function(obj) {
+    return _.defaults(obj, defaults);
   });
 };
 
