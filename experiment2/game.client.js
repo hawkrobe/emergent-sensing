@@ -66,38 +66,40 @@ function client_ondisconnect(data) {
 function client_onserverupdate_received(data){
   // Update client versions of variables with data received from
   // server_send_update function in game.core.js
-  
+  console.log(data.trialInfo);
   if(data.players) {
     _.forEach(_.zip(data.players, globalGame.players), function(z){
-      z[1].id = z[0].id;
-      if (z[0].player == null) {
-        z[1].player = null;
-      } else {
-        var s_player = z[0].player;
-        var l_player = z[1].player;
-        if(z[0].id != globalGame.my_id || l_player.angle == null) {
+      if(z[0] & z[1]) {
+	z[1].id = z[0].id;
+	if (z[0].player == null) {
+          z[1].player = null;
+	} else {
+          var s_player = z[0].player;
+          var l_player = z[1].player;
+          if(z[0].id != globalGame.my_id || l_player.angle == null) {
     	    l_player.angle = s_player.angle;
     	  }
     	  if(l_player.destination == null) {
     	    l_player.destination = s_player.destination;
     	  }
-        l_player.curr_background = s_player.cbg;
+          l_player.curr_background = s_player.cbg;
     	  l_player.total_points = s_player.tot;
-        l_player.pos = globalGame.pos(s_player.pos);
-        l_player.speed = s_player.speed;
+          l_player.pos = globalGame.pos(s_player.pos);
+          l_player.speed = s_player.speed;
     	  l_player.onwall = s_player.onwall;
-        l_player.kicked = s_player.kicked;
-        l_player.inactive = s_player.inactive;
-        l_player.lagging = s_player.lagging;
+          l_player.kicked = s_player.kicked;
+          l_player.inactive = s_player.inactive;
+          l_player.lagging = s_player.lagging;
+	}
       }
     });
   }
-  
   globalGame.game_started = data.gs;
   globalGame.players_threshold = data.pt;
   globalGame.player_count = data.pc;
   globalGame.waiting_remaining = data.wr;
-
+  globalGame.trialInfo = data.trialInfo;
+  console.log(globalGame.trialInfo);
 }; 
 
 // This is where clients parse socket.io messages from the server. If
@@ -130,11 +132,6 @@ function client_onMessage(data) {
     case 'join' : //join a game requested
       var num_players = commanddata;
       client_onjoingame(num_players); break;
-    // case 'add_player' : // New player joined... Need to add them to our list.
-    //   console.log("adding player" + commanddata);
-    //   this.players.push({id: commanddata, player: new game_player(this,null,false)}); break;
-    case 'begin_game' :
-      client_newgame(); break;
     case 'blink' : //blink title
       flashTitle("GO!");  break;
     }        
@@ -169,9 +166,9 @@ function client_update() {
   //Clear the screen area
   globalGame.ctx.clearRect(0,0,485,280);
 
-  if (window.expInfo && window.expInfo['condition'] == 'initial' && globalGame.game_started) {
-    draw_spot(globalGame);
-  }
+  // if (globalGame.trialInfo.showBackground) {
+  //   draw_spot(globalGame);
+  // }
     
   // Alter speeds
   if (speed_change != "none") {
@@ -180,16 +177,15 @@ function client_update() {
     speed_change = "none";
   }
 
-  if (window.expInfo && window.expInfo['condition'] != 'initial' && window.expInfo['condition'] != 'next') {
-    //Draw opponent next 
-    _.map(globalGame.get_others(globalGame.my_id), function(p){
-      draw_player(globalGame, p.player);
-      draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
-    });
-  }
-
+  //Draw opponent next 
+  _.map(globalGame.get_others(globalGame.my_id), function(p){
+    draw_player(globalGame, p.player);
+    draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
+  });
+  
   // Draw points scoreboard 
-  $("#cumulative_bonus").html("Total bonus this round: $" + (self.total_points).fixed(2));
+  $("#cumulative_bonus").html("Total bonus this round: $" +
+			      (self.total_points).fixed(2));
 
   if(self.onwall && globalGame.game_started) {
     $("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
@@ -204,7 +200,7 @@ function client_update() {
 			    +";'>---</span>");	
     }
   }
-  
+
   if(!started) {
     var left = timeRemaining(globalGame.waiting_remaining, globalGame.waiting_room_limit);
     var diff = globalGame.players_threshold - globalGame.player_count;
@@ -212,12 +208,12 @@ function client_update() {
   
   if(globalGame.game_started) {
     var left = new Date() - globalGame.start_time;
-  //   if((globalGame.round_length*60 - Math.floor(left/1000)) < 6) {
-  //     var remainder = globalGame.round_length*60 - Math.floor(left/1000);
-  //     if(remainder < 0) 
-	// remainder = 0;
-  //     self.message = 'Ending in ' + remainder;
-  //   }
+    //   if((globalGame.round_length*60 - Math.floor(left/1000)) < 6) {
+    //     var remainder = globalGame.round_length*60 - Math.floor(left/1000);
+    //     if(remainder < 0) 
+    // remainder = 0;
+    //     self.message = 'Ending in ' + remainder;
+    //   }
     left = timeRemaining(left, globalGame.round_length);
     // Draw time remaining 
     $("#time").html("Time remaining: " + left['t'] + " " + left['unit']);
@@ -231,7 +227,7 @@ function client_update() {
     draw_player(globalGame, self);
     draw_label(globalGame, self, "YOU");
   }
-
+  
   draw_message(globalGame, self);
   
 };
@@ -311,7 +307,7 @@ function client_connect_to_server(game) {
   //Sent when we are disconnected (network, server down, etc)
   game.socket.on('disconnect', client_ondisconnect.bind(game));
   //Sent each tick of the server simulation. This is our authoritive update
-  game.socket.on('onserverupdate', client_onserverupdate_received.bind(game));
+  game.socket.on('onserverupdate', client_onserverupdate_received);
   //Handle when we connect to the server, showing state and storing id's.
   game.socket.on('onconnected', client_onconnected.bind(game));
   //On message from the server, we parse the commands and send it to the handlers

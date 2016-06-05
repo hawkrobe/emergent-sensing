@@ -56,6 +56,7 @@ var game_core = function(options){
   this.waiting_background = 0.10;//us_min_wage_per_tick * this.game_length / this.max_bonus;
   this.waiting_start = new Date(); 
 
+  this.roundNum = -1;
   this.game_clock = 0;
 
   //We create a player set, passing them the game that is running
@@ -73,14 +74,10 @@ var game_core = function(options){
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
     this.trialList = this.makeTrialList();
-    console.log(this.trialList);
-    this.server_send_update();
   } else {
     // Have to create a client-side player array of same length as server-side
     this.players = this.initializeClientPlayers(options.numBots);
   }
-
-  this.physics_interval_id = this.create_physics_simulation();
 }; 
 
 /* The player class
@@ -123,13 +120,8 @@ var game_player = function( game_instance, player_instance, index) {
     y_min: this.size.hy,
     y_max: this.game.world.height - this.size.hy
   };
-  // if (this.game.server) {
-  //   this.pos = this.game.getInitPos(index);
-  //   this.angle = get_random_angle(); //TODO: use init angle?
-  // } else {
-    this.pos = null;
-    this.angle = null;
-//  }
+  this.pos = null;
+  this.angle = null;
   this.speed = this.game.min_speed;
   this.destination = this.pos;
   this.old_speed = this.speed;
@@ -137,6 +129,7 @@ var game_player = function( game_instance, player_instance, index) {
   this.color = 'white';
 }; 
 
+// Inherits player properties
 var bot = function(game_instance, condition, index) {
   this.base = game_player;
   this.base(game_instance, null, index);
@@ -166,41 +159,48 @@ game_core.prototype.initializeClientPlayers = function(numBots) {
 };
 
 game_core.prototype.initializePlayers = function(trialInfo) {
-  var humanPlayer = _.extend(this.players[0], {
+  // Add trial-specific info
+  var playerObj = this.players[0];
+  playerObj.player = _.extend(playerObj.player, {
     pos : this.getInitPos(trialInfo, 0),
-    angle : get_random_angle()
+    angle : get_random_angle(),
+    destination : this.getInitPos(trialInfo, 0)
   });
-  return humanPlayer.concat(this.initializeBots(this.trialInfo));
+  return [playerObj].concat(this.initializeBots(this.trialInfo));
 };
 
 game_core.prototype.initializeBots = function(trialInfo) {
   var that = this;
   return _.map(_.range(trialInfo.numBots), function(index) {
     var pid = utils.UUID();
+    var bot = new bot(that, trialInfo, index);
     return {
       id: pid,
       instance : 'bot' + index,
-      player: new bot(that, trialInfo, index)
+      player: _.extend(bot, {
+	pos : that.getInitPos(trialInfo, index),
+	angle : get_random_angle()
+      })
     };
   });
 };
 
 game_core.prototype.getInitPos = function(condition, index) {
   // Note: utils.readCSV might be syncronous & blocking
-  var pos = utils.readCSV("../metadata/" + condition.botPositions + ".csv");
+  var pos = utils.readCSV("../metadata/" + condition.botPositions);
   return {x: parseFloat(pos[index]['x_pos']),
 	  y: parseFloat(pos[index]['y_pos'])};
 };
 
 game_core.prototype.getBotInfo = function(condition, index) {
-  var botInput = utils.readCSV("../metadata/" + condition.botPositions + ".csv");
+  var botInput = utils.readCSV("../metadata/" + condition.botPositions);
   return _.filter(botInput, function(line) {
     return parseInt(line.pid) === index;
   });
 };
 
 game_core.prototype.getScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/" + condition.background + ".csv");  
+  return utils.readCSV("../metadata/" + condition.background );  
 };
 
 // Method to easily look up player 
@@ -235,7 +235,7 @@ game_core.prototype.get_bots = function() {
 };
 
 game_core.prototype.newRound = function() {
-  // If you've reached the planned number of rounds, end the game  
+  // If you've reached the planned number of rounds, end the game
   if(this.roundNum == this.numRounds - 1) {
     _.map(this.get_active_players(), function(p){
       p.player.instance.disconnect();
@@ -244,25 +244,32 @@ game_core.prototype.newRound = function() {
     // Otherwise, set stuff up for next round
     this.roundNum += 1;
     this.trialInfo = this.trialList[this.roundNum];
-    console.log(this.trialInfo);
     this.players = this.initializePlayers(this.trialInfo);
-    console.log(this.players);
     this.scoreLocs = this.getScoreInfo(this.trialInfo);
     this.server_send_update();
+    // Launch game after countdown;
+    setTimeout(function(){
+      this.game_started = true;
+      this.game_clock = 0;
+    }, 3000);
+  }
+  // Create simulation after initializing everything on first round
+  if(this.roundNum == 0) {
+    this.physics_interval_id = this.create_physics_simulation();
   }
 };
 
 game_core.prototype.getFixedConds = function() {
   return [{
     name: "initialVisible",
-    showBackground : true,
-    showBots : false,
-    botPositions : null,
+    numBots : 0,
+    botPositions : "spot-spot-close_init.csv",
+    showBackground : true,    
     background: "spot-spot-far_player_bg.csv"
   }, {
     name: "initialInvisible",
-    showBots: false,
-    botPositions : null,
+    numBots : 0,
+    botPositions : "spot-spot-close_init.csv",
     background: "spot-spot-far_player_bg.csv"
   }];
 };
@@ -283,11 +290,10 @@ game_core.prototype.getShuffledConds = function(conditions) {
 game_core.prototype.makeTrialList = function() {
   var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far']);
   var defaults = {showBackground : false,
-		  showBots: true,
 		  numBots: 4};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
-  return _.map([fixedConds].concat(shuffledConds), function(obj) {
+  return _.map(fixedConds.concat(shuffledConds), function(obj) {
     return _.defaults(obj, defaults);
   });
 };
@@ -302,7 +308,7 @@ game_core.prototype.distance_between = function(obj1, obj2) {
 };
 
 //copies a 2d vector like object from one to another
-game_core.prototype.pos = function(a) { return {x:a.x,y:a.y}; };
+game_core.prototype.pos = function(a) {return {x:a.x,y:a.y}; };
 
 //Add a 2d vector with another one and return the resulting vector
 game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
@@ -313,43 +319,44 @@ game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y
 // Notifies clients of changes on the server side. Server totally
 // handles position and points.
 game_core.prototype.server_send_update = function(){
-
   // Add info about all players
   var player_packet = _.map(this.players, function(p){
     if(p.player){
       return {id: p.id,
               player: {
                 pos: p.player.pos,
-		            destination : p.player.destination,
+		destination : p.player.destination,
                 cbg: p.player.curr_background,
-		            tot: p.player.total_points,
+		tot: p.player.total_points,
                 angle: p.player.angle,
                 speed: p.player.speed,
-		            onwall: p.player.onwall,
-		            kicked: p.player.kicked,
-		            inactive: p.player.inactive,
-		            lagging: p.player.lagging}};
+		onwall: p.player.onwall,
+		kicked: p.player.kicked,
+		inactive: p.player.inactive,
+		lagging: p.player.lagging}};
     } else {
       return {id: p.id,
               player: null};
     }
   });
+
   if(this.game_started) {
-    var state = {
+    var gameState = {
       gs : this.game_started                      // true when game's started
     };
   } else {
-    var state = {
+    var gameState = {
       gs : this.game_started,                      // true when game's started
       pt : this.players_threshold,
       pc : this.player_count,
       wr : new Date() - this.waiting_start
     };
   }
-  _.extend(state, {players: player_packet});
-  
+  var state = _.extend(gameState, {players: player_packet});
+  console.log(state.players[0].player);
   //Send the snapshot to the players
   this.state = state;
+  console.log(this.get_active_players().length);
   _.map(this.get_active_players(), function(p){
     p.player.instance.emit( 'onserverupdate', state);
   });
@@ -432,15 +439,6 @@ game_core.prototype.writeData = function() {
 game_core.prototype.server_newgame = function() {
   var local_gamecore = this;
   
-  _.map(local_gamecore.get_active_players(), function(p) {
-    p.player.instance.send('s.begin_game.');
-  });
-
-  // Launch game after countdown;
-  setTimeout(function(){
-    local_gamecore.game_started = true;
-    local_gamecore.game_clock = 0;
-  }, 3000);
 };
 
 //Main update loop
@@ -453,15 +451,6 @@ game_core.prototype.update = function() {
   this.updateid = window.requestAnimationFrame(this.update.bind(this), 
                                                this.viewport);
 };
-
-// This gets called every iteration of a new game to reset positions
-game_core.prototype.server_reset_positions = function() {
-  var local_gamecore = this;
-  _.map(local_gamecore.get_active_players(), function(p) {
-    p.player.pos = get_random_center_position(local_gamecore.world);
-    p.player.angle = get_random_angle(local_gamecore.world);
-  })
-}; 
 
 //For the server, we need to cancel the setTimeout that the polyfill creates
 game_core.prototype.stop_update = function() {  

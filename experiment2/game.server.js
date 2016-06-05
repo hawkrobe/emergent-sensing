@@ -148,19 +148,21 @@ game_server.createGame = function(player) {
 game_server.endGame = function(gameid, userid) {
   var thegame = this.games [ gameid ];
   if(thegame) {
-    //if the game has more than one player, it's fine -- let the others keep playing, but let them know
+    //if the game has more than one player, it's fine --
+    // let the others keep playing, but let them know
     var player_metric = (thegame.active 
 			 ? thegame.get_active_players().length 
-			 : thegame.player_count)
-    console.log("removing... game has " + player_metric + " players")
+			 : thegame.player_count);
+    console.log("removing... game has " + player_metric + " players");
     if(player_metric > 1) {
-      var i = _.indexOf(thegame.players, _.findWhere(thegame.players, {id: userid}))
+      var i = _.indexOf(thegame.players, _.findWhere(thegame.players, {id: userid}));
       thegame.players[i].player = null;
 
-      // If the game hasn't started yet, allow more players to fill their place. after it starts, don't.
+      // If the game hasn't started yet, allow more players to fill their place.
+      // after it starts, don't.
       if (!thegame.active) {
         thegame.player_count--;
-	      thegame.player_count = thegame.player_count;
+	thegame.player_count = thegame.player_count;
         thegame.server_send_update();
         thegame.update();
       }
@@ -188,8 +190,6 @@ game_server.holdGame = function(game) {
 
 // When the threshold is exceeded, this gets called
 game_server.startGame = function(game) {
-  // var startTime = utils.getLongFormTime();
-  // var dataFileName = startTime + "_" + game.id + ".csv";
   
   game.active = true;
   
@@ -211,7 +211,7 @@ game_server.startGame = function(game) {
 
   console.log('game ' + game.id + ' starting with ' + game.player_count + ' players...')
   
-  game.server_newgame(); 
+  game.newRound();
 };
 
 //A simple wrapper for logging so we can toggle it,
