@@ -1,4 +1,0 @@
-pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y
-5786-01fd9a48-a110-458e-bd1c-dce016e3058e,0,visible,319.016,27.238,2.125,291,0.1,0,0.1,321,28
-5786-01fd9a48-a110-458e-bd1c-dce016e3058e,1,visible,317.032,26.476,2.125,291,0.1,0,0.1,321,28
-5786-01fd9a48-a110-458e-bd1c-dce016e3058e,2,visible,315.048,25.714,2.125,291,0.1,0,0.1,321,28

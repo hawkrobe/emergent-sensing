@@ -1,5 +1,0 @@
-pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y
-5786-01fd9a48-a110-458e-bd1c-dce016e3058e,0,visible,108.074,196.124,2.125,178,0.1,0,0.1,108,194
-5786-01fd9a48-a110-458e-bd1c-dce016e3058e,1,visible,108.148,198.248,2.125,178,0.1,0,0.1,108,194
-5786-01fd9a48-a110-458e-bd1c-dce016e3058e,2,visible,108.222,200.372,2.125,178,0.1,0,0.1,108,194
-5786-01fd9a48-a110-458e-bd1c-dce016e3058e,3,visible,108.296,202.496,2.125,178,0.1,0,0.1,108,194
