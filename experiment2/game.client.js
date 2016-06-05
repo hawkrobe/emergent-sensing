@@ -57,11 +57,7 @@ function client_ondisconnect(data) {
   } else if(self.lagging) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + this.my_id;
   } else {
-    next = {'initial':'next','next':'first','first':'second','second':'third','third':'fourth','fourth':'initial'}
-    window.expInfo['condition'] = next[window.expInfo['condition']];
-    URL = './index.html?id=' + this.my_id + dict_to_query_string(window.expInfo);
-    //URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
-    //URL = 'http://projects.csail.mit.edu/ci/turk/forms/next.html?id=' + this.my_id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
   }
   window.location.replace(URL);
 };
