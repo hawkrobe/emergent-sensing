@@ -138,8 +138,6 @@ var bot = function(game_instance, condition, index) {
   this.movementInfo = this.game.getBotInfo(condition, index);
 };
 
-console.log(bot);
-
 // server side we set the 'game_core' class to a global type, so that
 // it can use it in other files (specifically, game.server.js)
 if('undefined' != typeof global) {
@@ -164,31 +162,28 @@ game_core.prototype.initializeClientPlayers = function(numBots) {
 game_core.prototype.initializePlayers = function(trialInfo) {
   // Add trial-specific info
   var playerObj = this.players[0];
+  var initInfo = this.getInitInfo(trialInfo, 0);
   playerObj.player = _.extend(playerObj.player, {
-    pos : this.getInitPos(trialInfo, 0),
-    angle : get_random_angle(),
-    destination : this.getInitPos(trialInfo, 0)
+    pos : initInfo.pos,
+    angle : initInfo.angle,
+    destination : initInfo.pos
   });
-  console.log("before initialize");
-  console.log(bot);
   var bots = this.initializeBots(this.trialInfo);
   return [playerObj].concat(bots);
 };
 
 game_core.prototype.initializeBots = function(trialInfo) {
-  console.log("inside initialize");
-  console.log(bot);
   var botList = [];
   for (var i = 0; i < trialInfo.numBots; i++) {
     var pid = utils.UUID();
-    console.log(bot);
-    var localBot = new bot(this, trialInfo, i);
+    var localBot = new bot(this, trialInfo, i + 1);
+    var initInfo = this.getInitInfo(trialInfo, i + 1);
     botList.push({
       id: pid,
       instance : 'bot' + i,
       player: _.extend(localBot, {
-	pos : this.getInitPos(trialInfo, i),
-	angle : get_random_angle()
+	pos : initInfo.pos,
+	angle : initInfo.angle
       })
     });
   }
@@ -197,11 +192,14 @@ game_core.prototype.initializeBots = function(trialInfo) {
 
 
 
-game_core.prototype.getInitPos = function(condition, index) {
+game_core.prototype.getInitInfo = function(condition, index) {
   // Note: utils.readCSV might be syncronous & blocking
-  var pos = utils.readCSV("../metadata/" + condition.botPositions);
-  return {x: parseFloat(pos[index]['x_pos']),
-	  y: parseFloat(pos[index]['y_pos'])};
+  var botPositions = utils.readCSV("../metadata/" + condition.botPositions);
+  return {
+    pos : {x: parseFloat(botPositions[index]['x_pos']),
+	   y: parseFloat(botPositions[index]['y_pos'])},
+    angle : parseFloat(botPositions[index]['angle'])
+  };
 };
 
 game_core.prototype.getBotInfo = function(condition, index) {
@@ -272,13 +270,13 @@ game_core.prototype.getFixedConds = function() {
   return [{
     name: "initialVisible",
     numBots : 0,
-    botPositions : "spot-spot-close_init.csv",
+    botPositions : "spot-spot-close_simulation-0-non-social.csv",
     showBackground : true,    
     background: "spot-spot-far_player_bg.csv"
   }, {
     name: "initialInvisible",
     numBots : 0,
-    botPositions : "spot-spot-close_init.csv",
+    botPositions : "spot-spot-close_simulation-0-non-social.csv",    
     background: "spot-spot-far_player_bg.csv"
   }];
 };

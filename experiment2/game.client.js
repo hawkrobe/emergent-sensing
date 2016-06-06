@@ -81,6 +81,7 @@ function client_onserverupdate_received(data){
       }
       l_player.curr_background = s_player.cbg;
       l_player.total_points = s_player.tot;
+      l_player.angle = s_player.angle;
       l_player.pos = globalGame.pos(s_player.pos);
       l_player.speed = s_player.speed;
       l_player.onwall = s_player.onwall;
