@@ -65,13 +65,15 @@ function draw_other_dot(game, player, other) {
 };
 
 function draw_destination(game, player) {
+  var xCoord = parseFloat(player.destination.x);
+  var yCoord = parseFloat(player.destination.y);  
   game.ctx.strokeStyle = player.color;
   game.ctx.beginPath();
-  game.ctx.moveTo(player.destination.x - 5, player.destination.y - 5);
-  game.ctx.lineTo(player.destination.x + 5, player.destination.y + 5);
+  game.ctx.moveTo(xCoord - 5, yCoord- 5);
+  game.ctx.lineTo(xCoord + 5, yCoord + 5);
 
-  game.ctx.moveTo(player.destination.x + 5, player.destination.y - 5);
-  game.ctx.lineTo(player.destination.x - 5, player.destination.y + 5);
+  game.ctx.moveTo(xCoord + 5, yCoord - 5);
+  game.ctx.lineTo(xCoord - 5, yCoord + 5);
   game.ctx.stroke();
 };
 
@@ -111,7 +113,6 @@ var getColorForPercentage = function(pct) {
 }
 
 function draw_spot(game){
-
   var centerX = 400;
   var centerY = 200;
   var radius = 50;

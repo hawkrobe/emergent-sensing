@@ -23,7 +23,6 @@ var started = false;
 var ending = false;
 
 function getSelf () {
-  console.log(globalGame.my_id);
   return globalGame.get_player(globalGame.my_id);
 };
 
@@ -74,9 +73,7 @@ function client_onserverupdate_received(data){
       globalGame.players[i].id = data.players[i].id;
       var s_player = data.players[i].player;
       var l_player = globalGame.players[i].player;
-      if(l_player.destination == null) {
-    	l_player.destination = s_player.destination;
-      }
+      l_player.destination = s_player.destination;
       l_player.curr_background = s_player.cbg;
       l_player.total_points = s_player.tot;
       l_player.angle = s_player.angle;
@@ -88,6 +85,7 @@ function client_onserverupdate_received(data){
       l_player.lagging = s_player.lagging;
     }
   }
+  
   globalGame.game_started = data.gs;
   globalGame.trialInfo = data.trialInfo;
   // Hacky way to know when the round changed
@@ -182,18 +180,12 @@ function client_update() {
   $("#cumulative_bonus").html("Total bonus this round: $" +
 			      (self.total_points).fixed(2));
 
-  if(self.onwall && globalGame.game_started) {
+  if(!globalGame.trialInfo.wallBG & self.onwall) {
     $("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
   } else {
-    if(globalGame.game_started) {
-      $("#curr_bonus").html("Current Score: <span style='color: " 
-			    + getColorForPercentage(self.curr_background) 
-			    +";'>" + Math.floor(self.curr_background*100) + "%</span>");
-    } else {
-      $("#curr_bonus").html("Current Score: <span style='color: " 
-			    + getColorForPercentage(0) 
-			    +";'>---</span>");	
-    }
+    $("#curr_bonus").html("Current Score: <span style='color: " 
+			  + getColorForPercentage(self.curr_background) 
+			  +";'>" + Math.floor(self.curr_background*100) + "%</span>");
   }
 
   if(!started) {
@@ -203,17 +195,7 @@ function client_update() {
   }
   
   if(globalGame.game_started) {
-    console.log("start time:");
-    console.log(globalGame.start_time);
     var left = Date.now() - globalGame.start_time;
-    console.log("time left:");
-    console.log(left);
-    //   if((globalGame.round_length*60 - Math.floor(left/1000)) < 6) {
-    //     var remainder = globalGame.round_length*60 - Math.floor(left/1000);
-    //     if(remainder < 0) 
-    // remainder = 0;
-    //     self.message = 'Ending in ' + remainder;
-    //   }
     left = timeRemaining(left, globalGame.round_length);
     // Draw time remaining 
     $("#time").html("Time remaining: " + left['t'] + " " + left['unit']);
