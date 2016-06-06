@@ -39,7 +39,7 @@ var game_core = function(options){
   this.round_length = 0.2; // set how long each round will last (in minutes)
   this.max_bonus = 15.0 / 60 * this.round_length; // total $ players can make in bonuses 
   this.booting = false;
-  
+  this.game_started = true;
   this.players_threshold = 1;
   
   // game and waiting length in seconds
@@ -57,6 +57,7 @@ var game_core = function(options){
   this.waiting_start = new Date(); 
 
   this.roundNum = -1;
+  this.numRounds = 6;
   this.game_clock = 0;
 
   //We create a player set, passing them the game that is running
@@ -133,9 +134,11 @@ var game_player = function( game_instance, player_instance, index) {
 var bot = function(game_instance, condition, index) {
   this.base = game_player;
   this.base(game_instance, null, index);
-  this.bot = true;
+  this.isBot = true;
   this.movementInfo = this.game.getBotInfo(condition, index);
 };
+
+console.log(bot);
 
 // server side we set the 'game_core' class to a global type, so that
 // it can use it in other files (specifically, game.server.js)
@@ -166,24 +169,33 @@ game_core.prototype.initializePlayers = function(trialInfo) {
     angle : get_random_angle(),
     destination : this.getInitPos(trialInfo, 0)
   });
-  return [playerObj].concat(this.initializeBots(this.trialInfo));
+  console.log("before initialize");
+  console.log(bot);
+  var bots = this.initializeBots(this.trialInfo);
+  return [playerObj].concat(bots);
 };
 
 game_core.prototype.initializeBots = function(trialInfo) {
-  var that = this;
-  return _.map(_.range(trialInfo.numBots), function(index) {
+  console.log("inside initialize");
+  console.log(bot);
+  var botList = [];
+  for (var i = 0; i < trialInfo.numBots; i++) {
     var pid = utils.UUID();
-    var bot = new bot(that, trialInfo, index);
-    return {
+    console.log(bot);
+    var localBot = new bot(this, trialInfo, i);
+    botList.push({
       id: pid,
-      instance : 'bot' + index,
-      player: _.extend(bot, {
-	pos : that.getInitPos(trialInfo, index),
+      instance : 'bot' + i,
+      player: _.extend(localBot, {
+	pos : this.getInitPos(trialInfo, i),
 	angle : get_random_angle()
       })
-    };
-  });
+    });
+  }
+  return botList;
 };
+
+
 
 game_core.prototype.getInitPos = function(condition, index) {
   // Note: utils.readCSV might be syncronous & blocking
@@ -218,7 +230,7 @@ game_core.prototype.get_others = function(id) {
 // Method to get whole list of players
 game_core.prototype.get_active_players = function() {
   return _.without(_.map(this.players, function(p){
-    return p.player && !p.player.bot ? p : null;
+    return p.player && !p.player.isBot ? p : null;
   }), null);
 };
 
@@ -230,11 +242,12 @@ game_core.prototype.get_active_players_and_bots = function() {
 
 game_core.prototype.get_bots = function() {
   return _.without(_.map(this.players, function(p){
-    return p.player.bot ? p : null;
+    return p.player.isBot ? p : null;
   }), null);
 };
 
 game_core.prototype.newRound = function() {
+  console.log("newRound called");
   // If you've reached the planned number of rounds, end the game
   if(this.roundNum == this.numRounds - 1) {
     _.map(this.get_active_players(), function(p){
@@ -246,12 +259,8 @@ game_core.prototype.newRound = function() {
     this.trialInfo = this.trialList[this.roundNum];
     this.players = this.initializePlayers(this.trialInfo);
     this.scoreLocs = this.getScoreInfo(this.trialInfo);
+    this.game_clock = 0;
     this.server_send_update();
-    // Launch game after countdown;
-    setTimeout(function(){
-      this.game_started = true;
-      this.game_clock = 0;
-    }, 3000);
   }
   // Create simulation after initializing everything on first round
   if(this.roundNum == 0) {
@@ -339,7 +348,7 @@ game_core.prototype.server_send_update = function(){
               player: null};
     }
   });
-
+  
   if(this.game_started) {
     var gameState = {
       gs : this.game_started                      // true when game's started
@@ -352,11 +361,11 @@ game_core.prototype.server_send_update = function(){
       wr : new Date() - this.waiting_start
     };
   }
-  var state = _.extend(gameState, {players: player_packet});
+  var state = _.extend(gameState, {players: player_packet,
+				   trialInfo : this.trialInfo});
   console.log(state.players[0].player);
   //Send the snapshot to the players
   this.state = state;
-  console.log(this.get_active_players().length);
   _.map(this.get_active_players(), function(p){
     p.player.instance.emit( 'onserverupdate', state);
   });
@@ -432,21 +441,12 @@ game_core.prototype.writeData = function() {
     line += p.player.destination.x +',';
     line += p.player.destination.y;
     local_game.gameDataStream.write(String(line) + "\n",
-    				                        function (err) {if(err) throw err;});
+    				    function (err) {if(err) throw err;});
   });
-};
-
-game_core.prototype.server_newgame = function() {
-  var local_gamecore = this;
-  
 };
 
 //Main update loop
 game_core.prototype.update = function() {
-  //Update the game specifics
-  if(!this.server) 
-    client_update();
-
   //schedule the next update
   this.updateid = window.requestAnimationFrame(this.update.bind(this), 
                                                this.viewport);
@@ -548,10 +548,7 @@ game_core.prototype.create_physics_simulation = function() {
     local_game.game_clock += 1;
     
     if(this.server && this.game_started && this.game_clock >= this.game_length) {
-      this.stop_update();
-      _.map(this.get_active_players(), function(p){
-	      p.player.instance.disconnect();
-      });
+      this.newRound();
     }
   }.bind(this), this.tick_frequency);
 };

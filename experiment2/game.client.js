@@ -23,6 +23,7 @@ var started = false;
 var ending = false;
 
 function getSelf () {
+  console.log(globalGame.my_id);
   return globalGame.get_player(globalGame.my_id);
 };
 
@@ -53,11 +54,11 @@ function client_ondisconnect(data) {
   if(self.kicked) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
   } else if(self.inactive) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + this.my_id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + globalGame.my_id;
   } else if(self.lagging) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + this.my_id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + globalGame.my_id;
   } else {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + globalGame.my_id;
   }
   window.location.replace(URL);
 };
@@ -66,40 +67,38 @@ function client_ondisconnect(data) {
 function client_onserverupdate_received(data){
   // Update client versions of variables with data received from
   // server_send_update function in game.core.js
-  console.log(data.trialInfo);
+  var minNumPlayers = _.min([data.players.length, globalGame.players.length]);
   if(data.players) {
-    _.forEach(_.zip(data.players, globalGame.players), function(z){
-      if(z[0] & z[1]) {
-	z[1].id = z[0].id;
-	if (z[0].player == null) {
-          z[1].player = null;
-	} else {
-          var s_player = z[0].player;
-          var l_player = z[1].player;
-          if(z[0].id != globalGame.my_id || l_player.angle == null) {
-    	    l_player.angle = s_player.angle;
-    	  }
-    	  if(l_player.destination == null) {
-    	    l_player.destination = s_player.destination;
-    	  }
-          l_player.curr_background = s_player.cbg;
-    	  l_player.total_points = s_player.tot;
-          l_player.pos = globalGame.pos(s_player.pos);
-          l_player.speed = s_player.speed;
-    	  l_player.onwall = s_player.onwall;
-          l_player.kicked = s_player.kicked;
-          l_player.inactive = s_player.inactive;
-          l_player.lagging = s_player.lagging;
-	}
+    // Match up players
+    for(var i = 0; i < minNumPlayers; i++) {
+      globalGame.players[i].id = data.players[i].id;
+      var s_player = data.players[i].player;
+      var l_player = globalGame.players[i].player;
+      console.log(s_player);
+      console.log(l_player);
+      if(l_player.destination == null) {
+    	l_player.destination = s_player.destination;
       }
-    });
+      l_player.curr_background = s_player.cbg;
+      l_player.total_points = s_player.tot;
+      l_player.pos = globalGame.pos(s_player.pos);
+      l_player.speed = s_player.speed;
+      l_player.onwall = s_player.onwall;
+      l_player.kicked = s_player.kicked;
+      l_player.inactive = s_player.inactive;
+      l_player.lagging = s_player.lagging;
+    }
   }
+  console.log("after update:");
+  console.log(globalGame.players[0].player);
   globalGame.game_started = data.gs;
   globalGame.players_threshold = data.pt;
   globalGame.player_count = data.pc;
   globalGame.waiting_remaining = data.wr;
   globalGame.trialInfo = data.trialInfo;
-  console.log(globalGame.trialInfo);
+  if(globalGame.trialInfo) {
+    client_update();
+  }
 }; 
 
 // This is where clients parse socket.io messages from the server. If
@@ -124,7 +123,7 @@ function client_onMessage(data) {
     case 'end' :
       // Redirect to exit survey
       console.log("received end message...");
-      var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + this.my_id;
+      var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + globalGame.my_id;
       window.location.replace(URL); break;
     case 'alert' : // Not in database, so you can't play...
       alert('You did not enter an ID'); 
@@ -137,12 +136,6 @@ function client_onMessage(data) {
     }        
     break; 
   } 
-}; 
-
-// Restarts things on the client side. Necessary for iterated games.
-function client_newgame() {
-  started = true;
-  client_countdown();
 }; 
 
 function client_countdown() {
@@ -162,13 +155,12 @@ function client_countdown() {
 
 function client_update() {
   var self = getSelf();
-
+  
   //Clear the screen area
   globalGame.ctx.clearRect(0,0,485,280);
-
-  // if (globalGame.trialInfo.showBackground) {
-  //   draw_spot(globalGame);
-  // }
+  if (globalGame.trialInfo.showBackground) {
+    draw_spot(globalGame);
+  }
     
   // Alter speeds
   if (speed_change != "none") {
@@ -177,10 +169,12 @@ function client_update() {
     speed_change = "none";
   }
 
-  //Draw opponent next 
+  //Draw opponent next
   _.map(globalGame.get_others(globalGame.my_id), function(p){
-    draw_player(globalGame, p.player);
-    draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
+    if(p.id) {
+      draw_player(globalGame, p.player);
+      draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
+    }
   });
   
   // Draw points scoreboard 
@@ -202,7 +196,8 @@ function client_update() {
   }
 
   if(!started) {
-    var left = timeRemaining(globalGame.waiting_remaining, globalGame.waiting_room_limit);
+    var left = timeRemaining(globalGame.waiting_remaining,
+			     globalGame.waiting_room_limit);
     var diff = globalGame.players_threshold - globalGame.player_count;
   }
   
@@ -223,7 +218,8 @@ function client_update() {
   
   //And then we draw ourself so we're always in front
   if(globalGame.game_started && self.pos) {
-    //draw_destination(globalGame, self);
+    draw_destination(globalGame, self);
+    console.log("drawing self");
     draw_player(globalGame, self);
     draw_label(globalGame, self, "YOU");
   }
@@ -319,9 +315,8 @@ function client_onconnected(data) {
   //this lets us store the information about ourselves  
   // so that we remember who we are.
   console.log("setting id to " + data.id);
-  this.my_id = data.id;
-  this.players[0].id = data.id;
-  window.expInfo = $.extend({}, data.info);
+  globalGame.my_id = data.id;
+  globalGame.players[0].id = data.id;
 };
 
 function client_onjoingame(num_players) {
