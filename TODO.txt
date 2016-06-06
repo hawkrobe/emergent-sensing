@@ -1,12 +1,18 @@
 TODO:
 
-* Read in other player positions
-* Read in new csv of just scorefield centroid
-  -- set to 1 in 20 pixel radius of that centroid, .5 elsewhere, 0 at edges
+* Randomize location of centroid (via transformation)
+* Decide what to do with stopping mechanism
+  - if keep going past destination marker, need to start new round standing still
+  - if press button to stop, need to change destination mechanism
+  - if stop at destination, need to expand boundary condition
+* Make rounds last longer
 
 COMPLETED:
 
 * Convert to 1 player game (expert)
+* Read in other player positions
+* Read in new csv of just scorefield centroid
+  -- set to 1 in 20 pixel radius of that centroid, .5 elsewhere, 0 at edges
 * Click to move instead of arrow keys
 * Allow more than 2 people to be in a room together
   -- Don't need separate function for 'host' and 'other', since players are identical
