@@ -74,8 +74,6 @@ function client_onserverupdate_received(data){
       globalGame.players[i].id = data.players[i].id;
       var s_player = data.players[i].player;
       var l_player = globalGame.players[i].player;
-      console.log(s_player);
-      console.log(l_player);
       if(l_player.destination == null) {
     	l_player.destination = s_player.destination;
       }
@@ -90,13 +88,13 @@ function client_onserverupdate_received(data){
       l_player.lagging = s_player.lagging;
     }
   }
-  console.log("after update:");
-  console.log(globalGame.players[0].player);
   globalGame.game_started = data.gs;
-  globalGame.players_threshold = data.pt;
-  globalGame.player_count = data.pc;
-  globalGame.waiting_remaining = data.wr;
   globalGame.trialInfo = data.trialInfo;
+  // Hacky way to know when the round changed
+  if(globalGame.roundNum != data.roundNum) {
+    globalGame.roundNum = data.roundNum;
+    globalGame.start_time = new Date();
+  }
   if(globalGame.trialInfo) {
     client_update();
   }
@@ -159,6 +157,8 @@ function client_update() {
   
   //Clear the screen area
   globalGame.ctx.clearRect(0,0,485,280);
+
+  // Draw background
   if (globalGame.trialInfo.showBackground) {
     draw_spot(globalGame);
   }
@@ -203,7 +203,11 @@ function client_update() {
   }
   
   if(globalGame.game_started) {
-    var left = new Date() - globalGame.start_time;
+    console.log("start time:");
+    console.log(globalGame.start_time);
+    var left = Date.now() - globalGame.start_time;
+    console.log("time left:");
+    console.log(left);
     //   if((globalGame.round_length*60 - Math.floor(left/1000)) < 6) {
     //     var remainder = globalGame.round_length*60 - Math.floor(left/1000);
     //     if(remainder < 0) 
@@ -220,7 +224,6 @@ function client_update() {
   //And then we draw ourself so we're always in front
   if(globalGame.game_started && self.pos) {
     draw_destination(globalGame, self);
-    console.log("drawing self");
     draw_player(globalGame, self);
     draw_label(globalGame, self, "YOU");
   }
@@ -284,6 +287,7 @@ window.onload = function(){
   globalGame.ctx.font = '11px "Helvetica"';
 
   //Finally, start the loop
+  globalGame.start_time = new Date();  
   globalGame.update();
 };
 

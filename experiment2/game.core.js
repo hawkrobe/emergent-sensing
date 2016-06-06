@@ -254,6 +254,7 @@ game_core.prototype.newRound = function() {
   } else {
     // Otherwise, set stuff up for next round
     this.roundNum += 1;
+    this.roundStarted = new Date();
     this.trialInfo = this.trialList[this.roundNum];
     this.players = this.initializePlayers(this.trialInfo);
     this.scoreLocs = this.getScoreInfo(this.trialInfo);
@@ -347,21 +348,21 @@ game_core.prototype.server_send_update = function(){
     }
   });
   
-  if(this.game_started) {
-    var gameState = {
-      gs : this.game_started                      // true when game's started
-    };
-  } else {
-    var gameState = {
-      gs : this.game_started,                      // true when game's started
-      pt : this.players_threshold,
-      pc : this.player_count,
-      wr : new Date() - this.waiting_start
-    };
-  }
+  var gameState = {
+    roundNum : this.roundNum,
+    gs : this.game_started                      // true when game's started
+  };
+  // } else {
+  //   var gameState = {
+  //     gs : this.game_started,                      // true when game's started
+  //     pt : this.players_threshold,
+  //     pc : this.player_count,
+  //     wr : new Date() - this.waiting_start
+  //   };
+  // }
   var state = _.extend(gameState, {players: player_packet,
 				   trialInfo : this.trialInfo});
-  console.log(state.players[0].player);
+
   //Send the snapshot to the players
   this.state = state;
   _.map(this.get_active_players(), function(p){
@@ -377,10 +378,9 @@ game_core.prototype.server_update_physics = function() {
     var player = p.player;
 
     // Stop at destination
-    // var r = (local_this.distance_between(player.pos, player.destination) < 8 ?
-	  //    0 :
-	  //          player.speed);
-    var r = player.speed;
+    var r = (local_this.distance_between(player.pos, player.destination) < 8 ?
+	     0 :
+	     player.speed);
     var theta = (player.angle - 90) * Math.PI / 180;
     var new_dir = {
       x : r * Math.cos(theta), 
