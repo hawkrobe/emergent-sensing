@@ -1,11 +1,20 @@
 TODO:
 
-* Randomize location of centroid (via transformation)
 * Decide what to do with stopping mechanism
   - if keep going past destination marker, need to start new round standing still
   - if press button to stop, need to change destination mechanism
   - if stop at destination, need to expand boundary condition
 * Make rounds last longer
+
+* The new design will have the highest scoring region appearing in some location that depends on the human player’s current position. In the “close” conditions, after a random interval, say between 5 and 10 seconds, the highest scoring region should appear at the player’s location (or the closest valid point for the it, which may be different in the wall condition).  Also, it should disappear at random after a random interval between 5 and 10 seconds, and then reappear again. (previously, "randomize location of centroid via transformation")
+
+* I think beyond increasing the width of the wall, we should also make the center area have 0 points in the wall condition, and we should invert the player booting so that if the player is inactive in the center region for too long, we remove them, as we did when they were against the wall in the original implementation.
+
+* I wanted to add instruction pages in between the rounds 1 and 2, and rounds 2 and 3.  I’m not sure how to do that in the current architecture, but maybe now it is best to implement then in the javascript given we abandoned the URL-passing-data architecture.  I was thinking these instructions would be quite simple, e.g. ("You will now play 1 round where the score field is visible. Click here to begin.”… “You will now play one round where the score field is invisible”… “You will now play 4 rounds with other players.”)
+
+* To make the game a little more engaging, I was thinking maybe we should make the space bar just give a little temporary boost to speed, and then you have to wait some random number of milliseconds before you can boost again. What do you think?
+
+* It might be worth considering still doing the 1-bit communication flag. I was thinking about what might be a reasonable way to implement this given the current control.  One way I was thinking was holding down the mouse button and shaking the mouse around, as if you are waving a flag. What do you think?
 
 COMPLETED:
 
