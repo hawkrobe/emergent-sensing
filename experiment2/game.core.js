@@ -382,7 +382,7 @@ game_core.prototype.server_update_physics = function() {
     player.old_state.pos = local_this.pos(player.pos) ;
     player.pos = local_this.v_add( player.old_state.pos, new_dir );
     if(player.pos) {
-      player.game.check_collision( player );
+      player.game.checkCollision( player, {tolerance: 0, stop: true});
     }
   });
 };
@@ -396,7 +396,7 @@ game_core.prototype.update_bots = function() {
     var angle = parseFloat(player.movementInfo[stepNum]["angle"]);
     player.pos = {x:x,y:y};
     player.angle = angle;
-    player.game.check_collision( player );
+    player.game.checkCollision( player , {tolerance: 0, stop: true});
   });
 };
 
@@ -468,7 +468,7 @@ game_core.prototype.handleHiddenTab = function(p) {
 
 game_core.prototype.handleInactivity = function(p) {
   var not_changing = p.last_speed == p.speed && p.last_angle == p.angle;
-  var onWall = this.check_collision(p);
+  var onWall = this.checkCollision(p, {tolerance: 5, stop: false});
   p.last_speed = p.speed;
   p.last_angle = p.angle;
 
@@ -507,14 +507,22 @@ game_core.prototype.handleBootingConditions = function(p) {
 
 game_core.prototype.updateScores = function(p) {
   if(p) {
-    var onWall = this.check_collision(p);
+    var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
     var loc = {x:this.scoreLocs[this.game_clock]["x_pos"],
 	       y:this.scoreLocs[this.game_clock]["y_pos"]};
     var dist = this.distance_between(loc, p.pos);
     // In alternative scoring field, only counts if you're against the wall
     if(this.trialInfo.wallBG) {
-      p.curr_background = (dist < 50 & onWall) ? 1.0 : this.waiting_background;
-      p.onwall = true;
+      if(onWall) {
+	p.onwall = true;
+	if(dist < 50) {
+	  p.curr_background = 1;
+	} else {
+	  p.curr_background = .1;
+	}
+      } else {
+	p.curr_background = 0;
+      }
     } else if (!onWall) {
       p.curr_background = (dist < 50) ? 1.0 : this.waiting_background;
       p.onwall = false;
@@ -563,30 +571,32 @@ game_core.prototype.create_physics_simulation = function() {
 };
 
 //Prevents people from leaving the arena
-game_core.prototype.check_collision = function( item ) {
+game_core.prototype.checkCollision = function(item, options) {
   var collision = false;
-
+  var tolerance = options.tolerance;
+  var stop = options.stop;
+  
   //Left wall.
-  if(item.pos.x <= item.pos_limits.x_min){
+  if(item.pos.x <= item.pos_limits.x_min + tolerance){
     collision = true;
-    item.pos.x = item.pos_limits.x_min;
+    item.pos.x = stop ? item.pos_limits.x_min : item.pos.x;
   }
   //Right wall
-  if(item.pos.x >= item.pos_limits.x_max ){
+  if(item.pos.x >= item.pos_limits.x_max - tolerance){
     collision = true;
-    item.pos.x = item.pos_limits.x_max;
+    item.pos.x = stop ? item.pos_limits.x_max : item.pos.x;
   }
 
   //Roof wall.
-  if(item.pos.y <= item.pos_limits.y_min) {
+  if(item.pos.y <= item.pos_limits.y_min + tolerance) {
     collision = true;
-    item.pos.y = item.pos_limits.y_min;
+    item.pos.y = stop ? item.pos_limits.y_min : item.pos.y;
   }
 
   //Floor wall
-  if(item.pos.y >= item.pos_limits.y_max ) {
+  if(item.pos.y >= item.pos_limits.y_max - tolerance) {
     collision = true;
-    item.pos.y = item.pos_limits.y_max;
+    item.pos.y = stop ? item.pos_limits.y_max : item.pos.y;
   }
 
   //Fixed point helps be more deterministic
