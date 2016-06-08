@@ -74,6 +74,8 @@ var game_core = function(options){
       instance: options.player_instances[0].player,
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
+    this.backgroundCondition = Math.random() < .5 ? "wall" : "spot";
+    console.log(this.backgroundCondition);
     this.trialList = this.makeTrialList();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -272,33 +274,31 @@ game_core.prototype.getFixedConds = function() {
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
     showBackground : true,    
-    background: "spot-spot-far_player_bg.csv"
+    background: this.backgroundCondition + "-spot-far_player_bg.csv"
   }, {
     name: "initialInvisible",
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",    
-    background: "spot-spot-far_player_bg.csv"
+    background: this.backgroundCondition + "-spot-far_player_bg.csv"
   }];
 };
 
 game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
-    var localBackground = Math.random() < .5 ? "wall" : "spot";
     var simulationNum = Math.floor(Math.random() * 30);
     var simulationExtension = "_simulation-" + simulationNum + "-non-social.csv";
     return {
       name : condition,
-      wallBG : localBackground == "wall",
-      botPositions : localBackground + "-" + condition + simulationExtension,
-      background : localBackground + "-" + condition + "_player_bg.csv"
+      botPositions : this.backgroundCondition + "-" + condition + simulationExtension,
+      background : this.backgroundCondition + "-" + condition + "_player_bg.csv"
     };
-  });
+  }, this);
 };
 
 game_core.prototype.makeTrialList = function() {
   var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far']);
   var defaults = {showBackground : false,
-		  wallBG : false,
+		  wallBG : this.backgroundCondition == "wall",
 		  numBots: 4};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
