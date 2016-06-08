@@ -28,20 +28,34 @@ function getSelf () {
 
 function client_on_click(game, newX, newY ) {
   // Auto-correcting input, but only between rounds
-
   var self = getSelf();
   var oldX = self.pos.x;
   var oldY = self.pos.y;
   var dx = newX - oldX;
   var dy = newY - oldY;
 
-  self.destination = {x : Math.round(newX), y : Math.round(newY)};
-  self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
+  if(globalGame.pause) {
+    checkButtonPress(newX, newY);
+  } else {
 
-  var info_packet = ("c." + self.angle +
-		     "."  + self.destination.x +
-		     "."  + self.destination.y);
-  game.socket.send(info_packet);
+    self.destination = {x : Math.round(newX), y : Math.round(newY)};
+    self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
+
+    var info_packet = ("c." + self.angle +
+		       "."  + self.destination.x +
+		       "."  + self.destination.y);
+    game.socket.send(info_packet);
+  }
+};
+
+function checkButtonPress(mx, my) {
+  var button = globalGame.advanceButton;
+  var dx = mx - button.trueX;
+  var dy = my - button.trueY;
+  if ((0 < dx) && (dx < button.width) && (0 < dy) && (dy < button.height)) {
+    globalGame.socket.send("ready");
+    globalGame.pause = false;
+  }
 };
 
 function client_ondisconnect(data) {
@@ -61,7 +75,6 @@ function client_ondisconnect(data) {
   }
   window.location.replace(URL);
 };
-
 
 function client_onserverupdate_received(data){
   // Update client versions of variables with data received from
@@ -88,6 +101,7 @@ function client_onserverupdate_received(data){
   
   globalGame.game_started = data.gs;
   globalGame.trialInfo = data.trialInfo;
+
   // Hacky way to know when the round changed
   if(globalGame.roundNum != data.roundNum) {
     globalGame.roundNum = data.roundNum;
@@ -120,7 +134,8 @@ function client_onMessage(data) {
     case 'end' :
       // Redirect to exit survey
       console.log("received end message...");
-      var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + globalGame.my_id;
+      var URL = ('http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' +
+		 globalGame.my_id);
       window.location.replace(URL); break;
     case 'alert' : // Not in database, so you can't play...
       alert('You did not enter an ID'); 
@@ -130,6 +145,9 @@ function client_onMessage(data) {
       client_onjoingame(num_players); break;
     case 'blink' : //blink title
       flashTitle("GO!");  break;
+    case 'showInstructions' :
+      globalGame.pause = true;
+      drawInstructions(globalGame);
     }        
     break; 
   } 

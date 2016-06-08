@@ -44,6 +44,9 @@ game_server.server_onMessage = function(client,message) {
     target.speed = message_parts[1].replace(/-/g,'.');;
   } else if (message_type == "h") { 
     target.visible = message_parts[1];
+  } else if (message_type == "ready") {
+    client.game.update();
+    client.game.newRound();
   } else if (message_type == 'pong') {
     var latency = (Date.now() - message_parts[1])/2;
     target.latency = latency;
