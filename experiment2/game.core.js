@@ -30,7 +30,11 @@ var game_core = function(options){
   
   //Dimensions of world -- Used in collision detection, etc.
   this.world = {width : 485, height : 280};  // 160cm * 3
-
+  this.advanceButton = {trueX: 2 * this.world.width / 5,
+			trueY: 3 * this.world.height / 4,
+			width: this.world.width / 5,
+			height: this.world.height / 6};
+    
   //How often the players move forward <global_speed>px in ms.
   this.tick_frequency = 125;     //Update 8 times per second
   this.ticks_per_sec = 1000/125;
@@ -52,8 +56,9 @@ var game_core = function(options){
   this.other_color = 'white';
 
   // minimun wage per tick
+  // background = us_min_wage_per_tick * this.game_length / this.max_bonus;
   var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency));
-  this.waiting_background = 0.10;//us_min_wage_per_tick * this.game_length / this.max_bonus;
+  this.waiting_background = 0.10;
   this.waiting_start = new Date(); 
 
   this.roundNum = -1;
@@ -260,11 +265,9 @@ game_core.prototype.newRound = function() {
     this.players = this.initializePlayers(this.trialInfo);
     this.scoreLocs = this.getScoreInfo(this.trialInfo);
     this.game_clock = 0;
-    this.server_send_update();
-  }
-  // Create simulation after initializing everything on first round
-  if(this.roundNum == 0) {
+    // (Re)start simulation
     this.physics_interval_id = this.create_physics_simulation();
+    this.server_send_update();
   }
 };
 
@@ -563,9 +566,12 @@ game_core.prototype.create_physics_simulation = function() {
       this.game_clock += 1;
     }
 
-    // Advance to next round when length is exceeded
+    // Pause & show player next instruction set when time is out
     if(this.server && this.game_started && this.game_clock >= this.game_length) {
-      this.newRound();
+      this.stop_update();
+      _.map(this.get_active_players(), function(p){
+	p.player.instance.send('s.showInstructions');
+      });
     }
   }.bind(this), this.tick_frequency);
 };
