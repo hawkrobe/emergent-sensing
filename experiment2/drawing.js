@@ -139,3 +139,59 @@ function draw_spot(game){
   game.ctx.restore();  
 
 };
+
+var drawInstructions = function(game, player) {
+  game.ctx.save();
+  game.ctx.clearRect(0,0,485,280);
+  game.ctx.font = "10pt Helvetica";
+  game.ctx.fillStyle = 'white';
+  game.ctx.textAlign = 'center';
+  var message = "Starting round " + (game.roundNum + 1);
+  wrapText(game, message, 
+           game.world.width/2, game.world.height/4,
+           game.world.width*4/5,
+           25);
+  game.ctx.restore();
+  drawButton(game);
+};
+
+var drawButton = function (game, player){
+  var but = game.advanceButton;
+  game.ctx.save();
+  game.ctx.fillStyle = '#61e6ff';
+  game.ctx.fillRect(but.trueX, but.trueY, but.width, but.height);
+  game.ctx.strokeStyle = "#000000";
+  game.ctx.lineWidth=4;
+  game.ctx.strokeRect(but.trueX, but.trueY, but.width, but.height);
+  game.ctx.fillStyle = '#000000';
+  game.ctx.textBaseline = 'middle';
+  game.ctx.fillText("Ready", but.trueX + but.width/2, but.trueY + but.height/2);
+  game.ctx.restore();
+};
+
+function wrapText(game, text, x, y, maxWidth, lineHeight) {
+  var cars = text.split("\n");
+
+  for (var ii = 0; ii < cars.length; ii++) {
+
+    var line = "";
+    var words = cars[ii].split(" ");
+
+    for (var n = 0; n < words.length; n++) {
+      var testLine = line + words[n] + " ";
+      var metrics = game.ctx.measureText(testLine);
+      var testWidth = metrics.width;
+
+      if (testWidth > maxWidth) {
+        game.ctx.fillText(line, x, y);
+        line = words[n] + " ";
+        y += lineHeight;
+      }
+      else {
+        line = testLine;
+      }
+    }
+    game.ctx.fillText(line, x, y);
+    y += lineHeight;
+  }
+}
