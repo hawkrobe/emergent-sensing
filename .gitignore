@@ -7,3 +7,6 @@ node_modules/*
 */node_modules/*
 */data/games/*.csv 
 */data/latencies/*.csv
+*/data/waiting_games/*.csv 
+*/data/waiting_latencies/*.csv
+*/data/*
