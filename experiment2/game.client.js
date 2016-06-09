@@ -22,6 +22,18 @@ var speed_change = "none";
 var started = false;
 var ending = false;
 
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+var debug = getParameterByName('debug') == 'true';
+
 function getSelf () {
   return globalGame.get_player(globalGame.my_id);
 };
@@ -34,6 +46,10 @@ function client_on_click(game, newX, newY ) {
   var dx = newX - oldX;
   var dy = newY - oldY;
 
+  if(debug) {
+    checkSkipPress(newX, newY);
+  }
+  
   if(globalGame.pause) {
     checkButtonPress(newX, newY);
   } else {
@@ -49,6 +65,16 @@ function client_on_click(game, newX, newY ) {
 };
 
 function checkButtonPress(mx, my) {
+  var button = globalGame.advanceButton;
+  var dx = mx - button.trueX;
+  var dy = my - button.trueY;
+  if ((0 < dx) && (dx < button.width) && (0 < dy) && (dy < button.height)) {
+    globalGame.socket.send("ready");
+    globalGame.pause = false;
+  }
+};
+
+function checkSkipPress(mx, my) {
   var button = globalGame.advanceButton;
   var dx = mx - button.trueX;
   var dy = my - button.trueY;
@@ -230,6 +256,10 @@ function client_update() {
   
   draw_message(globalGame, self);
   
+  if(debug) {
+    drawButton(globalGame);
+  }
+
 };
 
 var timeRemaining = function(remaining, limit) {

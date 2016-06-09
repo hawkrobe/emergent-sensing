@@ -57,6 +57,11 @@ io.on('connection', function (client) {
   // Recover query string information and set condition
   var hs = client.handshake;    
   var query = require('url').parse(client.handshake.headers.referer, true).query;
+  if('debug' in query) {
+    var debug = true;
+  } else {
+    var debug = false;
+  }
   //if( !(query.id && query.id in global_player_set) ) {
   if(query.id) {
     global_player_set[query.id] = true;
@@ -66,7 +71,7 @@ io.on('connection', function (client) {
   }
   if(valid_id(id)) {
     console.log("user connecting...");
-    initialize(query, client, id);
+    initialize(query, client, id, debug);
   }
 });
 
@@ -74,7 +79,7 @@ var valid_id = function(id) {
   return true;//id.length == 41;
 }
 
-var initialize = function(query, client, id) {
+var initialize = function(query, client, id, debug) {
   client.userid = id;
   client.emit('onconnected', { id: client.userid } );
   
@@ -82,7 +87,7 @@ var initialize = function(query, client, id) {
   console.log('\t socket.io:: player ' + client.userid + ' connected');
   
   //Pass off to game.server.js code
-  game_server.findGame(client);
+  game_server.findGame(client, debug);
   
   // Now we want set up some callbacks to handle messages that clients will send.
   // We'll just pass messages off to the server_onMessage function for now.

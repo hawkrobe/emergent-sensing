@@ -28,6 +28,8 @@ if( typeof _ === 'undefined' ) {
 var game_core = function(options){
   this.server = options.server;
   
+  this.debug = options.debug;
+  
   //Dimensions of world -- Used in collision detection, etc.
   this.world = {width : 485, height : 280};  // 160cm * 3
   this.advanceButton = {trueX: 2 * this.world.width / 5,
@@ -40,7 +42,7 @@ var game_core = function(options){
   this.ticks_per_sec = 1000/125;
 
   this.waiting_room_limit = 5; // set maximum waiting room time (in minutes)
-  this.round_length = 0.2; // set how long each round will last (in minutes)
+  this.round_length = 1.0; // set how long each round will last (in minutes)
   this.max_bonus = 15.0 / 60 * this.round_length; // total $ players can make in bonuses 
   this.booting = false;
   this.game_started = true;
@@ -277,23 +279,23 @@ game_core.prototype.getFixedConds = function() {
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
     showBackground : true,    
-    background: this.backgroundCondition + "-spot-far_player_bg.csv"
+    background: this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv"
   }, {
     name: "initialInvisible",
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",    
-    background: this.backgroundCondition + "-spot-far_player_bg.csv"
+    background: this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv"
   }];
 };
 
 game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
-    var simulationNum = Math.floor(Math.random() * 30);
+    var simulationNum = 0//Math.floor(Math.random() * 30);
     var simulationExtension = "_simulation-" + simulationNum + "-non-social.csv";
     return {
       name : condition,
       botPositions : this.backgroundCondition + "-" + condition + simulationExtension,
-      background : this.backgroundCondition + "-" + condition + "_player_bg.csv"
+      background : this.backgroundCondition + "-" + condition + "_bot_bg-" + simulationNum + "-non-social.csv"
     };
   }, this);
 };
