@@ -261,6 +261,7 @@ game_core.prototype.newRound = function() {
     });
   } else {
     // Otherwise, set stuff up for next round
+    this.stop_update();
     this.roundNum += 1;
     this.roundStarted = new Date();
     this.trialInfo = this.trialList[this.roundNum];
@@ -393,7 +394,7 @@ game_core.prototype.server_update_physics = function() {
 };
 
 game_core.prototype.update_bots = function() {
-  var stepNum = this.game_clock + 1;
+  var stepNum = this.game_clock;// + 1;
   _.forEach(this.get_bots(), function(p){
     var player = p.player;
     var x = parseFloat(player.movementInfo[stepNum]["x_pos"]);
@@ -465,7 +466,7 @@ game_core.prototype.handleHiddenTab = function(p) {
     p.hidden_count += 1;
   }
   // kick after being hidden for 15 seconds  
-  if(p.hidden_count > this.ticks_per_sec * 15) { 
+  if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug) { 
     p.kicked = true;
     console.log('Player ' + p.id + ' will be disconnected for being hidden.');
   }
@@ -482,7 +483,7 @@ game_core.prototype.handleInactivity = function(p) {
   }
   
   // kick after being inactive for 30 seconds
-  if(p.inactive_count > this.ticks_per_sec*30) {  
+  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug) {  
     p.inactive = true;
     console.log('Player ' + p.id + ' will be disconnected for inactivity.');
   }
@@ -494,14 +495,14 @@ game_core.prototype.handleLatency = function(p) {
     p.lag_count += 1;
   }
   // Kick if latency persists 10% of game
-  if(p.lag_count > this.game_length*0.1) {
+  if(p.lag_count > this.game_length*0.1 && !this.debug) {
     p.lagging = true;
     console.log('Player ' + p.id + ' will be disconnected because of latency.');
   }
 };
 
 game_core.prototype.handleBootingConditions = function(p) {
-  if(p.kicked || p.inactive || p.lagging) {
+  if(p.kicked || p.inactive || p.lagging && !this.debug) {
     p.instance.disconnect();
   } else {
     this.handleHiddenTab(p);
