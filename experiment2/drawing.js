@@ -1,5 +1,5 @@
 // Draw players as triangles using HTML5 canvas
-function draw_player(game, player){
+function drawPlayer(game, player){
   // Draw avatar as triangle
   var v = [[0,-player.size.x],
 	   [-player.size.hx,player.size.y],
@@ -24,7 +24,7 @@ function draw_player(game, player){
 
 };
 
-function draw_message(game, player){
+function drawMessage(game, player){
   // Draw message in center (for countdown, e.g.)
   game.ctx.font = "bold 12pt Helvetica";
   game.ctx.fillStyle = 'red';
@@ -32,39 +32,13 @@ function draw_message(game, player){
   game.ctx.fillText(player.message, game.world.width/2, game.world.height/5);
 }; 
 
-function draw_label(game, player, label) {
+function drawLabel(game, player, label) {
   game.ctx.font = "8pt Helvetica";
   game.ctx.fillStyle = 'white';
   game.ctx.fillText(label, player.pos.x+10, player.pos.y + 20); 
 }
 
-function draw_visibility_radius(game, player) {
-  var x = player.pos.x;
-  var y = player.pos.y;
-  var r = game.visibility_radius;
-  game.ctx.beginPath();
-  game.ctx.strokeStyle = 'gray';
-  game.ctx.arc(x, y, r, 0, 2 * Math.PI, false);
-  game.ctx.stroke();
-}
-
-function draw_other_dot(game, player, other) {
-  var scaling_factor = game.distance_between(player.pos, other.pos);
-  var X = (other.pos.x - player.pos.x);
-  var Y = (player.pos.y - other.pos.y);
-  var theta = Math.atan2(Y,X);
-  game.ctx.beginPath();
-  game.ctx.arc(player.pos.x + game.visibility_radius*Math.cos(theta),
-	       player.pos.y - game.visibility_radius*Math.sin(theta), 
-	       5, 0, 2 * Math.PI, false);
-  game.ctx.fillStyle = 'white';
-  game.ctx.fill();
-  game.ctx.lineWidth = 1;
-  game.ctx.strokeStyle = 'gray';
-  game.ctx.stroke();
-};
-
-function draw_destination(game, player) {
+function drawDestination(game, player) {
   var xCoord = parseFloat(player.destination.x);
   var yCoord = parseFloat(player.destination.y);  
   game.ctx.strokeStyle = player.color;
@@ -76,17 +50,6 @@ function draw_destination(game, player) {
   game.ctx.lineTo(xCoord - 5, yCoord + 5);
   game.ctx.stroke();
 };
-
-// draws instructions at the bottom in a nice style
-function draw_info(game, info) {    
-  //Draw information shared by both players
-  game.ctx.font = "8pt Helvetica";
-  game.ctx.fillStyle = 'rgba(255,255,255,1)';
-  game.ctx.fillText(info, 10 , 465); 
-  
-  //Reset the style back to full white.
-  game.ctx.fillStyle = 'rgba(255,255,255,1)';
-}; 
 
 var percentColors = [
   //    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
@@ -117,7 +80,7 @@ var getColorForPercentage = function(pct) {
   }
 }
 
-function draw_spot(game){
+function drawScoreField(game){
   var centerX = 400;
   var centerY = 200;
   var radius = 50;

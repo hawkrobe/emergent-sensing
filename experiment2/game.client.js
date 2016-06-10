@@ -202,7 +202,7 @@ function client_update() {
 
   // Draw background
   if (globalGame.trialInfo.showBackground) {
-    draw_spot(globalGame);
+    drawScoreField(globalGame);
   }
     
   // Alter speeds
@@ -215,8 +215,8 @@ function client_update() {
   //Draw opponent next
   _.map(globalGame.get_others(globalGame.my_id), function(p){
     if(p.id) {
-      draw_player(globalGame, p.player);
-      draw_label(globalGame, p.player, "Player " + p.id.slice(0,4));
+      drawPlayer(globalGame, p.player);
+      drawLabel(globalGame, p.player, "Player " + p.id.slice(0,4));
     }
   });
   
@@ -245,12 +245,12 @@ function client_update() {
   
   //And then we draw ourself so we're always in front
   if(globalGame.game_started && self.pos) {
-    draw_destination(globalGame, self);
-    draw_player(globalGame, self);
-    draw_label(globalGame, self, "YOU");
+    drawDestination(globalGame, self);
+    drawPlayer(globalGame, self);
+    drawLabel(globalGame, self, "YOU");
   }
   
-  draw_message(globalGame, self);
+  drawMessage(globalGame, self);
   
   if(debug) {
     drawButton(globalGame);
