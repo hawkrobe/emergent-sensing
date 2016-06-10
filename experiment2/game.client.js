@@ -90,7 +90,7 @@ function client_ondisconnect(data) {
   
   var self = getSelf();
   var URL = 'http://projects.csail.mit.edu/ci/turk/forms/';
-  if(self.kicked) {
+  if(self.hidden) {
     URL += 'away.html';
   } else if(self.inactive) {
     URL += 'inactive.html';
@@ -119,7 +119,7 @@ function client_onserverupdate_received(data){
       l_player.pos = globalGame.pos(s_player.pos);
       l_player.speed = s_player.speed;
       l_player.onwall = s_player.onwall;
-      l_player.kicked = s_player.kicked;
+      l_player.hidden = s_player.hidden;
       l_player.inactive = s_player.inactive;
       l_player.lagging = s_player.lagging;
     }

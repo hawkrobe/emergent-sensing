@@ -106,7 +106,7 @@ var game_player = function( game_instance, player_instance, index) {
   this.state = 'not-connected';
   this.visible = "visible"; // Tracks whether client is watching game
   this.onwall = false;
-  this.kicked = false;
+  this.hidden = false;
   this.hidden_count = 0;
   this.inactive = false;
   this.inactive_count = 0;
@@ -346,7 +346,7 @@ game_core.prototype.server_send_update = function(){
                 angle: p.player.angle,
                 speed: p.player.speed,
 		onwall: p.player.onwall,
-		kicked: p.player.kicked,
+		hidden: p.player.hidden,
 		inactive: p.player.inactive,
 		lagging: p.player.lagging}};
     } else {
@@ -467,14 +467,13 @@ game_core.prototype.handleHiddenTab = function(p) {
   }
   // kick after being hidden for 15 seconds  
   if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug) { 
-    p.kicked = true;
+    p.hidden = true;
     console.log('Player ' + p.id + ' will be disconnected for being hidden.');
   }
 };
 
 game_core.prototype.handleInactivity = function(p) {
-  // Player is inactive if they're sitting in one place
-  console.log(p.inactive_count);
+  // Player is inactive if they're sitting in one place; reset after they move again
   if(p.speed == 0) {
     p.inactive_count += 1;
   } else {
@@ -501,7 +500,7 @@ game_core.prototype.handleLatency = function(p) {
 };
 
 game_core.prototype.handleBootingConditions = function(p) {
-  if(p.kicked || p.inactive || p.lagging && !this.debug) {
+  if(p.hidden || p.inactive || p.lagging && !this.debug) {
     p.instance.disconnect();
   } else {
     this.handleHiddenTab(p);
