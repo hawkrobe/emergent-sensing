@@ -89,17 +89,17 @@ function client_ondisconnect(data) {
   console.log("server booted");
   
   var self = getSelf();
-  var URL;
+  var URL = 'http://projects.csail.mit.edu/ci/turk/forms/';
   if(self.kicked) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
+    URL += 'away.html';
   } else if(self.inactive) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/inactive.html?id=' + globalGame.my_id;
+    URL += 'inactive.html';
   } else if(self.lagging) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + globalGame.my_id;
+    URL += 'latency.html';
   } else {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + globalGame.my_id;
+    URL += 'end.html';
   }
-  window.location.replace(URL);
+  window.location.replace(URL + '?id=' + globalGame.my_id);
 };
 
 function client_onserverupdate_received(data){
