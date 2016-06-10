@@ -81,31 +81,30 @@ var getColorForPercentage = function(pct) {
 }
 
 function drawScoreField(game){
-  var centerX = 400;
-  var centerY = 200;
+  var centerX = game.trialInfo.scoreLocs[game.game_clock]['x_pos'];
+  var centerY = game.trialInfo.scoreLocs[game.game_clock]['y_pos'];
   var radius = 50;
+  var goodColor = getColorForPercentage(1.0);  
+  var neutralColor = getColorForPercentage(0.1);
+  var forbiddenColor = "red";
 
+  // Draw walls
   game.ctx.save();
-  game.ctx.rect(0,0,game.world.width,game.world.height);
-  game.ctx.fillStyle = getColorForPercentage(0.1);
-  game.ctx.fill();
-  game.ctx.restore();
-  
-  game.ctx.save();
-  game.ctx.beginPath();
-  game.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-  game.ctx.fillStyle = getColorForPercentage(1.0);
-  game.ctx.fill();
-  game.ctx.restore();
-
-  game.ctx.save();
-  game.ctx.beginPath();
-  game.ctx.lineWidth="6";
-  game.ctx.rect(0,0,game.world.width,game.world.height);
-  game.ctx.strokeStyle = 'red';//getColorForPercentage(0.0);
-  game.ctx.stroke();
+  game.ctx.fillStyle = game.trialInfo.wallBG ? neutralColor : forbiddenColor;
+  game.ctx.fillRect(0, 0, game.world.width, game.world.height);
+  game.ctx.fillStyle = game.trialInfo.wallBG ? forbiddenColor : neutralColor;
+  game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
   game.ctx.restore();  
 
+  // Draw spotlight
+  if(centerX && centerY) {
+    game.ctx.save();
+    game.ctx.beginPath();
+    game.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+    game.ctx.fillStyle = getColorForPercentage(1.0);
+    game.ctx.fill();
+    game.ctx.restore();
+  }
 };
 
 var drawInstructions = function(game, player) {

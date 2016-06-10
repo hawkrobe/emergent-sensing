@@ -127,7 +127,8 @@ function client_onserverupdate_received(data){
   
   globalGame.game_started = data.gs;
   globalGame.trialInfo = data.trialInfo;
-
+  globalGame.game_clock = data.clock;
+  
   // Hacky way to know when the round changed
   if(globalGame.roundNum != data.roundNum) {
     globalGame.roundNum = data.roundNum;

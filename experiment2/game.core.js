@@ -266,7 +266,7 @@ game_core.prototype.newRound = function() {
     this.roundStarted = new Date();
     this.trialInfo = this.trialList[this.roundNum];
     this.players = this.initializePlayers(this.trialInfo);
-    this.scoreLocs = this.getScoreInfo(this.trialInfo);
+    this.trialInfo.scoreLocs = this.getScoreInfo(this.trialInfo);
     this.game_clock = 0;
     // (Re)start simulation
     this.physics_interval_id = this.create_physics_simulation();
@@ -356,6 +356,7 @@ game_core.prototype.server_send_update = function(){
   });
 
   var state = {
+    clock : this.game_clock,
     roundNum : this.roundNum,
     gs : this.game_started,
     players: player_packet,
@@ -512,8 +513,8 @@ game_core.prototype.handleBootingConditions = function(p) {
 game_core.prototype.updateScores = function(p) {
   if(p) {
     var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
-    var loc = {x:this.scoreLocs[this.game_clock]["x_pos"],
-	       y:this.scoreLocs[this.game_clock]["y_pos"]};
+    var loc = {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
+	       y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]};
     var dist = this.distance_between(loc, p.pos);
     console.log(p.speed);
     // In alternative scoring field, only counts if you're moving against the wall
