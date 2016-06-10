@@ -93,7 +93,7 @@ function client_ondisconnect(data) {
   if(self.kicked) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
   } else if(self.inactive) {
-    URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + globalGame.my_id;
+    URL = 'http://projects.csail.mit.edu/ci/turk/forms/inactive.html?id=' + globalGame.my_id;
   } else if(self.lagging) {
     URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + globalGame.my_id;
   } else {
