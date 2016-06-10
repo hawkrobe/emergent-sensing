@@ -38,6 +38,7 @@ game_server.server_onMessage = function(client,message) {
   var others = client.game.get_others(client.userid);
 
   if (message_type == 'c') {
+    target.speed = target.speed == 0 ? client.game.min_speed : target.speed;    
     target.angle = message_parts[1];
     target.destination = {x : message_parts[2], y : message_parts[3]};
   } else if (message_type == 's') {

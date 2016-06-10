@@ -377,13 +377,13 @@ game_core.prototype.server_update_physics = function() {
     var player = p.player;
 
     // Stop at destination
-    var r = (local_this.distance_between(player.pos, player.destination) < 8 ?
-	     0 :
-	     player.speed);
+    player.speed = (local_this.distance_between(player.pos, player.destination) < 8 ?
+		    0 :
+		    player.speed);
     var theta = (player.angle - 90) * Math.PI / 180;
     var new_dir = {
-      x : r * Math.cos(theta), 
-      y : r * Math.sin(theta)
+      x : player.speed * Math.cos(theta), 
+      y : player.speed * Math.sin(theta)
     };      
     player.old_state.pos = local_this.pos(player.pos) ;
     player.pos = local_this.v_add( player.old_state.pos, new_dir );
@@ -473,13 +473,12 @@ game_core.prototype.handleHiddenTab = function(p) {
 };
 
 game_core.prototype.handleInactivity = function(p) {
-  var not_changing = p.last_speed == p.speed && p.last_angle == p.angle;
-  var onWall = this.checkCollision(p, {tolerance: 5, stop: false});
-  p.last_speed = p.speed;
-  p.last_angle = p.angle;
-
-  if(onWall && not_changing) {
+  // Player is inactive if they're sitting in one place
+  console.log(p.inactive_count);
+  if(p.speed == 0) {
     p.inactive_count += 1;
+  } else {
+    p.inactive_count = 0;
   }
   
   // kick after being inactive for 30 seconds
@@ -517,11 +516,12 @@ game_core.prototype.updateScores = function(p) {
     var loc = {x:this.scoreLocs[this.game_clock]["x_pos"],
 	       y:this.scoreLocs[this.game_clock]["y_pos"]};
     var dist = this.distance_between(loc, p.pos);
-    // In alternative scoring field, only counts if you're against the wall
+    console.log(p.speed);
+    // In alternative scoring field, only counts if you're moving against the wall
     if(this.trialInfo.wallBG) {
       if(onWall) {
 	p.onwall = true;
-	if(dist < 50) {
+	if(dist < 50 & p.speed > 0) {
 	  p.curr_background = 1;
 	} else {
 	  p.curr_background = .1;
