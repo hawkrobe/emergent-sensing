@@ -224,13 +224,9 @@ function client_update() {
   $("#cumulative_bonus").html("Total bonus this round: $" +
 			      (self.total_points).fixed(2));
 
-  if(!globalGame.trialInfo.wallBG & self.onwall) {
-    $("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
-  } else {
-    $("#curr_bonus").html("Current Score: <span style='color: " 
-			  + getColorForPercentage(self.curr_background) 
-			  +";'>" + Math.floor(self.curr_background*100) + "%</span>");
-  }
+  $("#curr_bonus").html("Current Score: <span style='color: " 
+			+ getColorForPercentage(self.curr_background) 
+			+";'>" + Math.floor(self.curr_background*100) + "%</span>");
 
   if(!started) {
     var left = timeRemaining(globalGame.waiting_remaining,
