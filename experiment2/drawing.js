@@ -81,8 +81,8 @@ var getColorForPercentage = function(pct) {
 }
 
 function drawScoreField(game){
-  var centerX = game.trialInfo.scoreLocs[game.game_clock]['x_pos'];
-  var centerY = game.trialInfo.scoreLocs[game.game_clock]['y_pos'];
+  var centerX = game.trialInfo.currScoreLoc['x_pos'];
+  var centerY = game.trialInfo.currScoreLoc['y_pos'];
   var radius = 50;
   var goodColor = getColorForPercentage(1.0);  
   var neutralColor = getColorForPercentage(0.1);

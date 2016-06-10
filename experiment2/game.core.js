@@ -222,6 +222,10 @@ game_core.prototype.getScoreInfo = function(condition) {
   return utils.readCSV("../metadata/" + condition.background );  
 };
 
+game_core.prototype.getBotScoreInfo = function(condition) {
+  return utils.readCSV("../metadata/" + condition.botBackground );  
+};
+
 // Method to easily look up player 
 game_core.prototype.get_player = function(id) {
   var result = _.find(this.players, function(e){ return e.id == id; });
@@ -267,6 +271,7 @@ game_core.prototype.newRound = function() {
     this.trialInfo = this.trialList[this.roundNum];
     this.players = this.initializePlayers(this.trialInfo);
     this.trialInfo.scoreLocs = this.getScoreInfo(this.trialInfo);
+    this.trialInfo.botScoreLocs = this.getBotScoreInfo(this.trialInfo);
     this.game_clock = 0;
     // (Re)start simulation
     this.physics_interval_id = this.create_physics_simulation();
@@ -278,25 +283,29 @@ game_core.prototype.getFixedConds = function() {
   return [{
     name: "initialVisible",
     numBots : 0,
-    botPositions : "spot-spot-close_simulation-0-non-social.csv",
-    showBackground : true,    
+    showBackground : true,
+    botPositions : "spot-spot-close_simulation-0-non-social.csv",    
+    botBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
     background: this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv"
   }, {
     name: "initialInvisible",
     numBots : 0,
-    botPositions : "spot-spot-close_simulation-0-non-social.csv",    
+    botPositions : "spot-spot-close_simulation-0-non-social.csv",
+    botBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
     background: this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv"
   }];
 };
 
 game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
-    var simulationNum = 0//Math.floor(Math.random() * 30);
-    var simulationExtension = "_simulation-" + simulationNum + "-non-social.csv";
+    var simulationNum = 0;//Math.floor(Math.random() * 30);
+    var conditionPrefix = this.backgroundCondition + "-" + condition;
+    var conditionSuffix = "-" + simulationNum + "-non-social.csv";
     return {
       name : condition,
-      botPositions : this.backgroundCondition + "-" + condition + simulationExtension,
-      background : this.backgroundCondition + "-" + condition + "_bot_bg-" + simulationNum + "-non-social.csv"
+      botPositions : conditionPrefix + "_simulation" + conditionSuffix,
+      botBackground : conditionPrefix + "_bot_bg" + conditionSuffix,
+      background : conditionPrefix + "_player_bg" + conditionSuffix
     };
   }, this);
 };
@@ -360,7 +369,9 @@ game_core.prototype.server_send_update = function(){
     roundNum : this.roundNum,
     gs : this.game_started,
     players: player_packet,
-    trialInfo : this.trialInfo
+    trialInfo: {currScoreLoc: this.trialInfo.scoreLocs[this.game_clock],
+		showBackground : this.trialInfo.showBackground,
+		wallBG : this.trialInfo.wallBG}
   };
 
   //Send the snapshot to the players
@@ -413,7 +424,11 @@ game_core.prototype.distance_between = function(obj1, obj2) {
   var x2 = obj2.x;
   var y1 = obj1.y;
   var y2 = obj2.y;
-  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  if(parseInt(x1) && parseInt(x2) && parseInt(y1) && parseInt(y2)) {
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  } else {
+    return Infinity;
+  }
 };
 
 // Every second, we print out a bunch of information to a file in a
@@ -513,10 +528,13 @@ game_core.prototype.handleBootingConditions = function(p) {
 game_core.prototype.updateScores = function(p) {
   if(p) {
     var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
-    var loc = {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
-	       y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]};
-    var dist = this.distance_between(loc, p.pos);
-    console.log(p.speed);
+    var pScoreLoc = {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
+		     y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]};
+    var botScoreLoc = {x:this.trialInfo.botScoreLocs[this.game_clock]["x_pos"],
+		       y:this.trialInfo.botScoreLocs[this.game_clock]["y_pos"]};
+    // To make social info valid, concatenate score fields
+    var dist = _.min([this.distance_between(pScoreLoc, p.pos),
+		      this.distance_between(botScoreLoc, p.pos)]);
     // In alternative scoring field, only counts if you're moving against the wall
     if(this.trialInfo.wallBG) {
       if(onWall) {
