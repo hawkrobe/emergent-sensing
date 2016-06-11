@@ -314,7 +314,7 @@ game_core.prototype.makeTrialList = function() {
   var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far']);
   var defaults = {showBackground : false,
 		  wallBG : this.backgroundCondition == "wall",
-		  numBots: 4};
+		  numBots: 2};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
   return _.map(fixedConds.concat(shuffledConds), function(obj) {

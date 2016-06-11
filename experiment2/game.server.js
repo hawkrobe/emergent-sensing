@@ -103,7 +103,7 @@ game_server.createGame = function(player, debug) {
   // Figure out variables
   var options = {
     expName: "couzinExp2",
-    numBots: 4,
+    numBots: 2,
     server: true,
     id : utils.UUID(),
     player_instances: [{id: player.userid, player: player}],
