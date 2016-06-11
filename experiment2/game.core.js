@@ -57,6 +57,8 @@ var game_core = function(options){
   this.self_color = '#2288cc';
   this.other_color = 'white';
 
+  this.center = null
+
   // minimun wage per tick
   // background = us_min_wage_per_tick * this.game_length / this.max_bonus;
   var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency));
@@ -542,9 +544,21 @@ game_core.prototype.handleBootingConditions = function(p) {
 
 game_core.prototype.updateScores = function(p) {
   if(p) {
+    if(np.random.random() < (1/8.0)/15) {
+      if(this.center is null) {
+	this.center = p.pos + np.random.normal(size = 2)*10
+      } else {
+	this.center = null
+      }
+    }
+    if(condition is close) {
+      var pScoreLoc = this.center;
+    } else {
+      var pScoreLoc = {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
+		       y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]};
+
+    }
     var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
-    var pScoreLoc = {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
-		     y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]};
     var botScoreLoc = {x:this.trialInfo.botScoreLocs[this.game_clock]["x_pos"],
 		       y:this.trialInfo.botScoreLocs[this.game_clock]["y_pos"]};
     // To make social info valid, concatenate score fields
@@ -552,9 +566,9 @@ game_core.prototype.updateScores = function(p) {
 		      this.distance_between(botScoreLoc, p.pos)]);
     // In alternative scoring field, only counts if you're moving against the wall
     if(this.trialInfo.wallBG) {
-      if(onWall) {
+      if(onWall & p.speed > 0) {
 	p.onwall = true;
-	if(dist < 50 & p.speed > 0) {
+	if(dist < 50) {
 	  p.curr_background = 1;
 	} else {
 	  p.curr_background = .1;
