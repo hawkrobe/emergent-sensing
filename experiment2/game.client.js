@@ -40,11 +40,6 @@ function getSelf () {
 
 function client_on_click(game, newX, newY ) {
   // Auto-correcting input, but only between rounds
-  var self = getSelf();
-  var oldX = self.pos.x;
-  var oldY = self.pos.y;
-  var dx = newX - oldX;
-  var dy = newY - oldY;
 
   if(debug) {
     checkSkipPress(newX, newY);
@@ -54,6 +49,12 @@ function client_on_click(game, newX, newY ) {
     checkButtonPress(newX, newY);
   } else {
 
+    var self = getSelf();
+    var oldX = self.pos.x;
+    var oldY = self.pos.y;
+    var dx = newX - oldX;
+    var dy = newY - oldY;
+    
     self.destination = {x : Math.round(newX), y : Math.round(newY)};
     self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
 

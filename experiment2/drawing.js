@@ -94,7 +94,7 @@ function drawScoreField(game){
   game.ctx.fillRect(0, 0, game.world.width, game.world.height);
   game.ctx.fillStyle = game.trialInfo.wallBG ? forbiddenColor : neutralColor;
   game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
-  game.ctx.restore();  
+  game.ctx.restore();
 
   // Draw spotlight
   if(centerX && centerY) {
@@ -113,7 +113,18 @@ var drawInstructions = function(game, player) {
   game.ctx.font = "10pt Helvetica";
   game.ctx.fillStyle = 'white';
   game.ctx.textAlign = 'center';
-  var message = "Starting round " + (game.roundNum + 1);
+  if(game.roundNum == -1) {
+    var message = "In the first round, the score field that determines your reward will be visible."
+    if(game.trialInfo.wallBG) {
+      var message = message + " You will receive a score of 0% (no reward) whenever you are not moving."
+    }
+  }
+  if(game.roundNum == 0) {
+    var message = "In the next round, the score field will be hidden."
+  }
+  if(game.roundNum == 1) {
+    var message = "In the next rounds, the score field will be hidden and you may participate with other players."
+  }
   wrapText(game, message, 
            game.world.width/2, game.world.height/4,
            game.world.width*4/5,

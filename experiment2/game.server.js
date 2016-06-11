@@ -215,8 +215,10 @@ game_server.startGame = function(game) {
   game.latencyStream = fs.createWriteStream(latency_f, {'flags' : 'a'});
 
   console.log('game ' + game.id + ' starting with ' + game.player_count + ' players...')
-  
-  game.newRound();
+
+  game.initRound();
+  game.showInstructions();
+  //game.newRound();
 };
 
 //A simple wrapper for logging so we can toggle it,

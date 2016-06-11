@@ -257,6 +257,21 @@ game_core.prototype.get_bots = function() {
   }), null);
 };
 
+
+game_core.prototype.initRound = function() {
+  this.stop_update();
+  this.roundNum += 1;
+  this.trialInfo = this.trialList[this.roundNum];
+  this.players = this.initializePlayers(this.trialInfo);
+  this.trialInfo.scoreLocs = this.getScoreInfo(this.trialInfo);
+  this.trialInfo.botScoreLocs = this.getBotScoreInfo(this.trialInfo);
+  this.game_clock = 0;
+  this.roundNum -= 1;
+  this.server_send_update();
+  this.stop_update();
+};
+
+
 game_core.prototype.newRound = function() {
   // If you've reached the planned number of rounds, end the game
   if(this.roundNum == this.numRounds - 1) {
@@ -596,6 +611,12 @@ game_core.prototype.create_physics_simulation = function() {
     }
   }.bind(this), this.tick_frequency);
 };
+
+game_core.prototype.showInstructions = function() {
+  _.map(this.get_active_players(), function(p){
+    p.player.instance.send('s.showInstructions');
+  });
+}
 
 //Prevents people from leaving the arena
 game_core.prototype.checkCollision = function(item, options) {
