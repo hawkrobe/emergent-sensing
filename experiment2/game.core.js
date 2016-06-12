@@ -57,7 +57,7 @@ var game_core = function(options){
   this.self_color = '#2288cc';
   this.other_color = 'white';
 
-  this.scoreCenter = null;
+  this.scoreCenter = {x : '', y: ''};
 
   // minimun wage per tick
   // background = us_min_wage_per_tick * this.game_length / this.max_bonus;
@@ -342,21 +342,31 @@ game_core.prototype.makeTrialList = function() {
   });
 };
 
-// Takes two location objects and computes the distance between them
-game_core.prototype.distance_between = function(obj1, obj2) {
-  x1 = obj1.x;
-  x2 = obj2.x;
-  y1 = obj1.y;
-  y2 = obj2.y;
-  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+//copies a 2d vector like object from one to another
+game_core.prototype.pos = function(a) {
+  return {x:a.x,y:a.y};
 };
 
-//copies a 2d vector like object from one to another
-game_core.prototype.pos = function(a) {return {x:a.x,y:a.y}; };
+game_core.prototype.validLoc = function(obj) {
+  return parseInt(obj.x) && parseInt(obj.y);
+};
 
 //Add a 2d vector with another one and return the resulting vector
-game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
+game_core.prototype.v_add = function(a,b) {
+  return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() };
+};
 
+game_core.prototype.distance_between = function(obj1, obj2) {
+  if(this.validLoc(obj1) & this.validLoc(obj2)) {
+    var x1 = obj1.x;
+    var x2 = obj2.x;
+    var y1 = obj1.y;
+    var y2 = obj2.y;
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  } else {
+    return Infinity;
+  }
+};
 
 // SERVER FUNCTIONS
 
@@ -436,19 +446,6 @@ game_core.prototype.update_bots = function() {
     player.angle = angle;
     player.game.checkCollision( player , {tolerance: 0, stop: true});
   });
-};
-
-
-game_core.prototype.distance_between = function(obj1, obj2) {
-  var x1 = obj1.x;
-  var x2 = obj2.x;
-  var y1 = obj1.y;
-  var y2 = obj2.y;
-  if(parseInt(x1) && parseInt(x2) && parseInt(y1) && parseInt(y2)) {
-    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-  } else {
-    return Infinity;
-  }
 };
 
 // Every second, we print out a bunch of information to a file in a
@@ -549,16 +546,22 @@ game_core.prototype.updateScores = function(p) {
   if(p) {
     // Every so many seconds, move location of score center or turn off
     if(Math.random() < (1/8.0)/15) {
-      this.scoreCenter = (this.scoreCenter ?
-			  null :
+      console.log("triggered!");
+      this.scoreCenter = (this.validLoc(this.scoreCenter) ?
+			  {x : '', y : ''} :
 			  this.v_add(p.pos, utils.sampleGaussianJitter(10)));
     } 
-
+    
+    
     // Use dynamically set score center in "close" condition, otherwise use hard-coded
+    // console.log(this.trialInfo.scoreLocCondition);
+    // console.log(this.scoreCenter);
     var pScoreLoc = ( this.trialInfo.scoreLocCondition == "close"?
 		      this.scoreCenter :
 		      {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
 		       y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]});
+
+    //console.log(pScoreLoc);
     var botScoreLoc = {x:this.trialInfo.botScoreLocs[this.game_clock]["x_pos"],
 		       y:this.trialInfo.botScoreLocs[this.game_clock]["y_pos"]};
     
