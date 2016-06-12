@@ -69,7 +69,6 @@ var game_core = function(options){
   this.game_clock = 0;
 
   this.countdown = poissonRandomNumber(10*8) + 1;
-
     
   this.spotScoreLoc = {x:"",y:""};
   this.wallScoreLoc = {x:"",y:""};
@@ -225,14 +224,6 @@ game_core.prototype.getBotInfo = function(condition, index) {
   });
 };
 
-game_core.prototype.getScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/" + condition.background );  
-};
-
-game_core.prototype.getBotScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/" + condition.botBackground );  
-};
-
 game_core.prototype.getWallScoreInfo = function(condition) {
   return utils.readCSV("../metadata/" + condition.wallBackground );  
 };
@@ -279,9 +270,6 @@ game_core.prototype.initRound = function() {
   this.roundNum += 1;
   this.trialInfo = this.trialList[this.roundNum];
   this.players = this.initializePlayers(this.trialInfo);
-  //this.trialInfo.scoreLocs = this.getScoreInfo(this.trialInfo);
-  this.trialInfo.wallScoreLocs = this.getWallScoreInfo(this.trialInfo);
-  this.trialInfo.spotScoreLocs = this.getSpotScoreInfo(this.trialInfo);
   this.game_clock = 0;
   this.roundNum -= 1;
   this.server_send_update();
@@ -305,10 +293,6 @@ game_core.prototype.newRound = function() {
     this.trialInfo.wallScoreLocs = this.getWallScoreInfo(this.trialInfo);
     this.trialInfo.spotScoreLocs = this.getSpotScoreInfo(this.trialInfo);
     this.closeScoreLoc = {x : '', y : ''};
-    //this.trialInfo.scoreLocs = (this.trialInfo.scoreLocCondition == "close"?
-//				{x : '', y : ''} :
-    //this.getScoreInfo(this.trialInfo));
-    //this.trialInfo.botScoreLocs = this.getBotScoreInfo(this.trialInfo);
     this.game_clock = 0;
     // (Re)start simulation
     this.physics_interval_id = this.create_physics_simulation();
@@ -323,10 +307,8 @@ game_core.prototype.getFixedConds = function() {
     numBots : 0,
     showBackground : true,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",    
-    botBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv",
     wallBackground : this.backgroundCondition + "-wall-far_player_bg-0-non-social.csv",
     spotBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
-    background: this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv"
   }, {
     name: "initialInvisible",
     scoreLocCondition : "far",
@@ -334,8 +316,6 @@ game_core.prototype.getFixedConds = function() {
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
     wallBackground : this.backgroundCondition + "-wall-far_player_bg-0-non-social.csv",
     spotBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
-    botBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv",
-    background: this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv"
   }];
 };
 
@@ -349,10 +329,8 @@ game_core.prototype.getShuffledConds = function(conditions) {
       otherBGCondition : condition.split("-")[0],
       scoreLocCondition : condition.split("-")[1],
       botPositions : conditionPrefix + "_simulation" + conditionSuffix,
-      botBackground : conditionPrefix + "_bot_bg" + conditionSuffix,
       wallBackground : this.backgroundCondition + "-wall-far_player_bg-" + simulationNum + "-non-social.csv",
       spotBackground : this.backgroundCondition + "-spot-far_player_bg-" + simulationNum + "-non-social.csv", 
-      background : conditionPrefix + "_player_bg" + conditionSuffix
     };
   }, this);
 };
@@ -384,7 +362,7 @@ game_core.prototype.v_add = function(a,b) {
 };
 
 game_core.prototype.distance_between = function(obj1, obj2) {
-  if(this.validLoc(obj1) & this.validLoc(obj2)) {
+  if(this.validLoc(obj1) && this.validLoc(obj2)) {
     var x1 = obj1.x;
     var x2 = obj2.x;
     var y1 = obj1.y;
@@ -421,13 +399,6 @@ game_core.prototype.server_send_update = function(){
     }
   });
 
-  // var spotScoreLoc = (this.spotScoreLoc ? this.spotScoreLoc :
-  // 		      this.trialInfo.scoreLocs[this.game_clock]);
-  // var wallScoreLoc = (this.wallScoreLoc ? this.wallScoreLoc :
-  // 		      this.trialInfo.scoreLocs[this.game_clock]);
-  // var closeScoreLoc = (this.closeScoreLoc ? this.closeScoreLoc :
-  // 		      this.trialInfo.scoreLocs[this.game_clock]);
-  
   var state = {
     clock : this.game_clock,
     roundNum : this.roundNum,
@@ -592,18 +563,16 @@ poissonRandomNumber = function(lambda) {
     return k - 1;
 }
 
-game_core.prototype.updateCurrScoreLoc = function(p) {
+game_core.prototype.updateCloseScoreLoc = function(p) {
   // Every so many seconds, move location of score center close to player or turn off
 
   if(this.trialInfo.scoreLocCondition == "close") {
     this.countdown = this.countdown - 1;
     if(this.countdown == 0) {
       if(this.validLoc(this.closeScoreLoc)) {
-	//this.trialInfo.scoreLocs = {x : '', y : ''};
 	this.closeScoreLoc = {x : '', y : ''};
 	this.countdown = poissonRandomNumber(10*8) + 1;
       } else {
-	//this.trialInfo.scoreLocs = this.v_add(p.pos, utils.sampleGaussianJitter(10));
 	this.closeScoreLoc = this.v_add(p.pos, utils.sampleGaussianJitter(10));
 	this.countdown = poissonRandomNumber(20*8) + 1;
       }
@@ -611,17 +580,11 @@ game_core.prototype.updateCurrScoreLoc = function(p) {
   } else {
     this.closeScoreLoc = {x : '', y : ''};
   }
-  
-  // Use dynamically set score center in "close" condition, otherwise use hard-coded
-  // this.spotScoreLoc = ( this.trialInfo.scoreLocCondition == "close"?
-  // 			this.trialInfo.scoreLocs :
-  // 			{x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
-  // 			 y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]});
 };
 
 game_core.prototype.updateScores = function(p) {
   if(p) {
-    this.updateCurrScoreLoc(p);
+    this.updateCloseScoreLoc(p);
         
     // To make social info valid, concatenate score fields with bot's
     
@@ -639,11 +602,11 @@ game_core.prototype.updateScores = function(p) {
       var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
 			this.distance_between(this.wallScoreLoc, p.pos)]);
     }
-    
+
     // In alternative scoring field, only counts if you're moving against the wall
     var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
     if(this.trialInfo.wallBG) {
-      if(onWall & p.speed > 0) {
+      if(onWall && p.speed > 0) {
 	p.onwall = true;
 	if(dist < 50) {
 	  p.curr_background = 1;

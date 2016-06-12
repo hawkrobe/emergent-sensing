@@ -63,7 +63,7 @@ game_server.server_onMessage = function(client,message) {
  The following functions should not need to be modified for most purposes
  */
 
-game_server.findGame = function(player, debug) {
+game_server.findGame = function(player, debug, test) {
   this.log('looking for a game. We have : ' + this.game_count);
   var joined_a_game = false;
   // for (var gameid in this.games) {
@@ -94,12 +94,12 @@ game_server.findGame = function(player, debug) {
 
   // If you couldn't find a game to join, create a new one
   if(!joined_a_game) {
-    this.createGame(player, debug);
+    this.createGame(player, debug, test);
   }
 };
 
 // Will run when first player connects
-game_server.createGame = function(player, debug) {
+game_server.createGame = function(player, debug, test) {
   // Figure out variables
   var options = {
     expName: "couzinExp2",
@@ -109,7 +109,8 @@ game_server.createGame = function(player, debug) {
     player_instances: [{id: player.userid, player: player}],
     player_count: 1,
     experiment_info: player.info,
-    debug: debug
+    debug: debug,
+    test: test
   };
 
   var game = new game_core(options);
