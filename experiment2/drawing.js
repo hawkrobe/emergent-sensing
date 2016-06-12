@@ -1,3 +1,36 @@
+var percentColors = [
+  //    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
+  { pct: 0.0, color: { r: 0xff, g: 0xff, b: 0xff } },
+  { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
+
+var getColorForPercentage = function(pct) {
+  if(pct == 0) {
+    return 'red';
+  } else {
+    for (var i = 0; i < percentColors.length; i++) {
+      if (pct <= percentColors[i].pct) {
+	var lower = (percentColors[i - 1]
+		     || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } });
+	var upper = percentColors[i];
+	var range = upper.pct - lower.pct;
+	var rangePct = (pct - lower.pct) / range;
+	var pctLower = 1 - rangePct;
+	var pctUpper = rangePct;
+	var color = {
+          r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+          g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+          b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+	};
+	return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
+      }
+    }
+  }
+}
+
+var GOODCOLOR = getColorForPercentage(1.0);  
+var NEUTRALCOLOR = getColorForPercentage(0.1);
+var BADCOLOR = "red";
+
 // Draw players as triangles using HTML5 canvas
 function drawPlayer(game, player){
   // Draw avatar as triangle
@@ -40,7 +73,8 @@ function drawLabel(game, player, label) {
 
 function drawDestination(game, player) {
   var xCoord = parseFloat(player.destination.x);
-  var yCoord = parseFloat(player.destination.y);  
+  var yCoord = parseFloat(player.destination.y);
+  game.ctx.save();
   game.ctx.strokeStyle = player.color;
   game.ctx.beginPath();
   game.ctx.moveTo(xCoord - 5, yCoord- 5);
@@ -49,62 +83,56 @@ function drawDestination(game, player) {
   game.ctx.moveTo(xCoord + 5, yCoord - 5);
   game.ctx.lineTo(xCoord - 5, yCoord + 5);
   game.ctx.stroke();
+  game.ctx.restore();
 };
 
-var percentColors = [
-  //    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
-  { pct: 0.0, color: { r: 0xff, g: 0xff, b: 0xff } },
-  { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
-
-var getColorForPercentage = function(pct) {
-  if(pct == 0) {
-    return 'red';
-  } else {
-    for (var i = 0; i < percentColors.length; i++) {
-      if (pct <= percentColors[i].pct) {
-	var lower = (percentColors[i - 1]
-		     || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } });
-	var upper = percentColors[i];
-	var range = upper.pct - lower.pct;
-	var rangePct = (pct - lower.pct) / range;
-	var pctLower = 1 - rangePct;
-	var pctUpper = rangePct;
-	var color = {
-          r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
-          g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
-          b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
-	};
-	return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
-      }
-    }
-  }
-}
-
-function drawScoreField(game){
-  var centerX = game.trialInfo.currScoreLoc['x_pos'];
-  var centerY = game.trialInfo.currScoreLoc['y_pos'];
-  var radius = 50;
-  var goodColor = getColorForPercentage(1.0);  
-  var neutralColor = getColorForPercentage(0.1);
-  var forbiddenColor = "red";
-
-  // Draw walls
-  game.ctx.save();
-  game.ctx.fillStyle = game.trialInfo.wallBG ? neutralColor : forbiddenColor;
-  game.ctx.fillRect(0, 0, game.world.width, game.world.height);
-  game.ctx.fillStyle = game.trialInfo.wallBG ? forbiddenColor : neutralColor;
-  game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
-  game.ctx.restore();
-
+function drawSpotlight(game, centerX, centerY) {
   // Draw spotlight
+  var radius = 50;
   if(centerX && centerY) {
     game.ctx.save();
     game.ctx.beginPath();
     game.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-    game.ctx.fillStyle = getColorForPercentage(1.0);
+    game.ctx.fillStyle = GOODCOLOR;
     game.ctx.fill();
     game.ctx.restore();
   }
+}
+
+function drawSafeArea(game, wallBG) {
+  game.ctx.save();
+  if(wallBG) {
+    game.ctx.strokeStyle = NEUTRALCOLOR;
+    game.ctx.lineWidth = 25;
+    game.ctx.strokeRect(25/2, 25/2, game.world.width - 50/2, game.world.height - 50/2);
+  } else {
+    game.ctx.fillStyle = NEUTRALCOLOR;
+    game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
+  }
+  game.ctx.restore();
+};
+
+function drawForbiddenArea(game, wallBG) {
+  game.ctx.save();
+  if(wallBG) {
+    game.ctx.fillStyle = BADCOLOR;
+    game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
+  } else {
+    game.ctx.strokeStyle = BADCOLOR;
+    game.ctx.lineWidth = 25;
+    game.ctx.strokeRect(25/2, 25/2, game.world.width - 50/2, game.world.height - 50/2);
+  }
+  game.ctx.restore();
+};
+
+function drawScoreField(game){
+  var centerX = game.trialInfo.currScoreLoc['x_pos'];
+  var centerY = game.trialInfo.currScoreLoc['y_pos'];
+
+  drawSafeArea(game, game.trialInfo.wallBG);
+  drawSpotlight(game, centerX, centerY);
+  drawForbiddenArea(game, game.trialInfo.wallBG);
+ 
 };
 
 var getMessage = function(roundNum, wallBG) {
