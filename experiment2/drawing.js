@@ -126,8 +126,8 @@ function drawForbiddenArea(game, wallBG) {
 };
 
 function drawScoreField(game){
-  var centerX = game.trialInfo.currScoreLoc['x_pos'];
-  var centerY = game.trialInfo.currScoreLoc['y_pos'];
+  var centerX = game.trialInfo.currScoreLoc.x;
+  var centerY = game.trialInfo.currScoreLoc.y;
 
   drawSafeArea(game, game.trialInfo.wallBG);
   drawSpotlight(game, centerX, centerY);
