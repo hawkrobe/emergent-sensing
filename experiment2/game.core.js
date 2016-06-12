@@ -57,8 +57,6 @@ var game_core = function(options){
   this.self_color = '#2288cc';
   this.other_color = 'white';
 
-  this.scoreCenter = {x : '', y: ''};
-
   // minimun wage per tick
   // background = us_min_wage_per_tick * this.game_length / this.max_bonus;
   var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency));
@@ -286,7 +284,9 @@ game_core.prototype.newRound = function() {
     this.roundStarted = new Date();
     this.trialInfo = this.trialList[this.roundNum];
     this.players = this.initializePlayers(this.trialInfo);
-    this.trialInfo.scoreLocs = this.getScoreInfo(this.trialInfo);
+    this.trialInfo.scoreLocs = (this.trialInfo.scoreLocCondition == "close"?
+				{x : '', y : ''} :
+				this.getScoreInfo(this.trialInfo));
     this.trialInfo.botScoreLocs = this.getBotScoreInfo(this.trialInfo);
     this.game_clock = 0;
     // (Re)start simulation
@@ -394,12 +394,14 @@ game_core.prototype.server_send_update = function(){
     }
   });
 
+  var currScoreLoc = (this.currScoreLoc ? this.currScoreLoc :
+		      this.trialInfo.scoreLocs[this.game_clock]);
   var state = {
     clock : this.game_clock,
     roundNum : this.roundNum,
     gs : this.game_started,
     players: player_packet,
-    trialInfo: {currScoreLoc: this.trialInfo.scoreLocs[this.game_clock],
+    trialInfo: {currScoreLoc: currScoreLoc,
 		showBackground : this.trialInfo.showBackground,
 		wallBG : this.trialInfo.wallBG}
   };
@@ -542,31 +544,30 @@ game_core.prototype.handleBootingConditions = function(p) {
   }
 };
 
+game_core.prototype.updateCurrScoreLoc = function(p) {
+  // Every so many seconds, move location of score center close to player or turn off
+  if(this.trialInfo.scoreLocCondition == "close" 
+     && Math.random() < (1/8.0)/15) {
+    this.trialInfo.scoreLocs = (this.validLoc(this.trialInfo.scoreLocs) ?
+				{x : '', y : ''} :
+				this.v_add(p.pos, utils.sampleGaussianJitter(10)));
+  }
+
+  // Use dynamically set score center in "close" condition, otherwise use hard-coded
+  this.currScoreLoc = ( this.trialInfo.scoreLocCondition == "close"?
+			this.trialInfo.scoreLocs :
+			{x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
+			 y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]});
+};
+
 game_core.prototype.updateScores = function(p) {
   if(p) {
-    // Every so many seconds, move location of score center or turn off
-    if(Math.random() < (1/8.0)/15) {
-      console.log("triggered!");
-      this.scoreCenter = (this.validLoc(this.scoreCenter) ?
-			  {x : '', y : ''} :
-			  this.v_add(p.pos, utils.sampleGaussianJitter(10)));
-    } 
-    
-    
-    // Use dynamically set score center in "close" condition, otherwise use hard-coded
-    // console.log(this.trialInfo.scoreLocCondition);
-    // console.log(this.scoreCenter);
-    var pScoreLoc = ( this.trialInfo.scoreLocCondition == "close"?
-		      this.scoreCenter :
-		      {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
-		       y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]});
-
-    //console.log(pScoreLoc);
+    this.updateCurrScoreLoc(p);
+        
+    // To make social info valid, concatenate score fields with bot's
     var botScoreLoc = {x:this.trialInfo.botScoreLocs[this.game_clock]["x_pos"],
 		       y:this.trialInfo.botScoreLocs[this.game_clock]["y_pos"]};
-    
-    // To make social info valid, concatenate score fields
-    var dist = _.min([this.distance_between(pScoreLoc, p.pos),
+    var dist = _.min([this.distance_between(this.currScoreLoc, p.pos),
 		      this.distance_between(botScoreLoc, p.pos)]);
 
     // In alternative scoring field, only counts if you're moving against the wall
