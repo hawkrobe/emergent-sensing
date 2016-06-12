@@ -203,7 +203,7 @@ function client_update() {
   globalGame.ctx.clearRect(0,0,485,280);
 
   // Draw background
-  if (globalGame.trialInfo.showBackground) {
+  if (globalGame.trialInfo.showBackground || debug) {
     drawScoreField(globalGame);
   }
     
