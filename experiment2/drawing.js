@@ -107,24 +107,33 @@ function drawScoreField(game){
   }
 };
 
+var getMessage = function(roundNum, wallBG) {
+  var message = "";
+  if(roundNum == -1) {
+    message += "In the first round, the score field " +
+      "that determines your reward will be visible. ";
+    if(wallBG) {
+      message += "You will receive a score of 0% (no reward) " +
+	"whenever you are not moving.";
+    }
+  } else if(roundNum == 0) {
+    message += "In the next round, the score field will be hidden.";
+  } else if(roundNum == 1) {
+    message += "In the next rounds, the score field will be hidden " +
+      "and you may participate with other players.";
+  } else if(roundNum > 1) {
+    message += "Click 'Ready' to begin the next round";
+  };
+  return message;
+};
+
 var drawInstructions = function(game, player) {
+  var message = getMessage(game.roundNum, game.trialInfo.wallBG);
   game.ctx.save();
   game.ctx.clearRect(0,0,485,280);
   game.ctx.font = "10pt Helvetica";
   game.ctx.fillStyle = 'white';
   game.ctx.textAlign = 'center';
-  if(game.roundNum == -1) {
-    var message = "In the first round, the score field that determines your reward will be visible."
-    if(game.trialInfo.wallBG) {
-      var message = message + " You will receive a score of 0% (no reward) whenever you are not moving."
-    }
-  }
-  if(game.roundNum == 0) {
-    var message = "In the next round, the score field will be hidden."
-  }
-  if(game.roundNum == 1) {
-    var message = "In the next rounds, the score field will be hidden and you may participate with other players."
-  }
   wrapText(game, message, 
            game.world.width/2, game.world.height/4,
            game.world.width*4/5,
