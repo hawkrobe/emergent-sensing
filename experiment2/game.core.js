@@ -57,7 +57,7 @@ var game_core = function(options){
   this.self_color = '#2288cc';
   this.other_color = 'white';
 
-  this.center = null
+  this.scoreCenter = null;
 
   // minimun wage per tick
   // background = us_min_wage_per_tick * this.game_length / this.max_bonus;
@@ -84,7 +84,6 @@ var game_core = function(options){
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
     this.backgroundCondition = Math.random() < .5 ? "wall" : "spot";
-    console.log(this.backgroundCondition);
     this.trialList = this.makeTrialList();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -299,6 +298,7 @@ game_core.prototype.newRound = function() {
 game_core.prototype.getFixedConds = function() {
   return [{
     name: "initialVisible",
+    scoreLocCondition : "far",
     numBots : 0,
     showBackground : true,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",    
@@ -306,6 +306,7 @@ game_core.prototype.getFixedConds = function() {
     background: this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv"
   }, {
     name: "initialInvisible",
+    scoreLocCondition : "far",
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
     botBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
@@ -320,6 +321,8 @@ game_core.prototype.getShuffledConds = function(conditions) {
     var conditionSuffix = "-" + simulationNum + "-non-social.csv";
     return {
       name : condition,
+      otherBGCondition : condition.split("-")[0],
+      scoreLocCondition : condition.split("-")[1],
       botPositions : conditionPrefix + "_simulation" + conditionSuffix,
       botBackground : conditionPrefix + "_bot_bg" + conditionSuffix,
       background : conditionPrefix + "_player_bg" + conditionSuffix
@@ -544,27 +547,27 @@ game_core.prototype.handleBootingConditions = function(p) {
 
 game_core.prototype.updateScores = function(p) {
   if(p) {
-    if(np.random.random() < (1/8.0)/15) {
-      if(this.center is null) {
-	this.center = p.pos + np.random.normal(size = 2)*10
-      } else {
-	this.center = null
-      }
-    }
-    if(condition is close) {
-      var pScoreLoc = this.center;
-    } else {
-      var pScoreLoc = {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
-		       y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]};
+    // Every so many seconds, move location of score center or turn off
+    if(Math.random() < (1/8.0)/15) {
+      this.scoreCenter = (this.scoreCenter ?
+			  null :
+			  this.v_add(p.pos, utils.sampleGaussianJitter(10)));
+    } 
 
-    }
-    var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
+    // Use dynamically set score center in "close" condition, otherwise use hard-coded
+    var pScoreLoc = ( this.trialInfo.scoreLocCondition == "close"?
+		      this.scoreCenter :
+		      {x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
+		       y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]});
     var botScoreLoc = {x:this.trialInfo.botScoreLocs[this.game_clock]["x_pos"],
 		       y:this.trialInfo.botScoreLocs[this.game_clock]["y_pos"]};
+    
     // To make social info valid, concatenate score fields
     var dist = _.min([this.distance_between(pScoreLoc, p.pos),
 		      this.distance_between(botScoreLoc, p.pos)]);
+
     // In alternative scoring field, only counts if you're moving against the wall
+    var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
     if(this.trialInfo.wallBG) {
       if(onWall & p.speed > 0) {
 	p.onwall = true;
