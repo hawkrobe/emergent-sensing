@@ -33,6 +33,7 @@ function getParameterByName(name, url) {
 }
 
 var debug = getParameterByName('debug') == 'true';
+var test = getParameterByName('test') == 'true';
 
 function getSelf () {
   return globalGame.get_player(globalGame.my_id);
@@ -41,7 +42,7 @@ function getSelf () {
 function client_on_click(game, newX, newY ) {
   // Auto-correcting input, but only between rounds
 
-  if(debug) {
+  if(debug || test) {
     checkSkipPress(newX, newY);
   }
   
@@ -218,7 +219,7 @@ function client_update() {
   _.map(globalGame.get_others(globalGame.my_id), function(p){
     if(p.id) {
       drawPlayer(globalGame, p.player);
-      drawLabel(globalGame, p.player, "Player " + p.id.slice(0,4));
+      //drawLabel(globalGame, p.player, "Player " + p.id.slice(0,4));
     }
   });
   
@@ -254,7 +255,7 @@ function client_update() {
   
   drawMessage(globalGame, self);
   
-  if(debug) {
+  if(debug | test) {
     drawButton(globalGame);
   }
 

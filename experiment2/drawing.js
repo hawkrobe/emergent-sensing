@@ -10,7 +10,7 @@ var getColorForPercentage = function(pct) {
     for (var i = 0; i < percentColors.length; i++) {
       if (pct <= percentColors[i].pct) {
 	var lower = (percentColors[i - 1]
-		     || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } });
+		     || { pct: 0.2, color: { r: 0x0, g: 0x00, b: 0 } });
 	var upper = percentColors[i];
 	var range = upper.pct - lower.pct;
 	var rangePct = (pct - lower.pct) / range;
@@ -28,7 +28,7 @@ var getColorForPercentage = function(pct) {
 }
 
 var GOODCOLOR = getColorForPercentage(1.0);  
-var NEUTRALCOLOR = getColorForPercentage(0.1);
+var NEUTRALCOLOR = getColorForPercentage(0.2);
 var BADCOLOR = "red";
 
 // Draw players as triangles using HTML5 canvas
@@ -126,11 +126,21 @@ function drawForbiddenArea(game, wallBG) {
 };
 
 function drawScoreField(game){
-  var centerX = game.trialInfo.currScoreLoc.x;
-  var centerY = game.trialInfo.currScoreLoc.y;
-
+  
   drawSafeArea(game, game.trialInfo.wallBG);
+
+  var centerX = game.trialInfo.spotScoreLoc.x;
+  var centerY = game.trialInfo.spotScoreLoc.y;
   drawSpotlight(game, centerX, centerY);
+  
+  var centerX = game.trialInfo.wallScoreLoc.x;
+  var centerY = game.trialInfo.wallScoreLoc.y;
+  drawSpotlight(game, centerX, centerY);
+  
+  var centerX = game.trialInfo.closeScoreLoc.x;
+  var centerY = game.trialInfo.closeScoreLoc.y;
+  drawSpotlight(game, centerX, centerY);
+
   drawForbiddenArea(game, game.trialInfo.wallBG);
  
 };

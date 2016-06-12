@@ -29,6 +29,7 @@ var game_core = function(options){
   this.server = options.server;
   
   this.debug = options.debug;
+  this.test = options.test;
   
   //Dimensions of world -- Used in collision detection, etc.
   this.world = {width : 485, height : 280};  // 160cm * 3
@@ -60,13 +61,20 @@ var game_core = function(options){
   // minimun wage per tick
   // background = us_min_wage_per_tick * this.game_length / this.max_bonus;
   var us_min_wage_per_tick = 7.25 / (60*60*(1000 / this.tick_frequency));
-  this.waiting_background = 0.10;
+  this.waiting_background = 0.2;
   this.waiting_start = new Date(); 
 
   this.roundNum = -1;
   this.numRounds = 6;
   this.game_clock = 0;
 
+  this.countdown = poissonRandomNumber(10*8) + 1;
+
+    
+  this.spotScoreLoc = {x:"",y:""};
+  this.wallScoreLoc = {x:"",y:""};
+  this.closeScoreLoc = {x:"",y:""};
+    
   //We create a player set, passing them the game that is running
   //them, as well. Both the server and the clients need separate
   //instances of both players, but the server has more information
@@ -225,6 +233,15 @@ game_core.prototype.getBotScoreInfo = function(condition) {
   return utils.readCSV("../metadata/" + condition.botBackground );  
 };
 
+game_core.prototype.getWallScoreInfo = function(condition) {
+  return utils.readCSV("../metadata/" + condition.wallBackground );  
+};
+
+game_core.prototype.getSpotScoreInfo = function(condition) {
+  return utils.readCSV("../metadata/" + condition.spotBackground );  
+};
+
+
 // Method to easily look up player 
 game_core.prototype.get_player = function(id) {
   var result = _.find(this.players, function(e){ return e.id == id; });
@@ -262,8 +279,9 @@ game_core.prototype.initRound = function() {
   this.roundNum += 1;
   this.trialInfo = this.trialList[this.roundNum];
   this.players = this.initializePlayers(this.trialInfo);
-  this.trialInfo.scoreLocs = this.getScoreInfo(this.trialInfo);
-  this.trialInfo.botScoreLocs = this.getBotScoreInfo(this.trialInfo);
+  //this.trialInfo.scoreLocs = this.getScoreInfo(this.trialInfo);
+  this.trialInfo.wallScoreLocs = this.getWallScoreInfo(this.trialInfo);
+  this.trialInfo.spotScoreLocs = this.getSpotScoreInfo(this.trialInfo);
   this.game_clock = 0;
   this.roundNum -= 1;
   this.server_send_update();
@@ -284,10 +302,13 @@ game_core.prototype.newRound = function() {
     this.roundStarted = new Date();
     this.trialInfo = this.trialList[this.roundNum];
     this.players = this.initializePlayers(this.trialInfo);
-    this.trialInfo.scoreLocs = (this.trialInfo.scoreLocCondition == "close"?
-				{x : '', y : ''} :
-				this.getScoreInfo(this.trialInfo));
-    this.trialInfo.botScoreLocs = this.getBotScoreInfo(this.trialInfo);
+    this.trialInfo.wallScoreLocs = this.getWallScoreInfo(this.trialInfo);
+    this.trialInfo.spotScoreLocs = this.getSpotScoreInfo(this.trialInfo);
+    this.closeScoreLoc = {x : '', y : ''};
+    //this.trialInfo.scoreLocs = (this.trialInfo.scoreLocCondition == "close"?
+//				{x : '', y : ''} :
+    //this.getScoreInfo(this.trialInfo));
+    //this.trialInfo.botScoreLocs = this.getBotScoreInfo(this.trialInfo);
     this.game_clock = 0;
     // (Re)start simulation
     this.physics_interval_id = this.create_physics_simulation();
@@ -302,15 +323,19 @@ game_core.prototype.getFixedConds = function() {
     numBots : 0,
     showBackground : true,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",    
-    botBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
-    background: this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv"
+    botBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv",
+    wallBackground : this.backgroundCondition + "-wall-far_player_bg-0-non-social.csv",
+    spotBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
+    background: this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv"
   }, {
     name: "initialInvisible",
     scoreLocCondition : "far",
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
-    botBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
-    background: this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv"
+    wallBackground : this.backgroundCondition + "-wall-far_player_bg-0-non-social.csv",
+    spotBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
+    botBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv",
+    background: this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv"
   }];
 };
 
@@ -325,6 +350,8 @@ game_core.prototype.getShuffledConds = function(conditions) {
       scoreLocCondition : condition.split("-")[1],
       botPositions : conditionPrefix + "_simulation" + conditionSuffix,
       botBackground : conditionPrefix + "_bot_bg" + conditionSuffix,
+      wallBackground : this.backgroundCondition + "-wall-far_player_bg-" + simulationNum + "-non-social.csv",
+      spotBackground : this.backgroundCondition + "-spot-far_player_bg-" + simulationNum + "-non-social.csv", 
       background : conditionPrefix + "_player_bg" + conditionSuffix
     };
   }, this);
@@ -394,14 +421,21 @@ game_core.prototype.server_send_update = function(){
     }
   });
 
-  var currScoreLoc = (this.currScoreLoc ? this.currScoreLoc :
-		      this.trialInfo.scoreLocs[this.game_clock]);
+  // var spotScoreLoc = (this.spotScoreLoc ? this.spotScoreLoc :
+  // 		      this.trialInfo.scoreLocs[this.game_clock]);
+  // var wallScoreLoc = (this.wallScoreLoc ? this.wallScoreLoc :
+  // 		      this.trialInfo.scoreLocs[this.game_clock]);
+  // var closeScoreLoc = (this.closeScoreLoc ? this.closeScoreLoc :
+  // 		      this.trialInfo.scoreLocs[this.game_clock]);
+  
   var state = {
     clock : this.game_clock,
     roundNum : this.roundNum,
     gs : this.game_started,
     players: player_packet,
-    trialInfo: {currScoreLoc: currScoreLoc,
+    trialInfo: {spotScoreLoc: this.spotScoreLoc,
+		closeScoreLoc: this.closeScoreLoc,
+		wallScoreLoc: this.wallScoreLoc,
 		showBackground : this.trialInfo.showBackground,
 		wallBG : this.trialInfo.wallBG}
   };
@@ -501,7 +535,7 @@ game_core.prototype.handleHiddenTab = function(p) {
     p.hidden_count += 1;
   }
   // kick after being hidden for 15 seconds  
-  if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug) { 
+  if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug && !this.test) { 
     p.hidden = true;
     console.log('Player ' + p.id + ' will be disconnected for being hidden.');
   }
@@ -516,7 +550,7 @@ game_core.prototype.handleInactivity = function(p) {
   }
   
   // kick after being inactive for 30 seconds
-  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug) {  
+  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug && !this.test) {  
     p.inactive = true;
     console.log('Player ' + p.id + ' will be disconnected for inactivity.');
   }
@@ -528,14 +562,14 @@ game_core.prototype.handleLatency = function(p) {
     p.lag_count += 1;
   }
   // Kick if latency persists 10% of game
-  if(p.lag_count > this.game_length*0.1 && !this.debug) {
+  if(p.lag_count > this.game_length*0.1 && !this.debug && !this.test) {
     p.lagging = true;
     console.log('Player ' + p.id + ' will be disconnected because of latency.');
   }
 };
 
 game_core.prototype.handleBootingConditions = function(p) {
-  if(p.hidden || p.inactive || p.lagging && !this.debug) {
+  if(p.hidden || p.inactive || p.lagging && !this.debug && !this.test) {
     p.instance.disconnect();
   } else {
     this.handleHiddenTab(p);
@@ -544,20 +578,45 @@ game_core.prototype.handleBootingConditions = function(p) {
   }
 };
 
+// http://stackoverflow.com/questions/16110758/generate-random-number-with-a-non-uniform-distribution
+poissonRandomNumber = function(lambda) {
+    var L = Math.exp(-lambda),
+        k = 0,
+        p = 1;
+
+    do {
+        k = k + 1;
+        p = p * Math.random();
+    } while (p > L);
+
+    return k - 1;
+}
+
 game_core.prototype.updateCurrScoreLoc = function(p) {
   // Every so many seconds, move location of score center close to player or turn off
-  if(this.trialInfo.scoreLocCondition == "close" 
-     && Math.random() < (1/8.0)/15) {
-    this.trialInfo.scoreLocs = (this.validLoc(this.trialInfo.scoreLocs) ?
-				{x : '', y : ''} :
-				this.v_add(p.pos, utils.sampleGaussianJitter(10)));
-  }
 
+  if(this.trialInfo.scoreLocCondition == "close") {
+    this.countdown = this.countdown - 1;
+    if(this.countdown == 0) {
+      if(this.validLoc(this.closeScoreLoc)) {
+	//this.trialInfo.scoreLocs = {x : '', y : ''};
+	this.closeScoreLoc = {x : '', y : ''};
+	this.countdown = poissonRandomNumber(10*8) + 1;
+      } else {
+	//this.trialInfo.scoreLocs = this.v_add(p.pos, utils.sampleGaussianJitter(10));
+	this.closeScoreLoc = this.v_add(p.pos, utils.sampleGaussianJitter(10));
+	this.countdown = poissonRandomNumber(20*8) + 1;
+      }
+    }
+  } else {
+    this.closeScoreLoc = {x : '', y : ''};
+  }
+  
   // Use dynamically set score center in "close" condition, otherwise use hard-coded
-  this.currScoreLoc = ( this.trialInfo.scoreLocCondition == "close"?
-			this.trialInfo.scoreLocs :
-			{x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
-			 y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]});
+  // this.spotScoreLoc = ( this.trialInfo.scoreLocCondition == "close"?
+  // 			this.trialInfo.scoreLocs :
+  // 			{x:this.trialInfo.scoreLocs[this.game_clock]["x_pos"],
+  // 			 y:this.trialInfo.scoreLocs[this.game_clock]["y_pos"]});
 };
 
 game_core.prototype.updateScores = function(p) {
@@ -565,11 +624,22 @@ game_core.prototype.updateScores = function(p) {
     this.updateCurrScoreLoc(p);
         
     // To make social info valid, concatenate score fields with bot's
-    var botScoreLoc = {x:this.trialInfo.botScoreLocs[this.game_clock]["x_pos"],
-		       y:this.trialInfo.botScoreLocs[this.game_clock]["y_pos"]};
-    var dist = _.min([this.distance_between(this.currScoreLoc, p.pos),
-		      this.distance_between(botScoreLoc, p.pos)]);
-
+    
+    this.spotScoreLoc = {x:this.trialInfo.spotScoreLocs[this.game_clock]["x_pos"],
+			     y:this.trialInfo.spotScoreLocs[this.game_clock]["y_pos"]};
+    
+    this.wallScoreLoc = {x:this.trialInfo.wallScoreLocs[this.game_clock]["x_pos"],
+			     y:this.trialInfo.wallScoreLocs[this.game_clock]["y_pos"]};
+    
+    if(this.trialInfo.scoreLocCondition == "close") {
+      var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
+			this.distance_between(this.wallScoreLoc, p.pos),
+			this.distance_between(this.closeScoreLoc, p.pos)]);
+    } else {
+      var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
+			this.distance_between(this.wallScoreLoc, p.pos)]);
+    }
+    
     // In alternative scoring field, only counts if you're moving against the wall
     var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
     if(this.trialInfo.wallBG) {
@@ -578,7 +648,7 @@ game_core.prototype.updateScores = function(p) {
 	if(dist < 50) {
 	  p.curr_background = 1;
 	} else {
-	  p.curr_background = .1;
+	  p.curr_background = .2;
 	}
       } else {
 	p.curr_background = 0;
