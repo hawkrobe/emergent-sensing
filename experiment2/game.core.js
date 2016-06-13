@@ -306,9 +306,10 @@ game_core.prototype.getFixedConds = function() {
     scoreLocCondition : "far",
     numBots : 0,
     showBackground : true,
-    botPositions : "spot-spot-close_simulation-0-non-social.csv",    
+    botPositions : "spot-spot-close_simulation-0-non-social.csv",
     wallBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv",
     spotBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-1-non-social.csv",
+    oneBackground : true,
   }, {
     name: "initialInvisible",
     scoreLocCondition : "far",
@@ -316,6 +317,7 @@ game_core.prototype.getFixedConds = function() {
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
     wallBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-2-non-social.csv",
     spotBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-3-non-social.csv",
+    oneBackground : true,
   }];
 };
 
@@ -347,6 +349,7 @@ game_core.prototype.getShuffledConds = function(conditions) {
 game_core.prototype.makeTrialList = function() {
   var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far','none-close','none-far']);
   var defaults = {showBackground : false,
+		  oneBackground : false,
 		  wallBG : this.backgroundCondition == "wall"};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
@@ -413,6 +416,7 @@ game_core.prototype.server_send_update = function(){
     gs : this.game_started,
     players: player_packet,
     trialInfo: {nonsocial : this.trialInfo.nonsocial,
+		oneBackground : this.trialInfo.oneBackground,
 		spotScoreLoc: this.spotScoreLoc,
 		closeScoreLoc: this.closeScoreLoc,
 		wallScoreLoc: this.wallScoreLoc,
@@ -598,10 +602,15 @@ game_core.prototype.updateScores = function(p) {
     // To make social info valid, concatenate score fields with bot's
     
     this.spotScoreLoc = {x:this.trialInfo.spotScoreLocs[this.game_clock]["x_pos"],
-			     y:this.trialInfo.spotScoreLocs[this.game_clock]["y_pos"]};
+			 y:this.trialInfo.spotScoreLocs[this.game_clock]["y_pos"]};
     
-    this.wallScoreLoc = {x:this.trialInfo.wallScoreLocs[this.game_clock]["x_pos"],
-			     y:this.trialInfo.wallScoreLocs[this.game_clock]["y_pos"]};
+    if(this.trialInfo.oneBackground) {
+      this.wallScoreLoc = {x:"", y:""};
+
+    } else {
+      this.wallScoreLoc = {x:this.trialInfo.wallScoreLocs[this.game_clock]["x_pos"],
+			   y:this.trialInfo.wallScoreLocs[this.game_clock]["y_pos"]};
+    }
     
     if(this.trialInfo.scoreLocCondition == "close") {
       var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),

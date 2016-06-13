@@ -132,7 +132,7 @@ function drawScoreField(game){
   var centerX = game.trialInfo.spotScoreLoc.x;
   var centerY = game.trialInfo.spotScoreLoc.y;
   drawSpotlight(game, centerX, centerY);
-  
+
   var centerX = game.trialInfo.wallScoreLoc.x;
   var centerY = game.trialInfo.wallScoreLoc.y;
   drawSpotlight(game, centerX, centerY);
@@ -140,7 +140,7 @@ function drawScoreField(game){
   var centerX = game.trialInfo.closeScoreLoc.x;
   var centerY = game.trialInfo.closeScoreLoc.y;
   drawSpotlight(game, centerX, centerY);
-
+  
   drawForbiddenArea(game, game.trialInfo.wallBG);
  
 };
