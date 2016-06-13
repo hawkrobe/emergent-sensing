@@ -194,6 +194,16 @@ var drawButton = function (game, player){
   game.ctx.restore();
 };
 
+var addSkipButton = function (game){
+  var button = document.createElement("input");
+  button.value = "Skip";
+  button.onclick = function() {
+    game.socket.send("skip");
+  };
+  var instructionDiv = document.getElementById("instructions");
+  instructionDiv.appendChild(button);
+};
+
 function wrapText(game, text, x, y, maxWidth, lineHeight) {
   var cars = text.split("\n");
 

@@ -42,10 +42,6 @@ function getSelf () {
 function client_on_click(game, newX, newY ) {
   // Auto-correcting input, but only between rounds
 
-  if(debug || test) {
-    checkSkipPress(newX, newY);
-  }
-  
   if(globalGame.pause) {
     checkButtonPress(newX, newY);
   } else {
@@ -76,15 +72,6 @@ function checkButtonPress(mx, my) {
   }
 };
 
-function checkSkipPress(mx, my) {
-  var button = globalGame.advanceButton;
-  var dx = mx - button.trueX;
-  var dy = my - button.trueY;
-  if ((0 < dx) && (dx < button.width) && (0 < dy) && (dy < button.height)) {
-    globalGame.socket.send("ready");
-    globalGame.pause = false;
-  }
-};
 
 function client_ondisconnect(data) {
   // Redirect to exit survey
@@ -255,10 +242,6 @@ function client_update() {
   
   drawMessage(globalGame, self);
   
-  if(debug | test) {
-    drawButton(globalGame);
-  }
-
 };
 
 var timeRemaining = function(remaining, limit) {
@@ -308,10 +291,14 @@ window.onload = function(){
 		function(){speed_change = "up";}, 
 		function(){speed_change = "down";});
 
+  // Add skip button for debug/test model
+  if((debug || test)) {
+    addSkipButton(globalGame);
+  } 
 
   //Fetch the rendering contexts
   globalGame.ctx = globalGame.viewport.getContext('2d');
-
+  
   //Set the draw style for the font
   globalGame.ctx.font = '11px "Helvetica"';
 
