@@ -217,7 +217,7 @@ function client_update() {
 
   //Draw opponent next
   _.map(globalGame.get_others(globalGame.my_id), function(p){
-    if(p.id) {
+    if(p.id && !globalGame.trialInfo.nonsocial) {
       drawPlayer(globalGame, p.player);
       //drawLabel(globalGame, p.player, "Player " + p.id.slice(0,4));
     }

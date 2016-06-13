@@ -65,7 +65,7 @@ var game_core = function(options){
   this.waiting_start = new Date(); 
 
   this.roundNum = -1;
-  this.numRounds = 6;
+  this.numRounds = 8;
   this.game_clock = 0;
 
   this.countdown = poissonRandomNumber(10*8) + 1;
@@ -307,25 +307,34 @@ game_core.prototype.getFixedConds = function() {
     numBots : 0,
     showBackground : true,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",    
-    wallBackground : this.backgroundCondition + "-wall-far_player_bg-0-non-social.csv",
-    spotBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
+    wallBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv",
+    spotBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-1-non-social.csv",
   }, {
     name: "initialInvisible",
     scoreLocCondition : "far",
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
-    wallBackground : this.backgroundCondition + "-wall-far_player_bg-0-non-social.csv",
-    spotBackground : this.backgroundCondition + "-spot-far_player_bg-0-non-social.csv",
+    wallBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-2-non-social.csv",
+    spotBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-3-non-social.csv",
   }];
 };
 
 game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
-    var simulationNum = 0;//Math.floor(Math.random() * 30);
+    var simulationNum = Math.floor(Math.random() * 50);
+    var nonsocial = condition.split("-")[0] == 'none';
+    if(nonsocial) {
+      condition = 'wall-' + condition.split("-")[1]
+      numBots = 0
+    } else {
+      numBots = 2
+    }
     var conditionPrefix = this.backgroundCondition + "-" + condition;
     var conditionSuffix = "-" + simulationNum + "-non-social.csv";
     return {
       name : condition,
+      numBots : numBots,
+      nonsocial : nonsocial,
       otherBGCondition : condition.split("-")[0],
       scoreLocCondition : condition.split("-")[1],
       botPositions : conditionPrefix + "_simulation" + conditionSuffix,
@@ -336,10 +345,9 @@ game_core.prototype.getShuffledConds = function(conditions) {
 };
 
 game_core.prototype.makeTrialList = function() {
-  var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far']);
+  var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far','none-close','none-far']);
   var defaults = {showBackground : false,
-		  wallBG : this.backgroundCondition == "wall",
-		  numBots: 2};
+		  wallBG : this.backgroundCondition == "wall"};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
   return _.map(fixedConds.concat(shuffledConds), function(obj) {
@@ -404,7 +412,8 @@ game_core.prototype.server_send_update = function(){
     roundNum : this.roundNum,
     gs : this.game_started,
     players: player_packet,
-    trialInfo: {spotScoreLoc: this.spotScoreLoc,
+    trialInfo: {nonsocial : this.trialInfo.nonsocial,
+		spotScoreLoc: this.spotScoreLoc,
 		closeScoreLoc: this.closeScoreLoc,
 		wallScoreLoc: this.wallScoreLoc,
 		showBackground : this.trialInfo.showBackground,
