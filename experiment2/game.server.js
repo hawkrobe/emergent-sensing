@@ -8,7 +8,7 @@
     MIT Licensed.
 */
 
-//require('look').start()
+var _ = require('underscore')
 
     var
         game_server = module.exports = { games : {}, game_count:0, assignment:0},
@@ -45,6 +45,11 @@ game_server.server_onMessage = function(client,message) {
     target.speed = message_parts[1].replace(/-/g,'.');;
   } else if (message_type == "h") { 
     target.visible = message_parts[1];
+  } else if (message_type == "skip") {
+    client.game.stop_update();
+    _.map(client.game.get_active_players(), function(p){
+      p.player.instance.send('s.showInstructions');
+    });
   } else if (message_type == "ready") {
     client.game.update();
     client.game.newRound();
