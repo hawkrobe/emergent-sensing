@@ -42,10 +42,12 @@ html , body {
 }
 
 #viewport {
-	  border:solid 1px #333;
-	  height : 280px;
-	  width : 485px;
-	  left:0; right:0; top:0; bottom:0;
-	  z-index:100;
-	  background: #383838; 
+    border-width: 20px;
+    border-style: solid;
+    border-color: #333;
+    height : 280px;
+    width : 485px;
+    left:0; right:0; top:0; bottom:0;
+    z-index:100;
+    background: #383838; 
 }

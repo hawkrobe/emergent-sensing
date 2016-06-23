@@ -41,12 +41,11 @@ function getSelf () {
 
 function client_on_click(game, newX, newY ) {
   // Auto-correcting input, but only between rounds
-
+  var self = getSelf();
   if(globalGame.pause) {
     checkButtonPress(newX, newY);
-  } else {
-
-    var self = getSelf();
+  } else if (newX > self.pos_limits.x_min && newX < self.pos_limits.x_max &&
+	     newY > self.pos_limits.y_min && newY < self.pos_limits.y_max) {
     var oldX = self.pos.x;
     var oldY = self.pos.y;
     var dx = newX - oldX;
@@ -58,6 +57,7 @@ function client_on_click(game, newX, newY ) {
     var info_packet = ("c." + self.angle +
 		       "."  + self.destination.x +
 		       "."  + self.destination.y);
+    
     game.socket.send(info_packet);
   }
 };
@@ -282,8 +282,9 @@ window.onload = function(){
     // e.pageX is relative to whole page -- we want
     // relative to GAME WORLD (i.e. viewport)
     var offset = $(this).offset();
-    var relX = e.pageX - offset.left;
-    var relY = e.pageY - offset.top;
+    var borderWidth = parseInt($(this).css("border-width" ));
+    var relX = e.pageX - offset.left - borderWidth;
+    var relY = e.pageY - offset.top - borderWidth;
     client_on_click(globalGame, relX, relY);
   });
   
