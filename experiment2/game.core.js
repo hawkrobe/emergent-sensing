@@ -89,6 +89,7 @@ var game_core = function(options){
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
     this.backgroundCondition = Math.random() < .5 ? "wall" : "spot";
+    this.exploitMechanism = Math.random() < .5 ? "move" : "stop";
     this.trialList = this.makeTrialList();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -111,7 +112,6 @@ var game_player = function( game_instance, player_instance, index) {
   this.size = { x:5, y:5, hx:2.5, hy:2.5 }; // 5+5 = 10px long, 2.5+2.5 = 5px wide
   this.state = 'not-connected';
   this.visible = "visible"; // Tracks whether client is watching game
-  this.onwall = false;
   this.hidden = false;
   this.hidden_count = 0;
   this.inactive = false;
@@ -400,7 +400,6 @@ game_core.prototype.server_send_update = function(){
 		tot: p.player.total_points,
                 angle: p.player.angle,
                 speed: p.player.speed,
-		onwall: p.player.onwall,
 		hidden: p.player.hidden,
 		inactive: p.player.inactive,
 		lagging: p.player.lagging}};
@@ -621,25 +620,22 @@ game_core.prototype.updateScores = function(p) {
 			this.distance_between(this.wallScoreLoc, p.pos)]);
     }
 
-    // In alternative scoring field, only counts if you're moving against the wall
     var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
-    if(this.trialInfo.wallBG) {
-      if(onWall && p.speed > 0) {
-	p.onwall = true;
-	if(dist < 50) {
-	  p.curr_background = 1;
-	} else {
-	  p.curr_background = .2;
-	}
-      } else {
-	p.curr_background = 0;
-      }
-    } else if (!onWall) {
-      p.curr_background = (dist < 50) ? 1.0 : this.waiting_background;
-      p.onwall = false;
-    } else {
+    
+    // If you're in a forbidden region: 0 
+    if((this.backgroundCondition == "wall" && !onWall) ||
+       (this.backgroundCondition == "spot" && onWall)) {
       p.curr_background = 0;
-      p.onwall = true;      
+    // If you're in the right region, but too far away from the dist: .2 
+    } else if(dist > 50) {
+      p.curr_background = .2;
+    // If you're close to the dist, but not exploiting properly: .5?
+    } else if((this.exploitMechanism == "move" && p.speed == 0) ||
+	      (this.exploitMechanism == "stop" && p.speed > 0)) {
+      p.curr_background = .5;
+    // Otherwise, you get full points
+    } else {
+      p.curr_background = 1;
     }
 
     p.avg_score = (p.avg_score + p.curr_background/
