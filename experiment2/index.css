@@ -1,6 +1,6 @@
 html , body {
-     background: #212121; 
-     color: #fff; 
+    background: #ffffff;
+     color: #000000; 
      font-family: Helvetica;
      margin: 0; 
      padding: 0;
@@ -42,9 +42,9 @@ html , body {
 }
 
 #viewport {
-    border-width: 20px;
+    border-width: 1px;
     border-style: solid;
-    border-color: #383838;
+    border-color: #333;
     height : 280px;
     width : 485px;
     left:0; right:0; top:0; bottom:0;

@@ -161,7 +161,6 @@ function client_onMessage(data) {
     case 'blink' : //blink title
       flashTitle("GO!");  break;
     case 'showInstructions' :
-      $('#viewport').css('border-color', $('viewport').css('background'));
       globalGame.pause = true;
       drawInstructions(globalGame);
     }        
@@ -217,10 +216,6 @@ function client_update() {
   $("#curr_bonus").html("Current Score: <span style='color: " 
 			+ getColorForPercentage(self.curr_background) 
 			+";'>" + Math.floor(self.curr_background*100) + "%</span>");
-
-  if(globalGame.roundNum >= 1) {
-    $('#viewport').css('border-color', getColorForPercentage(self.curr_background));
-  }
   
   if(!started) {
     var left = timeRemaining(globalGame.waiting_remaining,
@@ -244,8 +239,7 @@ function client_update() {
     drawLabel(globalGame, self, "YOU");
   }
   
-  drawMessage(globalGame, self);
-  
+  drawMessage(globalGame, self);  
 };
 
 var timeRemaining = function(remaining, limit) {
