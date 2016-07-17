@@ -27,6 +27,32 @@ var getColorForPercentage = function(pct) {
   }
 }
 
+function getHatchPattern() {
+  var p = document.createElement("canvas");
+  p.width=16;
+  p.height=16;
+  var pctx=p.getContext('2d');
+  var x0=17;
+  var y0=-1;
+  var x1=-1;
+  var y1=17;
+  var offset=16;
+  pctx.fillStyle = "#383838";
+  pctx.fillRect(0,0,16,16);
+  pctx.strokeStyle = "red";
+  pctx.lineWidth=2;
+  pctx.beginPath();
+  pctx.moveTo(x0,y0);
+  pctx.lineTo(x1,y1);
+  pctx.moveTo(x0-offset,y0);
+  pctx.lineTo(x1-offset,y1);
+  pctx.moveTo(x0+offset,y0);
+  pctx.lineTo(x1+offset,y1);
+  pctx.stroke();
+
+  return p;
+};
+
 var GOODCOLOR = getColorForPercentage(1.0);  
 var NEUTRALCOLOR = getColorForPercentage(0.2);
 var BADCOLOR = "red";
@@ -114,11 +140,12 @@ function drawSafeArea(game, wallBG) {
 
 function drawForbiddenArea(game, wallBG) {
   game.ctx.save();
+  var p = getHatchPattern();
   if(wallBG) {
-    game.ctx.fillStyle = BADCOLOR;
+    game.ctx.fillStyle=game.ctx.createPattern(p,'repeat');
     game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
   } else {
-    game.ctx.strokeStyle = BADCOLOR;
+    game.ctx.strokeStyle = game.ctx.createPattern(p, 'repeat');
     game.ctx.lineWidth = 25;
     game.ctx.strokeRect(25/2, 25/2, game.world.width - 50/2, game.world.height - 50/2);
   }
@@ -145,14 +172,17 @@ function drawScoreField(game){
  
 };
 
-var getMessage = function(roundNum, wallBG) {
+var getMessage = function(roundNum, exploitMechanism) {
   var message = "";
   if(roundNum == -1) {
     message += "In the first round, the score field " +
       "that determines your reward will be visible. ";
-    if(wallBG) {
-      message += "You will receive a score of 0% (no reward) " +
-	"whenever you are not moving.";
+    if(exploitMechanism == "move") {
+      message += "You will only receive a full score of 100% " +
+	"whenever you are moving.";
+    } else {
+      message += "You will only receive a full score of 100% " +
+	"when you stop moving.";
     }
   } else if(roundNum == 0) {
     message += "In the next round, the score field will be hidden.";
@@ -166,7 +196,7 @@ var getMessage = function(roundNum, wallBG) {
 };
 
 var drawInstructions = function(game, player) {
-  var message = getMessage(game.roundNum, game.trialInfo.wallBG);
+  var message = getMessage(game.roundNum, game.exploitMechanism);
   game.ctx.save();
   game.ctx.clearRect(0,0,485,280);
   game.ctx.font = "10pt Helvetica";
