@@ -168,8 +168,6 @@ function drawScoreField(game){
   var centerY = game.trialInfo.closeScoreLoc.y;
   drawSpotlight(game, centerX, centerY);
   
-  drawForbiddenArea(game, game.trialInfo.wallBG);
- 
 };
 
 var getMessage = function(roundNum, exploitMechanism) {

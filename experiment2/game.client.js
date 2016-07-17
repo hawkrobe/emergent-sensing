@@ -193,6 +193,7 @@ function client_update() {
   if (globalGame.trialInfo.showBackground || debug) {
     drawScoreField(globalGame);
   }
+  drawForbiddenArea(globalGame, globalGame.trialInfo.wallBG);
     
   // Alter speeds
   if (speed_change != "none") {
