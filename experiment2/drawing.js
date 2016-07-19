@@ -258,3 +258,138 @@ function wrapText(game, text, x, y, maxWidth, lineHeight) {
     y += lineHeight;
   }
 }
+
+// Make sparkles (https://codepen.io/jackrugile/pen/Gving)
+/* super inefficient right now, could be improved */
+
+var rand = function(a,b){return ~~((Math.random()*(b-a+1))+a);};
+var dToR = function(degrees){
+  return degrees * (Math.PI / 180);
+};
+var particleMax = 100;
+
+function drawSparkles(game, player) {
+  if(!game.circle) {
+    game.particles = [];
+    game.circle = {
+      x: player.pos.x,
+      y: player.pos.y,
+      radius: player.size.x * 3,
+      speed: 45,
+      rotation: 0,
+      angleStart: 270,
+      angleEnd: 90,
+      hue: 60,
+      thickness: 5,
+      blur: 25
+    };    
+  }
+  game.circle.x = player.pos.x;
+  game.circle.y = player.pos.y;
+
+  var ctx = game.ctx;
+  ctx.save();
+  var updateCircle = function(){
+    console.log("updating circle...");
+    console.log(game.circle.rotation);
+    if(game.circle.rotation < 360){
+      game.circle.rotation += game.circle.speed;
+    } else {
+      game.circle.rotation = (game.circle.rotation + game.circle.speed) % 360;
+    }
+  };
+  var renderCircle = function(){
+    ctx.save();
+    ctx.translate(game.circle.x, game.circle.y);
+    ctx.rotate(dToR(game.circle.rotation));
+    ctx.beginPath();
+    ctx.arc(0, 0, game.circle.radius,
+	    dToR(game.circle.angleStart), dToR(game.circle.angleEnd), true);
+    ctx.lineWidth = game.circle.thickness;
+    ctx.strokeStyle = gradient1;
+    ctx.stroke();
+    ctx.restore();
+  };
+  var renderCircleBorder = function(){
+    ctx.save();
+    ctx.translate(game.circle.x, game.circle.y);
+    ctx.rotate(dToR(game.circle.rotation));
+    ctx.beginPath();
+    ctx.arc(0, 0, game.circle.radius + (game.circle.thickness/2),
+	    dToR(game.circle.angleStart), dToR(game.circle.angleEnd), true);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = gradient2;
+    ctx.stroke();
+    ctx.restore();
+  };
+  var createParticles = function(){
+    if(game.particles.length < particleMax){
+      game.particles.push({
+	x: (game.circle.x + game.circle.radius * Math.cos(dToR(game.circle.rotation-85))) +
+	  (rand(0, game.circle.thickness*2) - game.circle.thickness),
+	y: (game.circle.y + game.circle.radius * Math.sin(dToR(game.circle.rotation-85))) +
+	  (rand(0, game.circle.thickness*2) - game.circle.thickness),
+	vx: (rand(0, 100)-50)/1000,
+	vy: (rand(0, 100)-50)/1000,
+	radius: rand(1, 3)/2,
+	alpha: rand(10, 20)/100
+      });
+    }
+  };
+  var updateParticles = function(){
+    var i = game.particles.length;
+    while(i--){
+      var p = game.particles[i];
+      p.vx += (rand(0, 100)-50)/750;
+      p.vy += (rand(0, 100)-50)/750;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= .01;
+
+      if(p.alpha < .02){
+	game.particles.splice(i, 1)
+      }
+    }
+  };
+  var renderParticles = function(){
+    var i = game.particles.length;
+    while(i--){
+      var p = game.particles[i];
+      ctx.beginPath();
+      ctx.fillRect(p.x, p.y, p.radius, p.radius);
+      ctx.closePath();
+      ctx.fillStyle = 'hsla(0, 100%, 50%, '+p.alpha+')';
+    }
+  };
+
+  /* Set Constant Properties */
+  ctx.shadowBlur = game.circle.blur;
+  ctx.shadowColor = 'hsla('+game.circle.hue+', 80%, 60%, 1)';
+  ctx.lineCap = 'round';
+
+  var gradient1 = ctx.createLinearGradient(0, -game.circle.radius, 0, game.circle.radius);
+  gradient1.addColorStop(0, 'hsla('+game.circle.hue+', 60%, 50%, .25)');
+  gradient1.addColorStop(1, 'hsla('+game.circle.hue+', 60%, 50%, 0)');
+
+  var gradient2 = ctx.createLinearGradient(0, -game.circle.radius, 0, game.circle.radius);
+  gradient2.addColorStop(0, 'hsla('+game.circle.hue+', 100%, 50%, 0)');
+  gradient2.addColorStop(.1, 'hsla('+game.circle.hue+', 100%, 100%, .7)');
+  gradient2.addColorStop(1, 'hsla('+game.circle.hue+', 100%, 50%, 0)');
+
+  updateCircle();
+  renderCircle();
+  renderCircleBorder();
+  createParticles();
+  createParticles();
+  createParticles();
+  updateParticles();
+  renderParticles();
+  ctx.restore();
+
+  /* Loop It, Loop It Good */
+  // game.sparkleIntervalID = setInterval(loop, 16);
+};
+
+function endSparkles(game, player) {
+  //clearInterval(game.sparkleIntervalID);
+};

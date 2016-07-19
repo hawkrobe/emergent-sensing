@@ -194,7 +194,7 @@ function client_update() {
     drawScoreField(globalGame);
   }
   drawForbiddenArea(globalGame, globalGame.trialInfo.wallBG);
-    
+
   // Alter speeds
   if (speed_change != "none") {
     self.speed = speed_change == "up" ? globalGame.max_speed : globalGame.min_speed;
@@ -217,6 +217,10 @@ function client_update() {
   $("#curr_bonus").html("Current Score: <span style='color: " 
 			+ getColorForPercentage(self.curr_background) 
 			+";'>" + Math.floor(self.curr_background*100) + "%</span>");
+
+  if(self.curr_background > .2) {
+    drawSparkles(globalGame, self);
+  };
   
   if(!started) {
     var left = timeRemaining(globalGame.waiting_remaining,
