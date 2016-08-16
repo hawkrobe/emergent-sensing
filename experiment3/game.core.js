@@ -144,6 +144,7 @@ var game_player = function( game_instance, player_instance) {
         this.angle = null;
     }
     this.speed = this.game.min_speed;
+  this.destination = this.pos;
     this.old_speed = this.speed
     this.old_angle = this.angle
     this.color = 'white';
@@ -210,6 +211,7 @@ game_core.prototype.server_send_update = function(){
             return {id: p.id,
                     player: {
                         pos: p.player.pos,
+		      destination : p.player.destination,
                         cbg: p.player.curr_background,
 			tot: p.player.total_points,
                         angle: p.player.angle,
@@ -250,6 +252,11 @@ game_core.prototype.server_update_physics = function() {
     var local_gamecore = this;
     _.map(this.get_active_players(), function(p){
         var player = p.player;
+
+      // player.speed = (local_this.distance_between(player.pos, player.destination) < 8 ?
+      // 		    0 :
+      // 		    player.speed);
+
         r1 = player.speed; 
         theta1 = (player.angle - 90) * Math.PI / 180;
         player.old_state.pos = local_gamecore.pos(player.pos) ;
@@ -284,6 +291,9 @@ game_core.prototype.writeData = function() {
 	line += player_angle +',';
 	line += p.player.curr_background +',';
 	line += p.player.total_points.fixed(2) ;
+    line += p.player.curr_background +',';
+      line += p.player.destination.x +',';
+      line += p.player.destination.y;
 	if(local_game.game_started) {
 	    local_game.gameDataStream.write(String(line) + "\n",
 					    function (err) {if(err) throw err;});

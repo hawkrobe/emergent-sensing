@@ -46,11 +46,12 @@ game_server.server_onMessage = function(client,message) {
     //Extract important variables
     var target = client.game.gamecore.get_player(client.userid);
     var others = client.game.gamecore.get_others(client.userid);
-    if(message_type == 'a') {    // Client is changing angle
-        // Set their (server) angle 
-        target.angle = message_parts[1];
-	
-    } else if (message_type == 's') {
+  if (message_type == 'c') {
+    target.speed = target.speed == 0 ? client.game.min_speed : target.speed;    
+    target.angle = message_parts[1];
+    target.destination = {x : message_parts[2], y : message_parts[3]};
+    
+  } else if (message_type == 's') {
         target.speed = message_parts[1].replace(/-/g,'.');;
     } else if (message_type == "h") { // Receive message when browser focus shifts
         target.visible = message_parts[1];
@@ -163,7 +164,7 @@ game_server.createGame = function(player) {
     
     game.gamecore.fs = fs;
     
-    fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
+    fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y\n", function (err) {if(err) throw err;})
     game.gamecore.waitingDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
     fs.writeFile(latency_f, "pid,tick,latency\n", function (err) {if(err) throw err;})
     game.gamecore.waitingLatencyStream = fs.createWriteStream(latency_f, {'flags' : 'a'});

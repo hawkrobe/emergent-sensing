@@ -93,6 +93,7 @@ client_onserverupdate_received = function(data){
                     var l_player = z[1].player
                     if(z[0].id != my_id || l_player.angle == null) 
 			l_player.angle = s_player.angle
+		  l_player.destination = s_player.destination
                     l_player.curr_background = s_player.cbg
 		    l_player.total_points = s_player.tot
                     l_player.pos = game.pos(s_player.pos)
@@ -154,6 +155,30 @@ client_onMessage = function(data) {
         break; 
     } 
 }; 
+
+
+
+function client_on_click(game, newX, newY ) {
+  // Auto-correcting input, but only between rounds
+  var self = game.get_player(my_id);
+  if (newX > self.pos_limits.x_min && newX < self.pos_limits.x_max &&
+	     newY > self.pos_limits.y_min && newY < self.pos_limits.y_max) {
+    var oldX = self.pos.x;
+    var oldY = self.pos.y;
+    var dx = newX - oldX;
+    var dy = newY - oldY;
+    
+    self.destination = {x : Math.round(newX), y : Math.round(newY)};
+    self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
+
+    var info_packet = ("c." + self.angle +
+		       "."  + self.destination.x +
+		       "."  + self.destination.y);
+    
+    game.socket.send(info_packet);
+  }
+};
+
 
 // Restarts things on the client side. Necessary for iterated games.
 client_newgame = function() {
@@ -252,6 +277,7 @@ client_update = function() {
     
     //And then we draw ourself so we're always in front
     if(player.pos) {
+      drawDestination(game, player);
 	draw_player(game, player)
 	draw_label(game, player, "YOU");
     }
@@ -314,29 +340,17 @@ window.onload = function(){
     game.viewport.width = game.world.width;
     game.viewport.height = game.world.height;
 
-    // Keep track of which keys are being pressed. Keys fire continuously while held.
-    KeyboardJS.on('left', 
-	function(){ // Only notify on FIRST press
-	    if(!_.contains(active_keys, 'left')) {
-		active_keys.push('left');
-	    }
-	},
-	function(){ // Only notify on first release
-	    if(_.contains(active_keys, 'left')) {
-		game.socket.send('a.' + game.get_player(my_id).angle)
-	    }
-	    active_keys = _.without(active_keys, 'left');});
-    KeyboardJS.on('right', 
-        function(){ // Only notify on first press
-	    if(!_.contains(active_keys, 'right')) {
-		active_keys.push('right');
-	    }
-	}, 
-        function(){ // Only notify on first release
-	    if(_.contains(active_keys, 'right')) {
-		game.socket.send('a.' + game.get_player(my_id).angle)
-	    }
-	    active_keys = _.without(active_keys, 'right');})
+  $('#viewport').click(function(e){
+    e.preventDefault();
+    // e.pageX is relative to whole page -- we want
+    // relative to GAME WORLD (i.e. viewport)
+    var offset = $(this).offset();
+    var borderWidth = parseInt($(this).css("border-width" ));
+    var relX = e.pageX - offset.left - borderWidth;
+    var relY = e.pageY - offset.top - borderWidth;
+    client_on_click(game, relX, relY);
+  });
+
     KeyboardJS.on('space', 
         function(){speed_change = "up"}, 
         function(){speed_change = "down"})
