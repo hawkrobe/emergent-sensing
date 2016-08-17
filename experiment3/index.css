@@ -39,13 +39,24 @@ html , body {
 	width: 485px;
 	height: 15px;
 	font: 10pt Helvetica;
+	text-align: center;
 }
 
+#warnings {
+	width: 485px;
+	height: 15px;
+	font: 10pt Helvetica;
+	text-align: left;
+}
+
+
 #viewport {
-	  border:solid 1px #333;
-	  height : 280px;
-	  width : 485px;
-	  left:0; right:0; top:0; bottom:0;
-	  z-index:100;
-	  background: #383838; 
+    border-width: 1px;
+    border-style: solid;
+    border-color: #333;
+    height : 280px;
+    width : 485px;
+    left:0; right:0; top:0; bottom:0;
+    z-index:100;
+    background: #383838; 
 }

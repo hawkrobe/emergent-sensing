@@ -219,7 +219,13 @@ client_update = function() {
 
     // Alter speeds
     if (speed_change != "none") {
-        player.speed = speed_change == "up" ? game.max_speed : game.min_speed;
+      if (speed_change == "up") {
+        player.speed = game.max_speed;
+      } else if (speed_change == "stop") {
+	player.speed = 0.0;
+      } else { 
+	player.speed = game.min_speed;
+      }
         game.socket.send("s." + String(player.speed).replace(/\./g,'-'));
         speed_change = "none"
     }
@@ -290,11 +296,11 @@ client_update = function() {
 var timeRemaining = function(remaining, limit) {
     var time_remaining = limit - Math.floor(remaining / (1000*60));
     if(time_remaining > 1) {
-	return {t: time_remaining, unit: 'minutes', actual: (limit - remaining/1000)}
+	return {t: time_remaining, unit: 'minutes'}
     } else {
-	time_remaining = limit - Math.floor(remaining / (1000 * 60)*6)/6
-	time_remaining = Math.max(Math.floor(time_remaining*6)*10, 10)
-	return {t: time_remaining, unit: 'seconds', actual: (limit - remaining/1000)}
+	time_remaining = Math.floor((limit - remaining/(1000.0*60))*60)
+	time_remaining = Math.max(time_remaining, 0)
+	return {t: time_remaining, unit: 'seconds'}
     }
 
 }
@@ -355,8 +361,16 @@ window.onload = function(){
     client_on_click(game, relX, relY);
   });
 
-    KeyboardJS.on('space', 
+    // KeyboardJS.on('space', 
+    //     function(){speed_change = "up"}, 
+    //     function(){speed_change = "down"})
+
+    KeyboardJS.on('a', 
         function(){speed_change = "up"}, 
+        function(){speed_change = "down"})
+
+    KeyboardJS.on('s', 
+        function(){speed_change = "stop"}, 
         function(){speed_change = "down"})
 
 
