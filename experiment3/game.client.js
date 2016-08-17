@@ -354,7 +354,8 @@ window.onload = function(){
     // e.pageX is relative to whole page -- we want
     // relative to GAME WORLD (i.e. viewport)
     var offset = $(this).offset();
-    var borderWidth = parseInt($(this).css("border-width" ));
+    var borderWidth = 1; //parseInt($(this).css("border-width" )); // broken in firefox 48.0
+
     var relX = e.pageX - offset.left - borderWidth;
     var relY = e.pageY - offset.top - borderWidth;
 
