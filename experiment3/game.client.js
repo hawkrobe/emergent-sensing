@@ -222,7 +222,7 @@ client_update = function() {
       if (speed_change == "up") {
         player.speed = game.max_speed;
       } else if (speed_change == "stop") {
-	player.speed = 0.0;
+	player.speed = 0;
       } else { 
 	player.speed = game.min_speed;
       }
