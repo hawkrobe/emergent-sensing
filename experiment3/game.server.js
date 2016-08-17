@@ -126,7 +126,8 @@ game_server.findGame = function(player) {
 // Will run when first player connects
 game_server.createGame = function(player) {
     // Figure out variables
-    var thresholds = Array(3,3);
+    //var thresholds = Array(3,3);
+    var thresholds = Array(1,1);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
     var noise_id = '0-1en01'
@@ -281,7 +282,7 @@ game_server.startGame = function(game) {
     var game_f = "data/games/" + name + ".csv"
     var latency_f = "data/latencies/" + name + ".csv"
     
-    fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points\n", function (err) {if(err) throw err;})
+    fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y\n", function (err) {if(err) throw err;})
     game.gamecore.gameDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
     fs.writeFile(latency_f, "pid,tick,latency\n", function (err) {if(err) throw err;})
     game.gamecore.latencyStream = fs.createWriteStream(latency_f, {'flags' : 'a'});

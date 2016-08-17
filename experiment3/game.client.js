@@ -174,7 +174,7 @@ function client_on_click(game, newX, newY ) {
     var info_packet = ("c." + self.angle +
 		       "."  + self.destination.x +
 		       "."  + self.destination.y);
-    
+
     game.socket.send(info_packet);
   }
 };
@@ -237,20 +237,23 @@ client_update = function() {
     })
 
     // Draw points scoreboard 
-    $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(2));
+    $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(3));
 
     onwall = player.onwall;
     if(onwall) {
 	$("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
     } else {
 	if(game.game_started) {
-	    $("#curr_bonus").html("Current Score: <span style='color: " 
-				  + getColorForPercentage(player.curr_background) 
-				  +";'>" + Math.floor(player.curr_background*100) + "%</span>");
+	    // $("#curr_bonus").html("Current Score: <span style='color: " 
+	    // 			  + getColorForPercentage(player.curr_background) 
+	    // 			  +";'>" + Math.floor(player.curr_background*100) + "%</span>");
+	  if(player.curr_background > .2) {
+	    drawSparkles(game, player);
+	  };
 	} else {
-	    $("#curr_bonus").html("Current Score: <span style='color: " 
-				  + getColorForPercentage(0) 
-				  +";'>---</span>");	
+	    // $("#curr_bonus").html("Current Score: <span style='color: " 
+	    // 			  + getColorForPercentage(0) 
+	    // 			  +";'>---</span>");	
 	}
     }
     
@@ -348,6 +351,7 @@ window.onload = function(){
     var borderWidth = parseInt($(this).css("border-width" ));
     var relX = e.pageX - offset.left - borderWidth;
     var relY = e.pageY - offset.top - borderWidth;
+
     client_on_click(game, relX, relY);
   });
 

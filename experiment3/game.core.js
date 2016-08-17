@@ -55,7 +55,7 @@ var game_core = function(game_instance){
     } else {
 	this.waiting_room_limit = 1 // set maximum waiting room time (in minutes)
 	this.round_length = 1 // set how long each round will last (in minutes)
-	this.max_bonus = 1.25; // total $ players can make in bonuses 
+	this.max_bonus = 0.25; // total $ players can make in bonuses 
 	this.booting = false;
     }
 
@@ -290,7 +290,7 @@ game_core.prototype.writeData = function() {
 	line += p.player.speed +',';
 	line += player_angle +',';
 	line += p.player.curr_background +',';
-	line += p.player.total_points.fixed(2) ;
+	line += p.player.total_points.fixed(2) +',';
     line += p.player.curr_background +',';
       line += p.player.destination.x +',';
       line += p.player.destination.y;
