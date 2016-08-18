@@ -46,7 +46,8 @@ var game_core = function(game_instance){
     //How often the players move forward <global_speed>px in ms.
     this.tick_frequency = 125;     //Update 8 times per second
     this.ticks_per_sec = 1000/125
-
+  this.numFadeSteps = 50;
+  
     if(this.debug) {
 	this.waiting_room_limit = 0.25; // set maximum waiting room time (in minutes)
 	this.round_length = 1; // set how long each round will last (in minutes)

@@ -169,6 +169,10 @@ function client_on_click(game, newX, newY ) {
     var dy = newY - oldY;
     
     self.destination = {x : Math.round(newX), y : Math.round(newY)};
+
+    // Reset destination visualization to fade again
+    game.remainingFadeSteps = game.numFadeSteps;
+    
     self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
 
     var info_packet = ("c." + self.angle +
