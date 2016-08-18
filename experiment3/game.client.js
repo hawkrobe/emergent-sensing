@@ -295,7 +295,7 @@ client_update = function() {
 
 var timeRemaining = function(remaining, limit) {
     var time_remaining = limit - Math.floor(remaining / (1000*60));
-    if(time_remaining > 1) {
+    if(time_remaining > 2) {
 	return {t: time_remaining, unit: 'minutes'}
     } else {
 	time_remaining = Math.floor((limit - remaining/(1000.0*60))*60)

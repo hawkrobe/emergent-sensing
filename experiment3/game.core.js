@@ -54,8 +54,8 @@ var game_core = function(game_instance){
 	this.booting = true;
     } else {
 	this.waiting_room_limit = 1 // set maximum waiting room time (in minutes)
-	this.round_length = 1 // set how long each round will last (in minutes)
-	this.max_bonus = 0.25; // total $ players can make in bonuses 
+	this.round_length = 2 // set how long each round will last (in minutes)
+	this.max_bonus = 0.5; // total $ players can make in bonuses 
 	this.booting = false;
     }
 
@@ -193,7 +193,7 @@ game_core.prototype.pos = function(a) { return {x:a.x,y:a.y}; };
 game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
 
 game_core.prototype.getSpotScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/spot-1-smart-0-0-bg.csv");  
+  return utils.readCSV("../metadata/test-background.csv");  
 };
 
 
