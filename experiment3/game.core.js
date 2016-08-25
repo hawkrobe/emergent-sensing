@@ -217,7 +217,7 @@ game_core.prototype.server_send_update = function(){
                         angle: p.player.angle,
                         speed: p.player.speed,
 			onwall: p.player.onwall,
-			kicked: p.player.kicked,
+			hidden: p.player.hidden,
 			inactive: p.player.inactive,
 			lagging: p.player.lagging}}
         } else {
@@ -390,7 +390,7 @@ game_core.prototype.create_physics_simulation = function() {
 		  this.updateScores(p.player);
 		  
 		  // Handle inactive, hidden, or high latency players...
-		  this.handleBootingConditions(p.player);
+		  this.handleBootingConditions(p.player, p.id);
 		}
 	    }
 	}
@@ -453,52 +453,53 @@ game_core.prototype.checkCollision = function(item, options) {
 };
 
 
-game_core.prototype.handleHiddenTab = function(p) {
+game_core.prototype.handleHiddenTab = function(p, id) {
   // count ticks with hidden tab
   if(p.visible == 'hidden') {
     p.hidden_count += 1;
   }
+
   // kick after being hidden for 15 seconds  
-  if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug && !this.test) { 
+  if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug) { 
     p.hidden = true;
-    console.log('Player ' + p.id + ' will be disconnected for being hidden.');
+    console.log('Player ' + id + ' will be disconnected for being hidden.');
   }
 };
 
-game_core.prototype.handleInactivity = function(p) {
+game_core.prototype.handleInactivity = function(p, id) {
   // Player is inactive if they're sitting in one place; reset after they move again
-  if(p.speed == 0) {
+  if(p.onWall) {
     p.inactive_count += 1;
   } else {
     p.inactive_count = 0;
   }
   
-  // kick after being inactive for 30 seconds
-  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug && !this.test) {  
+  // kick after being inactive for 15 seconds
+  if(p.inactive_count > this.ticks_per_sec*15 && !this.debug) {  
     p.inactive = true;
-    console.log('Player ' + p.id + ' will be disconnected for inactivity.');
+    console.log('Player ' + id + ' will be disconnected for inactivity.');
   }
 };
 
-game_core.prototype.handleLatency = function(p) {
+game_core.prototype.handleLatency = function(p, id) {
   // Count time spent experiencing lag (but only when viewing page)
   if(p.latency > this.tick_frequency && p.visible != 'hidden') {
     p.lag_count += 1;
   }
   // Kick if latency persists 10% of game
-  if(p.lag_count > this.game_length*0.1 && !this.debug && !this.test) {
+  if(p.lag_count > this.game_length*0.1 && !this.debug) {
     p.lagging = true;
-    console.log('Player ' + p.id + ' will be disconnected because of latency.');
+    console.log('Player ' + id + ' will be disconnected because of latency.');
   }
 };
 
-game_core.prototype.handleBootingConditions = function(p) {
-  if((p.hidden || p.inactive || p.lagging) && !this.debug && !this.test) {
+game_core.prototype.handleBootingConditions = function(p, id) {
+  if((p.hidden || p.inactive || p.lagging) && !this.debug) {
     p.instance.disconnect();
   } else {
-    this.handleHiddenTab(p);
-    this.handleInactivity(p);
-    this.handleLatency(p);
+    this.handleHiddenTab(p, id);
+    this.handleInactivity(p, id);
+    this.handleLatency(p, id);
   }
 };
 
@@ -512,7 +513,8 @@ game_core.prototype.updateScores = function(p) {
     var dist = this.distance_between(this.spotScoreLoc, p.pos);
     
     var onWall = this.checkCollision(p, {tolerance: 0, stop: false});
-    
+    p.onWall = onWall
+
     // If you're in a forbidden region: 0 
     if(onWall) {
       p.curr_background = 0;

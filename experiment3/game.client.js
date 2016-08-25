@@ -51,7 +51,7 @@ right_turn = function() {
 client_ondisconnect = function(data) {
     // Redirect to exit survey
     console.log("server booted")
-    if(game.get_player(my_id).kicked) {
+    if(game.get_player(my_id).hidden) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
     } else if(game.get_player(my_id).inactive) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + my_id;
@@ -99,7 +99,7 @@ client_onserverupdate_received = function(data){
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
 		    l_player.onwall = s_player.onwall
-                    l_player.kicked = s_player.kicked
+                    l_player.hidden = s_player.hidden
                     l_player.inactive = s_player.inactive
                     l_player.lagging = s_player.lagging
                 }
