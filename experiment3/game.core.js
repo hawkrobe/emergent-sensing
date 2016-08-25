@@ -47,6 +47,8 @@ var game_core = function(game_instance){
     this.tick_frequency = 125;     //Update 8 times per second
     this.ticks_per_sec = 1000/125
   this.numFadeSteps = 50;
+
+  this.background_id = ''
   
     if(this.debug) {
 	this.waiting_room_limit = 0.25; // set maximum waiting room time (in minutes)
@@ -57,7 +59,7 @@ var game_core = function(game_instance){
 	this.waiting_room_limit = 1 // set maximum waiting room time (in minutes)
 	this.round_length = 2 // set how long each round will last (in minutes)
 	this.max_bonus = 0.5; // total $ players can make in bonuses 
-	this.booting = false;
+	this.booting = true;
     }
 
     // game and waiting length in seconds
@@ -74,14 +76,11 @@ var game_core = function(game_instance){
 
     this.game_clock = 0;
 
-  this.spotScoreLoc = {x:"",y:""};
-
     //We create a player set, passing them the game that is running
     //them, as well. Both the server and the clients need separate
     //instances of both players, but the server has more information
     //about who is who. Clients will be given this info later.
     if(this.server) {
-      this.spotScoreLocs = this.getSpotScoreInfo();
         this.players = [{
             id: this.instance.player_instances[0].id, 
             player: new game_player(this,this.instance.player_instances[0].player)
@@ -194,7 +193,7 @@ game_core.prototype.pos = function(a) { return {x:a.x,y:a.y}; };
 game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
 
 game_core.prototype.getSpotScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/test-background.csv");  
+  return utils.readCSV("../metadata/background-" + this.background_id + ".csv");  
 };
 
 
@@ -312,6 +311,12 @@ game_core.prototype.writeData = function() {
 game_core.prototype.server_newgame = function() {
     var local_gamecore = this;
     
+  this.spotScoreLoc = {x:"",y:""};
+
+    if(this.server) {
+      this.spotScoreLocs = this.getSpotScoreInfo();
+    }
+
     // Don't want players moving during countdown
     //_.map(local_gamecore.get_active_players(), function(p) {p.player.speed = 0;})
         
@@ -488,7 +493,7 @@ game_core.prototype.handleLatency = function(p) {
 };
 
 game_core.prototype.handleBootingConditions = function(p) {
-  if(p.hidden || p.inactive || p.lagging && !this.debug && !this.test) {
+  if((p.hidden || p.inactive || p.lagging) && !this.debug && !this.test) {
     p.instance.disconnect();
   } else {
     this.handleHiddenTab(p);
@@ -506,10 +511,10 @@ game_core.prototype.updateScores = function(p) {
 
     var dist = this.distance_between(this.spotScoreLoc, p.pos);
     
-    var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
+    var onWall = this.checkCollision(p, {tolerance: 0, stop: false});
     
     // If you're in a forbidden region: 0 
-    if(this.backgroundCondition == "spot" && onWall) {
+    if(onWall) {
       p.curr_background = 0;
     } else if(dist > 50) {
       p.curr_background = .2;

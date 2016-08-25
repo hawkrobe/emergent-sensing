@@ -254,30 +254,15 @@ game_server.startGame = function(game) {
 
     game.active = true;
     
-    if(game.player_count == 5) { 
-	var noise_id = (five_counter % 2) + 1 + '-1en01'
-	five_counter += 1
-    } else if(game.player_count == 4) {
-	if(four_counter % 2 == 0) {
-	    var noise_id = '0-1en01'
-	} else {
-	    var noise_id = '3-1en01'
-	}
-	four_counter += 1
-    } else if(game.player_count == 3) {
-	var noise_id = (three_counter % 2) + 2 + '-1en01'
-	three_counter += 1
-    } else {
-	var noise_id = Math.floor(Math.random() * 4) + '-1en01'
-    }
-    var noise_id = '0-1en01'
-    var noise_location = '/home/pkrafft/couzin_copy/light-fields/' + noise_id + '/'
-    game.gamecore.noise_location = noise_location
+
+  var bg_id = Math.floor(Math.random() * 4) + ''
+
+    game.gamecore.background_id = bg_id
 
     var d = new Date();
     var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
     
-    var name = start_time + '_' + game.player_count + '_' + noise_id + '_' + game.id;
+    var name = start_time + '_' + game.player_count + '_' + bg_id + '_' + game.id;
     
     var game_f = "data/games/" + name + ".csv"
     var latency_f = "data/latencies/" + name + ".csv"
