@@ -144,7 +144,7 @@ var game_player = function( game_instance, player_instance) {
         this.angle = null;
     }
     this.speed = this.game.min_speed;
-  this.destination = this.pos;
+  this.destination = '';//this.pos;
     this.old_speed = this.speed
     this.old_angle = this.angle
     this.color = 'white';
@@ -468,7 +468,7 @@ game_core.prototype.handleHiddenTab = function(p, id) {
 
 game_core.prototype.handleInactivity = function(p, id) {
   // Player is inactive if they're sitting in one place; reset after they move again
-  if(p.onWall) {
+  if(p.onwall) {
     p.inactive_count += 1;
   } else {
     p.inactive_count = 0;
@@ -513,7 +513,7 @@ game_core.prototype.updateScores = function(p) {
     var dist = this.distance_between(this.spotScoreLoc, p.pos);
     
     var onWall = this.checkCollision(p, {tolerance: 0, stop: false});
-    p.onWall = onWall
+    p.onwall = onWall
 
     // If you're in a forbidden region: 0 
     if(onWall) {

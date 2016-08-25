@@ -54,7 +54,8 @@ client_ondisconnect = function(data) {
     if(game.get_player(my_id).hidden) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
     } else if(game.get_player(my_id).inactive) {
-        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + my_id;
+        var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
+        //var URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + my_id;
     } else if(game.get_player(my_id).lagging) {
         var URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + my_id;
     } else {
@@ -249,10 +250,17 @@ client_update = function() {
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(3));
 
+
     onwall = player.onwall;
     if(onwall) {
-	$("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
+	//$("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
+      player.warning1 = 'Warning: Move off the wall!';
+      //player.warning2 = 'Move away from the wall or click the "disconnect" button';
+      //player.warning3 = 'at the bottom of the page, or you will be disqualified!';
     } else {
+      player.warning1 = '';
+      //player.warning2 = '';
+      //player.warning3 = '';
 	if(game.game_started) {
 	    // $("#curr_bonus").html("Current Score: <span style='color: " 
 	    // 			  + getColorForPercentage(player.curr_background) 

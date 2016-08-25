@@ -54,6 +54,9 @@ draw_player = function(game, player){
     game.ctx.fillStyle = 'red';
     game.ctx.textAlign = 'center';
     game.ctx.fillText(player.message, game.world.width/2, game.world.height/5);
+    game.ctx.fillText(player.warning1, game.world.width/2, game.world.height/2 - 20);
+    //game.ctx.fillText(player.warning2, game.world.width/2, game.world.height/2);
+    //game.ctx.fillText(player.warning3, game.world.width/2, game.world.height/2 + 20);
 }; 
 
 draw_label = function(game, player, label) {
