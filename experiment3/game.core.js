@@ -119,6 +119,7 @@ var game_player = function( game_instance, player_instance) {
     this.lagging = false;
     this.lag_count = 0;
     this.message = '';
+    this.warning = '';
 
     this.info_color = 'rgba(255,255,255,0)';
     this.id = '';
@@ -144,7 +145,7 @@ var game_player = function( game_instance, player_instance) {
         this.angle = null;
     }
     this.speed = this.game.min_speed;
-  this.destination = '';//this.pos;
+  this.destination = {x:'',y:''};//this.pos;
     this.old_speed = this.speed
     this.old_angle = this.angle
     this.color = 'white';
@@ -507,10 +508,14 @@ game_core.prototype.handleBootingConditions = function(p, id) {
 game_core.prototype.updateScores = function(p) {
   if(p) {
     
-    this.spotScoreLoc = {x:this.spotScoreLocs[this.game_clock]["x_pos"],
-			 y:this.spotScoreLocs[this.game_clock]["y_pos"]};
+    if(this.game_started) {
+      this.spotScoreLoc = {x:this.spotScoreLocs[this.game_clock]["x_pos"],
+			   y:this.spotScoreLocs[this.game_clock]["y_pos"]};
 
-    var dist = this.distance_between(this.spotScoreLoc, p.pos);
+      var dist = this.distance_between(this.spotScoreLoc, p.pos);
+    } else {
+      var dist = 100000
+    }
     
     var onWall = this.checkCollision(p, {tolerance: 0, stop: false});
     p.onwall = onWall

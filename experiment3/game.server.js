@@ -54,7 +54,10 @@ game_server.server_onMessage = function(client,message) {
   } else if (message_type == 's') {
         target.speed = message_parts[1].replace(/-/g,'.');;
     } else if (message_type == "h") { // Receive message when browser focus shifts
-        target.visible = message_parts[1];
+      target.visible = message_parts[1];
+    } else if (message_type == "quit") {
+      console.log("quit")
+      target.instance.disconnect()
     } else if (message_type == 'pong') {
 	var latency = (Date.now() - message_parts[1])/2;
 	target.latency = latency;
@@ -127,17 +130,18 @@ game_server.findGame = function(player) {
 game_server.createGame = function(player) {
     // Figure out variables
     //var thresholds = Array(3,3);
-    var thresholds = Array(1,1);
+    var thresholds = Array(2,2);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
-    var noise_id = '0-1en01'
-    var noise_location = '/home/pkrafft/couzin_copy/light-fields/' + noise_id + '/'
+
+  var bg_id = Math.floor(Math.random() * 4) + ''
 
     var d = new Date();
-    var start_time = d.getFullYear() + '-' + (parseInt(d.getMonth()) + 1) + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
+    var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
+  
     var id = utils.UUID();
 
-    var name = start_time + '_' + players_threshold + '_' + noise_id + '_' + id;
+    var name = start_time + '_' + players_threshold + '_' + bg_id + '_' + id;
     
     //Create a new game instance
     var game = {
@@ -157,7 +161,9 @@ game_server.createGame = function(player) {
     game.gamecore.game_id = id;
     game.gamecore.players_threshold = players_threshold
     game.gamecore.player_count = 1
-    game.gamecore.noise_location = noise_location
+
+    game.gamecore.background_id = bg_id
+  game.gamecore.name = name
 
     // Set up the filesystem variable we'll use later, and write headers
     var game_f = "data/waiting_games/" + name + ".csv"
@@ -253,19 +259,9 @@ game_server.holdGame = function(game) {
 game_server.startGame = function(game) {
 
     game.active = true;
-    
-
-  var bg_id = Math.floor(Math.random() * 4) + ''
-
-    game.gamecore.background_id = bg_id
-
-    var d = new Date();
-    var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
-    
-    var name = start_time + '_' + game.player_count + '_' + bg_id + '_' + game.id;
-    
-    var game_f = "data/games/" + name + ".csv"
-    var latency_f = "data/latencies/" + name + ".csv"
+      
+    var game_f = "data/games/" + game.gamecore.name + ".csv"
+    var latency_f = "data/latencies/" + game.gamecore.name + ".csv"
     
     fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y\n", function (err) {if(err) throw err;})
     game.gamecore.gameDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});

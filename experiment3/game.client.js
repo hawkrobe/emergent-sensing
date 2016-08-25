@@ -160,6 +160,7 @@ client_onMessage = function(data) {
 
 
 function client_on_click(game, newX, newY ) {
+
   // Auto-correcting input, but only between rounds
   var self = game.get_player(my_id);
   if (newX > self.pos_limits.x_min && newX < self.pos_limits.x_max &&
@@ -253,25 +254,13 @@ client_update = function() {
 
     onwall = player.onwall;
     if(onwall) {
-	//$("#curr_bonus").html("Current Score: <span style='color: red;'>0%</span>");
-      player.warning1 = 'Warning: Move off the wall!';
-      //player.warning2 = 'Move away from the wall or click the "disconnect" button';
-      //player.warning3 = 'at the bottom of the page, or you will be disqualified!';
+      player.warning = 'Warning: Move off the wall!';
     } else {
-      player.warning1 = '';
-      //player.warning2 = '';
-      //player.warning3 = '';
+      player.warning = '';
 	if(game.game_started) {
-	    // $("#curr_bonus").html("Current Score: <span style='color: " 
-	    // 			  + getColorForPercentage(player.curr_background) 
-	    // 			  +";'>" + Math.floor(player.curr_background*100) + "%</span>");
 	  if(player.curr_background > .2) {
 	    drawSparkles(game, player);
 	  };
-	} else {
-	    // $("#curr_bonus").html("Current Score: <span style='color: " 
-	    // 			  + getColorForPercentage(0) 
-	    // 			  +";'>---</span>");	
 	}
     }
     
@@ -386,6 +375,8 @@ window.onload = function(){
         function(){speed_change = "stop"}, 
         function(){speed_change = "down"})
 
+
+    addSkipButton(game);
 
     //Fetch the rendering contexts
     game.ctx = game.viewport.getContext('2d');

@@ -51,10 +51,11 @@ draw_player = function(game, player){
 
     // Draw message in center (for countdown, e.g.)
     game.ctx.font = "bold 12pt Helvetica";
-    game.ctx.fillStyle = 'red';
+    game.ctx.fillStyle = 'yellow';
     game.ctx.textAlign = 'center';
     game.ctx.fillText(player.message, game.world.width/2, game.world.height/5);
-    game.ctx.fillText(player.warning1, game.world.width/2, game.world.height/2 - 20);
+    game.ctx.fillStyle = 'red';
+    game.ctx.fillText(player.warning, game.world.width/2, game.world.height/2 - 20);
     //game.ctx.fillText(player.warning2, game.world.width/2, game.world.height/2);
     //game.ctx.fillText(player.warning3, game.world.width/2, game.world.height/2 + 20);
 }; 
@@ -276,4 +277,16 @@ function drawSparkles(game, player) {
 
 function endSparkles(game, player) {
   //clearInterval(game.sparkleIntervalID);
+};
+
+var addSkipButton = function (game){
+  var button = document.createElement("BUTTON");
+  var text = document.createTextNode("Disconnect");
+  button.appendChild(text); 
+  button.addEventListener('click',  function() {
+    console.log('test')
+    game.socket.send("quit");
+  });
+  var instructionDiv = document.getElementById("warnings");
+  instructionDiv.appendChild(button);
 };
