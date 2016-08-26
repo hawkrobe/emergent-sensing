@@ -461,7 +461,7 @@ game_core.prototype.handleHiddenTab = function(p, id) {
   }
 
   // kick after being hidden for 15 seconds  
-  if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug) { 
+  if(p.hidden_count > this.ticks_per_sec * 30 && !this.debug) { 
     p.hidden = true;
     console.log('Player ' + id + ' will be disconnected for being hidden.');
   }
@@ -475,8 +475,8 @@ game_core.prototype.handleInactivity = function(p, id) {
     p.inactive_count = 0;
   }
   
-  // kick after being inactive for 15 seconds
-  if(p.inactive_count > this.ticks_per_sec*15 && !this.debug) {  
+  // kick after being inactive for 30 seconds
+  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug) {  
     p.inactive = true;
     console.log('Player ' + id + ' will be disconnected for inactivity.');
   }
@@ -488,7 +488,7 @@ game_core.prototype.handleLatency = function(p, id) {
     p.lag_count += 1;
   }
   // Kick if latency persists 10% of game
-  if(p.lag_count > this.game_length*0.1 && !this.debug) {
+  if(p.lag_count > this.game_length*0.25 && !this.debug) {
     p.lagging = true;
     console.log('Player ' + id + ' will be disconnected because of latency.');
   }
