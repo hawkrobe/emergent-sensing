@@ -83,6 +83,11 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
+    
+    _.map(data.players, function(p) {
+	console.log(p.pos);
+    })
+
     if(data.players) {
         _.map(_.zip(data.players, game.players),
             function(z){
@@ -244,6 +249,7 @@ client_update = function() {
 
     //Draw opponent next 
     _.map(game.get_others(my_id), function(p){
+	console.log(p.pos);
         if(p.pos) draw_player(game, p.player)
 	if(p.pos) draw_label(game, p.player, "Player " + p.id.slice(0,4))
     })
