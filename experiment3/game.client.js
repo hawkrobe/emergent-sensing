@@ -174,6 +174,8 @@ function client_on_click(game, newX, newY ) {
 
     // Reset destination visualization to fade again
     game.remainingFadeSteps = game.numFadeSteps;
+
+    drawDestination(game, self);
     
     self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
 
