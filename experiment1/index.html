@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> Collective Behavior</title>
+    <!-- Load style sheet -->
+    <link href="index.css" media="screen" rel="stylesheet" type="text/css">
+
+    <!-- Notice the URL, this is handled by socket.io on the server automatically, via express -->
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+    <!-- Include some extra functional programming tools -->
+    <!-- <script src="http://documentcloud.github.com/underscore/underscore-min.js"> </script> -->
+    <script type="text/javascript" src="lib/underscore-min.js"></script>
+    
+    <script src="lib/keyboard.js"></script>
+    
+    <!-- Load jQuery, which lets us handle mouse events -->
+    <!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> -->
+    <script type="text/javascript" src="lib/jquery.min.js"></script>
+    
+    <!-- Script that lets us do nice string formatting -->
+    <script type="text/javascript" src="lib/sprintf.min.js"></script>
+
+    <!-- Load the common game code. -->
+    <script type="text/javascript" src="game.core.js"></script>
+
+    <!-- Finally, Load the game client code. -->
+    <script type="text/javascript" src="game.client.js"></script>
+    <script type="text/javascript" src="drawing.js"></script>
+
+    </head>
+
+  <body>
+    <div id='main'>
+        <h1 id='curr_bonus'> </h1>
+        <div id='second_row'>
+            <h5 class='alignleft' id='cumulative_bonus'> </h5> <h5 class='alignright' id='time'> </h5> 
+        </div>
+        <canvas id="viewport"> </canvas>
+        <div id='instructions'> 
+            <p> Controls: Hold <span style="color:yellow">left</span> and <span style="color:yellow">right</span> arrows to turn; hold <span style="color:yellow">spacebar</span> to move faster. </p> 
+	    <p>Do not refresh this page.</p>
+	</div>
+        </div>
+    </body>
+</html>

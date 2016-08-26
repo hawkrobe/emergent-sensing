@@ -1,9 +1,23 @@
 TODO:
 
-* database... 
+* Change text of between-round pages
+
+* Make sure player score field in wall conditions is correct (currently score loc is in center)
+
+* Make "close" condition score field follow player
+  -- The new design will have the highest scoring region appearing in some location that depends on the human player’s current position. In the “close” conditions, after a random interval, say between 5 and 10 seconds, the highest scoring region should appear at the player’s location (or the closest valid point for the it, which may be different in the wall condition).  Also, it should disappear at random after a random interval between 5 and 10 seconds, and then reappear again.
 
 COMPLETED:
-
+* when in mismatched condition, make bot scoring field work at 100% too
+* Round 1 background
+* change how to exploit against the wall, i.e. only while moving.
+* boot when speed = 0
+* Make the center area have 0 points in the wall condition, 
+* Convert to 1 player game (expert)
+* Read in other player positions
+* Read in new csv of just scorefield centroid
+  -- set to 1 in 20 pixel radius of that centroid, .5 elsewhere, 0 at edges
+* Click to move instead of arrow keys
 * Allow more than 2 people to be in a room together
   -- Don't need separate function for 'host' and 'other', since players are identical
   -- Notify and update clients when new player joins
@@ -35,3 +49,5 @@ COMPLETED:
 * set bonus at 0 around edge
 * get UID from querystring
 * read num. players and noise level from file when creating a game
+* add instruction pages in between the rounds 1 and 2, and rounds 2 and 3. 
+
