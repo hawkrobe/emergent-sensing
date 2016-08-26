@@ -249,9 +249,10 @@ client_update = function() {
 
     //Draw opponent next 
     _.map(game.get_others(my_id), function(p){
-	console.log(p);
-        draw_player(game, p.player)
-	draw_label(game, p.player, "Player " + p.id.slice(0,4))
+        if(p.player.pos) {
+	    draw_player(game, p.player)
+	    draw_label(game, p.player, "Player " + p.id.slice(0,4))
+	}
     })
 
     // Draw points scoreboard 
