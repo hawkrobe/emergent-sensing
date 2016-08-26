@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../favicon.ico">
+
+    <title>Experiment</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="theme.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body role="document">
+    
+    <div class="container theme-showcase" role="main">
+
+      </br>
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="width: 5%;"><span class="sr-only">5% Complete</span></div>
+      </div>
+
+      <div class="page-header">
+        <h1>Instructions</h1>
+      </div>
+
+<p>The game you will play is a kind of digital easter egg hunt / hide and seek.</p>
+
+<p>You will navigate your avatar through a rectangular playing area, possibly together with other players, as in this image:</p>
+
+      <p>
+      <img src="no-sparkles.png" alt="Example gameplay" style="width:304px">
+	  </p>
+
+<p>At each point in time during the game, some regions of this area will be “magical bonus regions”.</p>
+
+<p>When you are in a magical bonus region, your avatar will sparkle, as in this image:</p>
+
+      <p>
+      <img src="sparkles.png" alt="Example gameplay" style="width:304px">
+	  </p>
+
+<p>The locations of the magical bonus regions in the game change over time.</p>
+
+<p>Your goal is to maximize the amount of time you spend in magical bonus regions regions, i.e., to locate the regions where your avatar sparkles.  Your score increases at a constant baseline rate during the game, but will increase much more quickly in magical bonus regions.</p>
+
+<p>You will only see sparkles on your own avatar, never on other avatars, even if they are in a magical bonus region, but the magical bonus regions are in the same places for everyone.</p>
+
+<p><strong>Please remain active in the game at all times during the experiment, or you will be removed from the game.</strong></p>
+
+      <p>
+        <button id="agree" type="button" class="btn btn-sm btn-primary">START</button>
+	<noscript><strong>JavaScript must be enabled to start.</strong></noscript>
+      </p>
+
+<script type="text/javascript">
+      document.getElementById("agree").onclick = function () {
+        location.replace("http://nospoon.mit.edu:8888/index.html");
+      };
+    </script>
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="../dist/js/bootstrap.min.js"></script>
+  </body>
+</html>
