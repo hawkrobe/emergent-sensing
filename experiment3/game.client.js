@@ -249,9 +249,9 @@ client_update = function() {
 
     //Draw opponent next 
     _.map(game.get_others(my_id), function(p){
-	console.log(p.pos);
-        if(p.pos) draw_player(game, p.player)
-	if(p.pos) draw_label(game, p.player, "Player " + p.id.slice(0,4))
+	console.log(p);
+        draw_player(game, p.player)
+	draw_label(game, p.player, "Player " + p.id.slice(0,4))
     })
 
     // Draw points scoreboard 
@@ -293,7 +293,7 @@ client_update = function() {
     
     //And then we draw ourself so we're always in front
     if(player.pos) {
-	drawDestination(game, player);
+      drawDestination(game, player);
 	draw_player(game, player)
 	draw_label(game, player, "YOU");
     }
