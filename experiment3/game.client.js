@@ -85,7 +85,7 @@ client_onserverupdate_received = function(data){
     // server_send_update function in game.core.js
     
     _.map(data.players, function(p) {
-	console.log(p.pos);
+	console.log(p.player.pos);
     })
 
     if(data.players) {
