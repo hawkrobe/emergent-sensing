@@ -258,7 +258,7 @@ client_update = function() {
     } else {
       player.warning = '';
 	if(game.game_started) {
-	  if(player.curr_background > .2) {
+	  if(player.curr_background >= 1.0) {
 	    drawSparkles(game, player);
 	  };
 	}
