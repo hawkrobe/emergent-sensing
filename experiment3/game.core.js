@@ -56,7 +56,7 @@ var game_core = function(game_instance){
 	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
 	this.booting = true;
     } else {
-	this.waiting_room_limit = 5 // set maximum waiting room time (in minutes)
+	this.waiting_room_limit = 15 // set maximum waiting room time (in minutes)
 	this.round_length = 2 // set how long each round will last (in minutes)
 	this.max_bonus = 0.75; // total $ players can make in bonuses 
 	this.booting = false;
@@ -497,9 +497,11 @@ game_core.prototype.handleBootingConditions = function(p, id) {
   if((p.hidden || p.inactive || p.lagging) && !this.debug) {
     p.instance.disconnect();
   } else {
-    this.handleHiddenTab(p, id);
-    this.handleInactivity(p, id);
-    this.handleLatency(p, id);
+    if(this.booting) {
+      this.handleHiddenTab(p, id);
+      this.handleInactivity(p, id);
+      this.handleLatency(p, id);
+    }
   }
 };
 
@@ -523,7 +525,7 @@ game_core.prototype.updateScores = function(p) {
     if(onWall) {
       p.curr_background = 0;
     } else if(dist > 50) {
-      p.curr_background = 1/3.0;
+      p.curr_background = 0;//1/3.0;
     } else {
       p.curr_background = 1;
     }
