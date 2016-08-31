@@ -56,8 +56,9 @@ game_server.server_onMessage = function(client,message) {
     } else if (message_type == "h") { // Receive message when browser focus shifts
       target.visible = message_parts[1];
     } else if (message_type == "quit") {
-      console.log("quit")
       target.instance.disconnect()
+      } else if (message_type == "start") {
+	game_server.startGame(client.game);
     } else if (message_type == 'pong') {
 	var latency = (Date.now() - message_parts[1])/2;
 	target.latency = latency;

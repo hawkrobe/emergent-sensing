@@ -59,7 +59,7 @@ var game_core = function(game_instance){
 	this.waiting_room_limit = 5 // set maximum waiting room time (in minutes)
 	this.round_length = 2 // set how long each round will last (in minutes)
 	this.max_bonus = 0.75; // total $ players can make in bonuses 
-	this.booting = true;
+	this.booting = false;
     }
 
     // game and waiting length in seconds

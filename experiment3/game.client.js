@@ -35,6 +35,7 @@ function getParameterByName(name, url) {
 }
 
 var debug = getParameterByName('debug') == 'true';
+var researcher = getParameterByName('researcher') == 'true';
 
 // what happens when you press 'left'?
 left_turn = function() {
@@ -383,6 +384,9 @@ window.onload = function(){
 
 
     addSkipButton(game);
+  if(researcher) {
+    addStartButton(game);
+  }
 
     //Fetch the rendering contexts
     game.ctx = game.viewport.getContext('2d');
