@@ -85,10 +85,6 @@ client_onserverupdate_received = function(data){
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
     
-    _.map(data.players, function(p) {
-	console.log(p.player.pos);
-    })
-
     if(data.players) {
         _.map(_.zip(data.players, game.players),
             function(z){
@@ -98,10 +94,11 @@ client_onserverupdate_received = function(data){
                 } else {
                     var s_player = z[0].player
                     var l_player = z[1].player
-                    if(z[0].id != my_id || l_player.angle == null) 
+		    // Don't update own angle if local info exists
+                    if(z[0].id != my_id || l_player.angle == null) {
 			l_player.angle = s_player.angle
-		  l_player.destination = s_player.destination
-                    l_player.curr_background = s_player.cbg
+		    }
+		    l_player.curr_background = s_player.cbg
 		    l_player.total_points = s_player.tot
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
@@ -250,9 +247,10 @@ client_update = function() {
 
     //Draw opponent next 
     _.map(game.get_others(my_id), function(p){
-	console.log(p);
-        draw_player(game, p.player)
-	draw_label(game, p.player, "Player " + p.id.slice(0,4))
+        if(p.player.pos) {
+	    draw_player(game, p.player)
+	    draw_label(game, p.player, "Player " + p.id.slice(0,4))
+	}
     })
 
     // Draw points scoreboard 
@@ -294,7 +292,7 @@ client_update = function() {
     
     //And then we draw ourself so we're always in front
     if(player.pos) {
-      drawDestination(game, player);
+	drawDestination(game, player);
 	draw_player(game, player)
 	draw_label(game, player, "YOU");
     }

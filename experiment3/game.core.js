@@ -212,7 +212,6 @@ game_core.prototype.server_send_update = function(){
             return {id: p.id,
                     player: {
                         pos: p.player.pos,
-		      destination : p.player.destination,
                         cbg: p.player.curr_background,
 			tot: p.player.total_points,
                         angle: p.player.angle,
