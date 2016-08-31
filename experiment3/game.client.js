@@ -35,6 +35,7 @@ function getParameterByName(name, url) {
 }
 
 var debug = getParameterByName('debug') == 'true';
+var researcher = getParameterByName('researcher') == 'true';
 
 // what happens when you press 'left'?
 left_turn = function() {
@@ -83,6 +84,7 @@ client_onserverupdate_received = function(data){
 
     // Update client versions of variables with data received from
     // server_send_update function in game.core.js
+    
     if(data.players) {
         _.map(_.zip(data.players, game.players),
             function(z){
@@ -92,10 +94,11 @@ client_onserverupdate_received = function(data){
                 } else {
                     var s_player = z[0].player
                     var l_player = z[1].player
-                    if(z[0].id != my_id || l_player.angle == null) 
+		    // Don't update own angle if local info exists
+                    if(z[0].id != my_id || l_player.angle == null) {
 			l_player.angle = s_player.angle
-		  l_player.destination = s_player.destination
-                    l_player.curr_background = s_player.cbg
+		    }
+		    l_player.curr_background = s_player.cbg
 		    l_player.total_points = s_player.tot
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
@@ -174,7 +177,7 @@ function client_on_click(game, newX, newY ) {
 
     // Reset destination visualization to fade again
     game.remainingFadeSteps = game.numFadeSteps;
-    
+
     self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
 
     var info_packet = ("c." + self.angle +
@@ -244,23 +247,35 @@ client_update = function() {
 
     //Draw opponent next 
     _.map(game.get_others(my_id), function(p){
-        draw_player(game, p.player)
-	draw_label(game, p.player, "Player " + p.id.slice(0,4))
+        if(p.player.pos) {
+	    draw_player(game, p.player)
+	    //draw_label(game, p.player, "Player " + p.id.slice(0,4))
+	}
     })
 
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(3));
 
+  if(game.game_started) {
+    $("#curr_bonus").html("Game on!" )
+  } else {
+    $("#curr_bonus").html("Waiting Room" )
+  }
 
     onwall = player.onwall;
     if(onwall) {
       player.warning = 'Warning: Move off the wall!';
+      document.getElementById("viewport").style.borderColor = "red";
     } else {
       player.warning = '';
 	if(game.game_started) {
-	  if(player.curr_background > .2) {
+	  document.getElementById("viewport").style.borderColor = "blue";
+	  if(player.curr_background >= 1.0) {
 	    drawSparkles(game, player);
+	    document.getElementById("viewport").style.borderColor = "yellow";
 	  };
+	} else {
+	  document.getElementById("viewport").style.borderColor = "#333";
 	}
     }
     
@@ -287,7 +302,7 @@ client_update = function() {
     
     //And then we draw ourself so we're always in front
     if(player.pos) {
-      drawDestination(game, player);
+	drawDestination(game, player);
 	draw_player(game, player)
 	draw_label(game, player, "YOU");
     }
@@ -377,6 +392,9 @@ window.onload = function(){
 
 
     addSkipButton(game);
+  if(researcher) {
+    addStartButton(game);
+  }
 
     //Fetch the rendering contexts
     game.ctx = game.viewport.getContext('2d');
