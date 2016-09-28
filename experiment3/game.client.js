@@ -112,6 +112,7 @@ client_onserverupdate_received = function(data){
   
   game.spotScoreLoc = data.spotScoreLoc;
   game.game_started = data.gs;
+  game.game_clock = data.game_clock;
   game.players_threshold = data.pt;
   game.player_count = data.pc;
   game.waiting_remaining = data.wr;
@@ -287,15 +288,11 @@ client_update = function() {
 
   // Notify user of remaining time
   if(game.game_started) {
-    var timeToEnd = getTimeToEnd(game)['seconds'];
-    console.log(timeToEnd);
+    var timeToEnd = getTimeToEnd(game);
     if(timeToEnd.minutes == 0 && timeToEnd.seconds < 6) {
       player.message = 'Ending in ' + timeToEnd.seconds;
     }
-    var timeStr = (timeToEnd.minutes == 0 ?
-		   [timeToEnd.seconds, "seconds"].join(" ") :
-		   [timeToEnd.minutes, "minutes"].join(" "));
-    $("#time").html("Time remaining: " + timeStr);
+    $("#time").html("Time remaining: " + getTimeStr(timeToEnd));
   } else {
     $("#time").html('You are in the waiting room.');
   }
@@ -309,10 +306,22 @@ client_update = function() {
 
 };
 
+// Game ends when game_clock >= game.game_length (measured in ticks)
+// We convert this to seconds and parse into min/sec representation
 var getTimeToEnd = function(game) {
-  var secondsLeft = game.game_length*60 - game.game_clock/game.ticks_per_sec;
-  return {minutes: Math.floor(secondsLeft/60),
-	  seconds: secondsLeft % 60};
+  var secondsLeft = (game.game_length - game.game_clock)/game.ticks_per_sec;
+  console.log(secondsLeft);
+  return {minutes: Math.floor(secondsLeft / 60),
+	  seconds: Math.floor(secondsLeft % 60)};
+};
+
+// Handles appropriate plurals, and only displays seconds when min < 1
+var getTimeStr = function(timeToEnd) {
+  var minuteStr = (timeToEnd.minutes > 1 ?
+		   [timeToEnd.minutes, "minutes"].join(" ") :
+		   [timeToEnd.minutes, "minute"].join(" "));
+  var secondStr = [timeToEnd.seconds, "seconds"].join(" ");
+  return timeToEnd.minutes > 0 ? minuteStr + ", " + secondStr : secondStr;
 };
 
 var percentColors = [
