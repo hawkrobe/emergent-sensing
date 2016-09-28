@@ -53,7 +53,7 @@ var game_core = function(game_instance){
     if(this.debug) {
 	this.waiting_room_limit = 0.25; // set maximum waiting room time (in minutes)
 	this.round_length = 1; // set how long each round will last (in minutes)
-	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
+	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonus 
 	this.booting = true;
     } else {
 	this.waiting_room_limit = 2 // set maximum waiting room time (in minutes)
@@ -248,7 +248,8 @@ game_core.prototype.server_send_update = function(){
 	};
     }
     _.extend(state, {players: player_packet})
-    
+  _.extend(state, {game_clock: this.game_clock});
+  
     //Send the snapshot to the players
     this.state = state;
     _.map(local_game.get_active_players(), function(p){
@@ -334,14 +335,13 @@ game_core.prototype.server_newgame = function() {
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
     _.map(local_gamecore.get_active_players(), function(p) {
-	p.player.instance.send('s.begin_game.')})
+      p.player.instance.send('s.begin_game.');
+    })
 
     // Launch game after countdown;
     setTimeout(function(){
         local_gamecore.game_started = true;
 	local_gamecore.game_clock = 0;
-//        _.map(local_gamecore.get_active_players(), function(p) {
-//	    p.player.speed = local_gamecore.min_speed});
     }, 3000);
 };
 
