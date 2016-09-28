@@ -56,11 +56,16 @@ var game_core = function(game_instance){
 	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
 	this.booting = true;
     } else {
-	this.waiting_room_limit = 15 // set maximum waiting room time (in minutes)
-	this.round_length = 2 // set how long each round will last (in minutes)
-	this.max_bonus = 0.75; // total $ players can make in bonuses 
-	this.booting = false;
+	this.waiting_room_limit = 2 // set maximum waiting room time (in minutes)
+	this.round_length = 5 // set how long each round will last (in minutes)
+	this.max_bonus = 1.25; // total $ players can make in bonuses 
+	this.booting = true;
     }
+
+  // ( 5 * 8 * a * 60 + (b * 60 * 8 * 7)/10 + 0.5 ) * 6  = 15
+  // ( (b * 60 * 8 * 7)/10 + 0.5 ) * 6  = 7.25 
+  this.active_point_value = 0.0022;
+  this.star_point_value = 0.00052;
 
     // game and waiting length in seconds
     this.game_length = this.round_length*60*this.ticks_per_sec;
@@ -126,6 +131,8 @@ var game_player = function( game_instance, player_instance) {
     this.curr_background = 0; // keep track of current background val
     this.avg_score = 0; // keep track of average score, for bonus
     this.total_points = 0; // keep track of total score, for paying participant
+    this.active_points = 0; // keep track of total score, for paying participant
+    this.star_points = 0; // keep track of total score, for paying participant
 
     //This is used in moving us around later
     this.old_state = {pos:{x:0,y:0}};
@@ -214,6 +221,8 @@ game_core.prototype.server_send_update = function(){
                         pos: p.player.pos,
                         cbg: p.player.curr_background,
 			tot: p.player.total_points,
+			act: p.player.active_points,
+			star: p.player.star_points,
                         angle: p.player.angle,
                         speed: p.player.speed,
 			onwall: p.player.onwall,
@@ -524,15 +533,22 @@ game_core.prototype.updateScores = function(p) {
     // If you're in a forbidden region: 0 
     if(onWall) {
       p.curr_background = 0;
+      p.curr_active = 0;
     } else if(dist > 50) {
-      p.curr_background = 0;//1/3.0;
+      p.curr_background = 0;
+      p.curr_active = 1 / 10.0;
     } else {
       p.curr_background = 1;
+      p.curr_active = 1 / 10.0;
     }
     
-    p.avg_score = (p.avg_score + p.curr_background/
-		   this.game_length);
-    p.total_points = p.avg_score * this.max_bonus;
+    //p.avg_score = (p.avg_score + p.curr_background/
+		   //this.game_length);
+    //p.total_points = p.avg_score * this.max_bonus;
+    p.active_points += p.curr_active
+    p.star_points += p.curr_background
+    p.total_points += this.star_point_value * p.curr_background + this.active_point_value * p.curr_active //p.avg_score * this.max_bonus;
+    
   }
 };
 

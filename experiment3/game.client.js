@@ -100,6 +100,8 @@ client_onserverupdate_received = function(data){
 		    }
 		    l_player.curr_background = s_player.cbg
 		    l_player.total_points = s_player.tot
+		    l_player.active_points = s_player.act
+		    l_player.star_points = s_player.star
                     l_player.pos = game.pos(s_player.pos)
                     l_player.speed = s_player.speed
 		    l_player.onwall = s_player.onwall
@@ -254,7 +256,8 @@ client_update = function() {
     })
 
     // Draw points scoreboard 
-    $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(3));
+    //$("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(3));
+    $("#star_points").html("Star Points: " + parseInt(player.star_points) + "</br>Activity Points: " + parseInt(player.active_points));
 
   if(game.game_started) {
     $("#curr_bonus").html("Game on!" )
