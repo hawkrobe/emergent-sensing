@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -32,54 +33,19 @@
 
       </br>
 
-      <div id="show">
-	
-      <div class="page-header">
-        <h3>MIT Human Dynamics Group and Computational Cognitive Science Lab</h3>
-      </div>
-
-
-      <div class="well">
-	  <p>This experiment is part of a MIT scientific research
-	  project. Your decision to participate in this experiment is
-	  entirely voluntary. There are no known or anticipated risks to
-	  participating in this experiment. There is no way for us to
-	  identify you. The only information we will have, in addition
-	  to your responses, is the timestamps of your interactions
-	  with our site. The results of the research may be presented
-	  at scientific meetings or published in scientific
-	  journals. Clicking on the 'AGREE' button on the bottom of
-	  this page indicates that you are at least 18 years of age,
-	  and agree to participate voluntarily.</p>
-	</div>
-
       <p>
-        <center><button id="agree" type="button" class="btn btn-sm btn-primary">AGREE</button></center>
+        <center><button id="agree" type="button" class="btn btn-sm btn-primary">START</button></center>
 	<noscript><strong>JavaScript must be enabled to start.</strong></noscript>
       </p>
 
-      </div> <!-- show -->
-
     </div> <!-- /container -->
+
     
     <script type="text/javascript">
       document.getElementById("agree").onclick = function () {
-        location.replace("./instructions-pilot.html");
+        var id = Math.floor(Math.random() * 1e12);
+        location.replace("http://nospoon.mit.edu:8888/index.html?id=" + id);
       };
-    </script>
-
-
-    <!-- <script src="unique.js" type="text/javascript"></script> -->
-    <script src="//uniqueturker.myleott.com/lib.js" type="text/javascript"></script>
-    <script type="text/javascript">
-      // Source: http://uniqueturker.myleott.com/
-      (function(){
-      var ut_id = "877510a4c60408c921959e889f70ebde";
-      if (UTWorkerLimitReached(ut_id)) {
-        document.getElementById('mturk_form').style.display = 'none';
-        document.getElementById('show').innerHTML = "</br><div class='well'><p>You have already completed the maximum number of HITs allowed by this requester. Please click 'Return HIT' to avoid any impact on your approval rating.</p></div>";
-      }
-      })();
     </script>
 
     <!-- Bootstrap core JavaScript

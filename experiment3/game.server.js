@@ -56,8 +56,9 @@ game_server.server_onMessage = function(client,message) {
     } else if (message_type == "h") { // Receive message when browser focus shifts
       target.visible = message_parts[1];
     } else if (message_type == "quit") {
-      console.log("quit")
       target.instance.disconnect()
+      } else if (message_type == "start") {
+	game_server.startGame(client.game);
     } else if (message_type == 'pong') {
 	var latency = (Date.now() - message_parts[1])/2;
 	target.latency = latency;
@@ -130,13 +131,12 @@ game_server.findGame = function(player) {
 game_server.createGame = function(player) {
     // Figure out variables
     //var thresholds = Array(3,3);
-    var thresholds = Array(4,4);
+    var thresholds = Array(50,50);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
 
-  var bg_id = '0'
-  //var bg_id = Math.floor(Math.random() * 4) + ''
-
+  var bg_id = Math.floor(Math.random() * 4) + ''
+  
     var d = new Date();
     var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
   

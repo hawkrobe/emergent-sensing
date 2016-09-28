@@ -35,6 +35,7 @@ function getParameterByName(name, url) {
 }
 
 var debug = getParameterByName('debug') == 'true';
+var researcher = getParameterByName('researcher') == 'true';
 
 // what happens when you press 'left'?
 left_turn = function() {
@@ -248,23 +249,33 @@ client_update = function() {
     _.map(game.get_others(my_id), function(p){
         if(p.player.pos) {
 	    draw_player(game, p.player)
-	    draw_label(game, p.player, "Player " + p.id.slice(0,4))
+	    //draw_label(game, p.player, "Player " + p.id.slice(0,4))
 	}
     })
 
     // Draw points scoreboard 
     $("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(3));
 
+  if(game.game_started) {
+    $("#curr_bonus").html("Game on!" )
+  } else {
+    $("#curr_bonus").html("Waiting Room" )
+  }
 
     onwall = player.onwall;
     if(onwall) {
       player.warning = 'Warning: Move off the wall!';
+      document.getElementById("viewport").style.borderColor = "red";
     } else {
       player.warning = '';
 	if(game.game_started) {
+	  document.getElementById("viewport").style.borderColor = "blue";
 	  if(player.curr_background >= 1.0) {
 	    drawSparkles(game, player);
+	    document.getElementById("viewport").style.borderColor = "yellow";
 	  };
+	} else {
+	  document.getElementById("viewport").style.borderColor = "#333";
 	}
     }
     
@@ -381,6 +392,9 @@ window.onload = function(){
 
 
     addSkipButton(game);
+  if(researcher) {
+    addStartButton(game);
+  }
 
     //Fetch the rendering contexts
     game.ctx = game.viewport.getContext('2d');

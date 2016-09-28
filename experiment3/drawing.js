@@ -277,8 +277,18 @@ var addSkipButton = function (game){
   var text = document.createTextNode("Disconnect");
   button.appendChild(text); 
   button.addEventListener('click',  function() {
-    console.log('test')
     game.socket.send("quit");
+  });
+  var instructionDiv = document.getElementById("warnings");
+  instructionDiv.appendChild(button);
+};
+
+var addStartButton = function (game){
+  var button = document.createElement("BUTTON");
+  var text = document.createTextNode("Start");
+  button.appendChild(text); 
+  button.addEventListener('click',  function() {
+    game.socket.send("start");
   });
   var instructionDiv = document.getElementById("warnings");
   instructionDiv.appendChild(button);

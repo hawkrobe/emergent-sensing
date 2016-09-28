@@ -34,27 +34,46 @@
 
       <div id="show">
 	
-      <div class="page-header">
-        <h3>MIT Human Dynamics Group and Computational Cognitive Science Lab</h3>
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width: 1%;"><span class="sr-only">1% Complete</span></div>
       </div>
 
+      <div class="page-header">
+        <h3>MIT Computational Cognitive Science Lab</h3>
+      </div>
 
       <div class="well">
-	  <p>This experiment is part of a MIT scientific research
-	  project. Your decision to participate in this experiment is
-	  entirely voluntary. There are no known or anticipated risks to
-	  participating in this experiment. There is no way for us to
-	  identify you. The only information we will have, in addition
-	  to your responses, is the timestamps of your interactions
-	  with our site. The results of the research may be presented
-	  at scientific meetings or published in scientific
-	  journals. Clicking on the 'AGREE' button on the bottom of
-	  this page indicates that you are at least 18 years of age,
-	  and agree to participate voluntarily.</p>
+        <p>In this HIT, you will be asked to read a set of
+        instructions that describe a particular scenario, and you will
+        then be asked to perform a simple task relating to that
+        scenario.</p>
+
+        <p>There will also be comprehension and attention checks.
+        Participants who do not answer these checks correctly cannot
+        be approved.  In order to get credit for this HIT, you must
+        read all the questions fully and answer honestly.</p>
+	
+	<p>
+	You may only complete this HIT once. If you complete this HIT
+	multiple times, you will be rejected.
+	  </p>
+	</div>
+
+      <div class="well">
+	  <p>This HIT is part of a MIT scientific research
+	  project. Your decision to complete this HIT is
+	  voluntary. There is no way for us to identify you. The only
+	  information we will have, in addition to your responses, is
+	  the time at which you completed the survey. The results of
+	  the research may be presented at scientific meetings or
+	  published in scientific journals. Clicking on the 'SUBMIT'
+	  button on the bottom of this page indicates that you are at
+	  least 18 years of age, and agree to complete this HIT
+	  voluntarily.</p>
 	</div>
 
       <p>
-        <center><button id="agree" type="button" class="btn btn-sm btn-primary">AGREE</button></center>
+        <center><button id="agree" type="button" class="btn btn-sm btn-primary">SUBMIT</button></center>
 	<noscript><strong>JavaScript must be enabled to start.</strong></noscript>
       </p>
 
@@ -64,7 +83,7 @@
     
     <script type="text/javascript">
       document.getElementById("agree").onclick = function () {
-        location.replace("./instructions-pilot.html");
+        location.replace("./instructions-3.html");
       };
     </script>
 
