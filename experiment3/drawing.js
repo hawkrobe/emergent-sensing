@@ -270,13 +270,6 @@ function drawSparkles(game, player) {
   updateParticles();
   renderParticles();
   ctx.restore();
-
-  /* Loop It, Loop It Good */
-  // game.sparkleIntervalID = setInterval(loop, 16);
-};
-
-function endSparkles(game, player) {
-  //clearInterval(game.sparkleIntervalID);
 };
 
 var addSkipButton = function (game){
