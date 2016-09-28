@@ -279,23 +279,23 @@ client_update = function() {
     }
   }
   
-  if(!started) {
-    var left = timeRemaining(game.waiting_remaining, game.waiting_room_limit)
-    var diff = game.players_threshold - game.player_count
+  // if(!started) {
+  //   var left = timeRemaining(game.waiting_remaining, game.waiting_room_limit)
+  //   var diff = game.players_threshold - game.player_count
     //game.get_player(my_id).message = 'Waiting for ' + diff + ' more players or ' + left['t'] + ' more ' + left['unit'] + '.';
-  }
-  
+  // }
+
+  // Notify user of remaining time
   if(game.game_started) {
-    var left = new Date() - game.start_time;
-    if((game.round_length*60 - Math.floor(left/1000)) < 6) {
-      var remainder = game.round_length*60 - Math.floor(left/1000);
-      if(remainder < 0) 
-	remainder = 0
-      player.message = 'Ending in ' + remainder;
+    var timeToEnd = getTimeToEnd(game)['seconds'];
+    console.log(timeToEnd);
+    if(timeToEnd.minutes == 0 && timeToEnd.seconds < 6) {
+      player.message = 'Ending in ' + timeToEnd.seconds;
     }
-    left = timeRemaining(left, game.round_length);
-    // Draw time remaining 
-    $("#time").html("Time remaining: " + left['t'] + " " + left['unit']);
+    var timeStr = (timeToEnd.minutes == 0 ?
+		   [timeToEnd.seconds, "seconds"].join(" ") :
+		   [timeToEnd.minutes, "minutes"].join(" "));
+    $("#time").html("Time remaining: " + timeStr);
   } else {
     $("#time").html('You are in the waiting room.');
   }
@@ -309,17 +309,11 @@ client_update = function() {
 
 };
 
-var timeRemaining = function(remaining, limit) {
-  var time_remaining = limit - Math.floor(remaining / (1000*60));
-  if(time_remaining > 2) {
-    return {t: time_remaining, unit: 'minutes'}
-  } else {
-    time_remaining = Math.floor((limit - remaining/(1000.0*60))*60)
-    time_remaining = Math.max(time_remaining, 0)
-    return {t: time_remaining, unit: 'seconds'}
-  }
-
-}
+var getTimeToEnd = function(game) {
+  var secondsLeft = game.game_length*60 - game.game_clock/game.ticks_per_sec;
+  return {minutes: Math.floor(secondsLeft/60),
+	  seconds: secondsLeft % 60};
+};
 
 var percentColors = [
   //    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
