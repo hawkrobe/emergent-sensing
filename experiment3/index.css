@@ -42,7 +42,10 @@ body{
 #second_row {
 	width: 485px;
 	height: 10px;
+	text-align: left;
 }
+
+
 
 #instructions {
 	width: 485px;
