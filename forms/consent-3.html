@@ -62,24 +62,12 @@
 
     </div> <!-- /container -->
     
+    <script src="parse_url.js" type="text/javascript"></script>
     <script type="text/javascript">
+      var port = QueryString.port;
       document.getElementById("agree").onclick = function () {
-        location.replace("./instructions.html");
+        location.replace("./instructions-3.html?port="+port);
       };
-    </script>
-
-
-    <!-- <script src="unique.js" type="text/javascript"></script> -->
-    <script src="//uniqueturker.myleott.com/lib.js" type="text/javascript"></script>
-    <script type="text/javascript">
-      // Source: http://uniqueturker.myleott.com/
-      (function(){
-      var ut_id = "877510a4c60408c921959e889f70ebde";
-      if (UTWorkerLimitReached(ut_id)) {
-        document.getElementById('mturk_form').style.display = 'none';
-        document.getElementById('show').innerHTML = "</br><div class='well'><p>You have already completed the maximum number of HITs allowed by this requester. Please click 'Return HIT' to avoid any impact on your approval rating.</p></div>";
-      }
-      })();
     </script>
 
     <!-- Bootstrap core JavaScript

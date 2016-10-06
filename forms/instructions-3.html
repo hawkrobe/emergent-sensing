@@ -33,88 +33,99 @@
         <div class="progress-bar" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="width: 5%;"><span class="sr-only">5% Complete</span></div>
       </div>
 
+
       <div class="page-header">
         <h1>Instructions</h1>
       </div>
-      
-      <p><strong>IMPORTANT: Please return this HIT if you have already
-      played this game.  Your HIT will not be approved if you have
-      played before, and you will be compromising the integrity of the
-      results we are obtaining from other participants.</strong></p>
 
-      <p>After finishing the instructions, you will enter a waiting
-      room for a game.  Some games require multiple participants, so
-      you may have to wait for other players to join before the game
-      will start. You will receive a bonus at a constant rate of 12
-      cents per minute in the waiting room as long as you stay
-      active. <strong>The maximum time you will spend in the waiting
-      room is five minutes.</strong> </p>
+      <div>
+        <h3>Basics</h3>
+      </div>
 
-      <p>Once the game starts, you will see a screen that looks much
-      like the following:</p>
+
+<p>The game you will play is a kind of digital easter egg hunt / hide and seek.</p>
+
+<p>You will navigate your avatar through a rectangular playing area, possibly together with other players, as in this image:</p>
 
       <p>
-      <center><img src="gameplay.png" alt="Example gameplay" style="width:304px;height:260px"></center>
+      <img src="no-sparkles.png" alt="Example gameplay" style="width:304px">
 	  </p>
 
-      <p>
-	You will be in control of the blue triangle.  When you are not
-	holding down any keys, you will move at a slow speed.
-	<strong>Holding down the "a" will increase your speed.
-	Holding down the "s" key will bring you to a stop.  Clicking
-	in the playing region will control the direction of your
-	movement.</strong>
-      </p>
-      </p>
-	You will have a score at each point in the game, indicated by
-	the percentage shown at the top of the page.  Each location in
-	the game area is associated with a certain score.
-	<strong>Your goal is to locate yourself in high scoring
-	locations for as long as possible.</strong> <strong>You will
-	receive a cash bonus based on your cumulative score in the
-	game.</strong> The scores of locations will change over time,
-	so you will have to continuously be ready to move around to
-	maximize your bonus.
-      </p>
-      
-	<p>
-	  You will also be able to see the other participants who are
-	  currently playing in your game.  These players can also see
-	  you.  <strong>The score at any particular location at any
-	  particular point in time is the same for all players, and
-	  there is no competition between players.</strong>
-	</p>
+<p>At each point in time during the game, some regions of this area will be “magical bonus regions”.</p>
 
-      <p><strong>After the game ends, you will receive a survey code
-      to submit with your HIT.  You must submit the code exactly as
-      shown to receive your bonus.</strong></p> 
-      
+<p>When you are in a magical bonus region, your avatar will sparkle, as in this image:</p>
+
+      <p>
+      <img src="sparkles.png" alt="Example gameplay" style="width:304px">
+	  </p>
+
+<p>The locations of the magical bonus region moves continuously over time from one point to another, as shown in the following video (you will not be able to view the moving area during gameplay). Hover over the video and press play to see it again:</p>
+
+<video width="304" controls="controls" autoplay>
+  <source src="background-illustration.mov">
+Your browser does not support the video tag.
+</video>
+
+
+<b><p>Your goal is to maximize the amount of time you spend in magical bonus regions regions, i.e., to locate the regions where your avatar sparkles.  Your displayed score will only increase in magical bonus regions.</p></b>
+
+<p>You will only see sparkles on your own avatar, never on other avatars, even if they are in a magical bonus region, but the magical bonus regions are in the same places for everyone.</p>
+
+<b><p>There is no competition between players; the magical region is not consumed by players. It simply changes location over time.</p></b>
+
+      <div>
+        <h3>Payment, Bonuses, Etc.</h3>
+      </div>
+
+<p><b>Your monetary bonus will be based on both your game score and the total amount of time you spend in the waiting room/game.  Base pay for time is $7.25 / hour, and each game score point is worth $0.00052.<p></b>
+
+<p>You will begin the game in a waiting room, where you may wait for other players. There are no magical regions in the waiting room.</p>
+
       <p><strong>IMPORTANT: If you exit the game window or are
       otherwise detected as inactive in the waiting room or in the
       game, you will be removed from the game and your HIT may not be
       approved.  In order to remain active, you must stay off the
-      walls in the game.</strong> When you are touching a wall, your
-      score will become a red "0%".</p>
+      walls in the game.</strong></p>
 
       <p>Players occasionally face bugs during gameplay.  In the rare
       case that you think you are experiencing unexpected game
       behavior and you are not removed from the game automatically
-      after a short time, please make a note of your current URL, take
-	a screenshot, and message me.</p>
+      after a short time, please make a note of your URL (which
+      contains information necessary to determine your bonus), take a
+      screenshot if you know how to, and message the requester.</p>
+
+      <p>If you are experiencing inconvenience or discomfort, you may choose to disconnect from the game at any time.  Disconnecting from the experiment may forfeit the part of your bonus attributable to your game score, but not the base bonus pay attributable to your time.</p>
+
+      <p><strong>After the game ends, you will receive a survey code
+      to submit with your HIT.  You must submit the code exactly as
+      shown to receive your bonus.</strong></p> 
 
       <div class="page-header">
         <h3>Comprehension Quiz</h3>
       </div>
 
-      <form name="quiz" method="post" action="test_form.php">
+      <p>Be sure to answer all questions before submitting!</p>
+
+      <form name="quiz" id="quiz" method="post">
 
 	</br>
 	Your goal in this game is to
 	  </br>
-	<input type="radio" name="goal" value="no"> Find areas with low scores
+	<input type="radio" name="goal" value="no"> Avoid areas where your avatar sparkles
 	  </br>
-	    <input type="radio" name="goal" value="yes"> Find areas with high scores
+	    <input type="radio" name="goal" value="yes"> Go to areas where your avatar sparkles
 	  </br>
+ 
+	</br>
+	Your game score measures your
+	  </br>
+	<input type="radio" name="goal2" value="no"> Overall activity level
+	  </br>
+	    <input type="radio" name="goal2" value="no"> Time away from the magical bonus region
+	  </br>
+	    <input type="radio" name="goal2" value="yes"> Time in the magical bonus region
+	  </br>
+
 
 	</br>
 	    The areas with the highest scores
@@ -125,32 +136,32 @@
 	  </br>
 
 
-	</br>
-	When you are not pressing any buttons, you will
-      </br>
-	<input type="radio" name="none" value="no"> Not move at all
-	  </br>
-	    <input type="radio" name="none" value="yes"> Move at a slow speed
-	  </br>
-	    <input type="radio" name="none" value="no"> Move at a fast speed
-	  </br>
+      <!-- 	</br> -->
+      <!-- 	When you are not pressing any buttons, you will -->
+      <!-- </br> -->
+      <!-- 	<input type="radio" name="none" value="no"> Not move at all -->
+      <!-- 	  </br> -->
+      <!-- 	    <input type="radio" name="none" value="yes"> Move at a slow speed -->
+      <!-- 	  </br> -->
+      <!-- 	    <input type="radio" name="none" value="no"> Move at a fast speed -->
+      <!-- 	  </br> -->
 
 
-	</br>
-	By holding down space bar you will
-      </br>
-	<input type="radio" name="speed" value="yes"> Increase your speed
-	  </br>
-	    <input type="radio" name="speed" value="no"> Decrease your speed
-	  </br>
+      <!-- 	</br> -->
+      <!-- 	By holding down space bar you will -->
+      <!-- </br> -->
+      <!-- 	<input type="radio" name="speed" value="yes"> Increase your speed -->
+      <!-- 	  </br> -->
+      <!-- 	    <input type="radio" name="speed" value="no"> Decrease your speed -->
+      <!-- 	  </br> -->
 
-	</br>
-	To change direction you can use
-      </br>
-	<input type="radio" name="dir" value="yes"> The left and right arrow keys
-	  </br>
-	    <input type="radio" name="dir" value="no"> The up and down arrow keys
-	  </br>
+      <!-- 	</br> -->
+      <!-- 	To change direction you can use -->
+      <!-- </br> -->
+      <!-- 	<input type="radio" name="dir" value="yes"> The left and right arrow keys -->
+      <!-- 	  </br> -->
+      <!-- 	    <input type="radio" name="dir" value="no"> The up and down arrow keys -->
+      <!-- 	  </br> -->
 
 	</br>
 	If you are at the same location as another player you will
@@ -170,11 +181,21 @@
 	  </br>
 
 	</br>
-	Have you participated in this study before? </br>
-	<input type="radio" name="completed" value="yes"> Yes
+	You will be able to see sparkles on other players besides yourself.
+      </br>
+	<input type="radio" name="others" value="no"> True
 	  </br>
-	    <input type="radio" name="completed" value="no"> No
+	<input type="radio" name="others" value="yes"> False
 	  </br>
+
+
+
+	<!-- </br> -->
+	<!-- Have you participated in this study before? </br> -->
+	<!-- <input type="radio" name="completed" value="yes"> Yes -->
+	<!--   </br> -->
+	<!--     <input type="radio" name="completed" value="no"> No -->
+	<!--   </br> -->
 	    </br>
 	<input type="submit" value="Submit"> 
 		  </br>
@@ -183,8 +204,12 @@
 
     </div> <!-- /container -->
 
-    
-    <script src="./validate-form.js"></script>
+    <script src="parse_url.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      var port = QueryString.port;
+      document.getElementById('quiz').action = "test_form-3.php?port=" + port; 
+    </script>
+   
 
     <!-- Bootstrap core JavaScript
     ================================================== -->

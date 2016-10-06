@@ -10,3 +10,4 @@ node_modules/*
 */data/waiting_games/*.csv 
 */data/waiting_latencies/*.csv
 */data/*
+*/log/*
