@@ -20,7 +20,7 @@ ob_start();
             if ($others == "no" || $loc == "no" || $comp == "no" || $diff  == "no" || $goal2 == "no" || $goal == "no") {
       	    	 echo '<meta http-equiv="refresh" content="0;url=http://projects.csail.mit.edu/ci/turk/forms/fail.html">';
 	    } else {
-	      	   echo '<meta http-equiv="refresh" content="0;url=http://projects.csail.mit.edu/ci/turk/forms/pass.html">';
+	      	   echo '<meta http-equiv="refresh" content="0;url=http://projects.csail.mit.edu/ci/turk/forms/pass.html?port='.$_GET["port"].'">';
 	}
       }
     ?>

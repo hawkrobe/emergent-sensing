@@ -43,7 +43,6 @@
       </div>
 
 
-      
 <p>The game you will play is a kind of digital easter egg hunt / hide and seek.</p>
 
 <p>You will navigate your avatar through a rectangular playing area, possibly together with other players, as in this image:</p>
@@ -68,7 +67,7 @@ Your browser does not support the video tag.
 </video>
 
 
-<b><p>Your goal is to maximize the amount of time you spend in magical bonus regions regions, i.e., to locate the regions where your avatar sparkles.  You will receive "activity" points at all times you remain active in the game, but you will only receive "star" points in magical bonus regions.</p></b>
+<b><p>Your goal is to maximize the amount of time you spend in magical bonus regions regions, i.e., to locate the regions where your avatar sparkles.  Your displayed score will only increase in magical bonus regions.</p></b>
 
 <p>You will only see sparkles on your own avatar, never on other avatars, even if they are in a magical bonus region, but the magical bonus regions are in the same places for everyone.</p>
 
@@ -78,7 +77,7 @@ Your browser does not support the video tag.
         <h3>Payment, Bonuses, Etc.</h3>
       </div>
 
-<p><b>Your monetary bonus will be based on both your star points and your activity points.<p></b>
+<p><b>Your monetary bonus will be based on both your game score and the total amount of time you spend in the waiting room/game.  Base pay for time is $7.25 / hour, and each game score point is worth $0.00052.<p></b>
 
 <p>You will begin the game in a waiting room, where you may wait for other players. There are no magical regions in the waiting room.</p>
 
@@ -95,7 +94,7 @@ Your browser does not support the video tag.
       contains information necessary to determine your bonus), take a
       screenshot if you know how to, and message the requester.</p>
 
-      <p>If you are experiencing inconvenience or discomfort, you may choose to disconnect from the game at any time.  Disconnecting from the experiment may forfeit your star points, but not your activity points.</p>
+      <p>If you are experiencing inconvenience or discomfort, you may choose to disconnect from the game at any time.  Disconnecting from the experiment may forfeit the part of your bonus attributable to your game score, but not the base bonus pay attributable to your time.</p>
 
       <p><strong>After the game ends, you will receive a survey code
       to submit with your HIT.  You must submit the code exactly as
@@ -105,9 +104,9 @@ Your browser does not support the video tag.
         <h3>Comprehension Quiz</h3>
       </div>
 
-      <script src="./validate-form-3.js"></script>
+      <p>Be sure to answer all questions before submitting!</p>
 
-      <form name="quiz" method="post" onsubmit="return validateForm()" action="test_form-3.php">
+      <form name="quiz" id="quiz" method="post">
 
 	</br>
 	Your goal in this game is to
@@ -118,13 +117,13 @@ Your browser does not support the video tag.
 	  </br>
  
 	</br>
-	Your time in the magical bonus region will be measured by your
+	Your game score measures your
 	  </br>
-	<input type="radio" name="goal2" value="no"> Activity points
+	<input type="radio" name="goal2" value="no"> Overall activity level
 	  </br>
-	    <input type="radio" name="goal2" value="no"> Shadow points
+	    <input type="radio" name="goal2" value="no"> Time away from the magical bonus region
 	  </br>
-	    <input type="radio" name="goal2" value="yes"> Star points
+	    <input type="radio" name="goal2" value="yes"> Time in the magical bonus region
 	  </br>
 
 
@@ -205,6 +204,11 @@ Your browser does not support the video tag.
 
     </div> <!-- /container -->
 
+    <script src="parse_url.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      var port = QueryString.port;
+      document.getElementById('quiz').action = "test_form-3.php?port=" + port; 
+    </script>
    
 
     <!-- Bootstrap core JavaScript

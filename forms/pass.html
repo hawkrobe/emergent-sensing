@@ -54,15 +54,16 @@
 
     </div> <!-- /container -->
 
-    
+    <script src="parse_url.js" type="text/javascript"></script>
     <script type="text/javascript">
+      var port = QueryString.port;
       document.getElementById("agree").onclick = function () {
       var name = Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10);
       var id = name + '-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
       return v.toString(16);
       });
-        location.replace("http://nospoon.mit.edu:8000/index.html?researcher=true&id=" + id);
+        location.replace("http://nospoon.mit.edu:"+port+"/index.html?id=" + id);
       };
     </script>
 
