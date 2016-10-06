@@ -35,6 +35,7 @@ function getParameterByName(name, url) {
 }
 
 var debug = getParameterByName('debug') == 'true';
+var video = getParameterByName('video') == 'true';
 var researcher = getParameterByName('researcher') == 'true';
 
 // what happens when you press 'left'?
@@ -60,7 +61,7 @@ client_ondisconnect = function(data) {
   } else if(game.get_player(my_id).lagging) {
     var URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + my_id;
   } else {
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/survey.html?id=' + my_id + '&score=' + (game.get_player(my_id).total_points).fixed(2);
   }
   window.location.replace(URL);
 };
@@ -143,7 +144,7 @@ client_onMessage = function(data) {
     case 'end' :
       // Redirect to exit survey
       console.log("received end message...")
-      var URL = 'http://projects.csail.mit.edu/ci/turk/forms/end.html?id=' + my_id;
+      var URL = 'http://projects.csail.mit.edu/ci/turk/forms/survey.html?id=' + my_id + '&score=' + (game.get_player(my_id).total_points).fixed(2);
       window.location.replace(URL); break;
     case 'alert' : // Not in database, so you can't play...
       alert('You did not enter an ID'); 
@@ -222,7 +223,7 @@ client_update = function() {
   game.ctx.clearRect(0,0,485,280);
 
   // Draw background
-  if (debug) {
+  if (debug || video) {
     if(game.spotScoreLoc) {
       drawScoreField(game);
     }
@@ -258,7 +259,8 @@ client_update = function() {
 
     // Draw points scoreboard 
     //$("#cumulative_bonus").html("Total bonus so far: $" + (player.total_points).fixed(3));
-    $("#star_points").html("Star Points: " + parseInt(player.star_points) + "</br>Activity Points: " + parseInt(player.active_points));
+    $("#star_points").html("Score: " + parseInt(player.star_points));
+    //$("#star_points").html("Star Points: " + parseInt(player.star_points) + "</br>Activity Points: " + parseInt(player.active_points));
 
   if(game.game_started) {
     $("#curr_bonus").html("Game on!" )
@@ -267,6 +269,7 @@ client_update = function() {
   }
 
   onwall = player.onwall;
+  if(!video){
   if(onwall) {
     player.warning = 'Warning: Move off the wall!';
     document.getElementById("viewport").style.borderColor = "red";
@@ -282,7 +285,8 @@ client_update = function() {
       document.getElementById("viewport").style.borderColor = "#333";
     }
   }
-  
+  }
+
   // if(!started) {
   //   var left = timeRemaining(game.waiting_remaining, game.waiting_room_limit)
   //   var diff = game.players_threshold - game.player_count
@@ -301,7 +305,7 @@ client_update = function() {
   }
   
   //And then we draw ourself so we're always in front
-  if(player.pos) {
+  if(player.pos && !video) {
     drawDestination(game, player);
     draw_player(game, player)
     draw_label(game, player, "YOU");

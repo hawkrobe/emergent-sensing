@@ -56,16 +56,17 @@ var game_core = function(game_instance){
 	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonus 
 	this.booting = true;
     } else {
-	this.waiting_room_limit = 2 // set maximum waiting room time (in minutes)
+	this.waiting_room_limit = 3 // set maximum waiting room time (in minutes)
 	this.round_length = 5 // set how long each round will last (in minutes)
 	this.max_bonus = 1.25; // total $ players can make in bonuses 
 	this.booting = true;
     }
 
-  // ( 5 * 8 * a * 60 + (b * 60 * 8 * 7)/10 + 0.5 ) * 6  = 15
-  // ( (b * 60 * 8 * 7)/10 + 0.5 ) * 6  = 7.25 
-  this.active_point_value = 0.0022;
-  this.star_point_value = 0.00052;
+  // ( game length * 8 * a * 60 + b * 60 * 8 * (game length + waiting length)/10 + HIT base pay) * tasks per hour
+  // ( 5 * 8 * a * 60 + (b * 60 * 8 * 8)/10 + 0.5 ) * 6  = 15
+  // ( (b * 60 * 8 * 8)/10 + 0.5 ) * 6  = 7.25 
+  this.active_point_value = 0.00185;
+  this.star_point_value = 0.00054;
 
     // game and waiting length in seconds
     this.game_length = this.round_length*60*this.ticks_per_sec;
