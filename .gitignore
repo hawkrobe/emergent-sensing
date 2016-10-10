@@ -11,3 +11,5 @@ node_modules/*
 */data/waiting_latencies/*.csv
 */data/*
 */log/*
+datapile/*
+*/data/metadata/*
