@@ -13,7 +13,7 @@ os.system('mkdir ./data/waiting_games/')
 os.system('mkdir ./data/latencies/')
 os.system('mkdir ./data/waiting_latencies/')
 
-os.system('git add .')
+os.system('git add --all ../')
 os.system('git commit -m "Running ' + time + '"')
 
 os.system('git rev-parse HEAD >> ./data/metadata/commit_num')
