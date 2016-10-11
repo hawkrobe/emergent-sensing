@@ -68,9 +68,22 @@
   </br>
   <div class="col-md">
   <span>How do you think you scored relative to other players?</span>  
-  <input id="relative" name="relative" type="text" class="form-control input-md">
+    <div class="radio">
+      <label class="radio-inline" for="radios-0">
+	<input type="radio" name="relative" id="relative-0" value="better">
+	Better
+      </label>
+      <label class="radio-inline" for="radios-1">
+	<input type="radio" name="relative" id="relative-1" value="worse">
+	Worse
+      </label>
+      <label class="radio-inline" for="radios-2">
+	<input type="radio" name="relative" id="relative-2" value="same">
+	About the same
+      </label>
+    </div>
   </div>
-  </br>
+</br>
   <div class="col-md">
   <span>Did you notice any problems (such as persistently choppy movement) or other bugs in the game?</span>  
   <input id="bugs" name="bugs" type="text" class="form-control input-md">
@@ -118,7 +131,7 @@
       id = getPar('id');
       score = getPar('score');
 
-      document.getElementById("my_score").innerHTML = '<b><p>You will receive a total bonus of $' + score + ' from your time in the game, on top of the base pay of $0.50 for completing the HIT.</p></b>';
+      document.getElementById("my_score").innerHTML = '<b><p>You will receive a total bonus of $' + score + ' from your time in the game, on top of the base reward of $0.25 for completing the HIT.</p></b>';
 
 
       document.getElementById("submit").onclick = function () {
