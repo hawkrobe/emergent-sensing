@@ -32,12 +32,15 @@
 
       </br>
 
-      <div id="show">
-	
       <div class="page-header">
         <h3>MIT Human Dynamics Group and Computational Cognitive Science Lab</h3>
       </div>
 
+      <div id="kicked">
+      </div>
+
+
+      <div id="show">
 
       <div class="well">
 	  <p>This experiment is part of a MIT scientific research
@@ -64,10 +67,29 @@
     
     <script src="parse_url.js" type="text/javascript"></script>
     <script type="text/javascript">
+
+
+
+      if (typeof(Storage) !== "undefined") {
+      var state = localStorage.state;
+      } else {
+      var state = 'none';
+      }
+
+
+      if(state && state == 'kicked') {
+      document.getElementById('show').style.display = 'none';
+      document.getElementById('kicked').innerHTML = "<p>Sorry. It looks like you were removed from a previous game. Please return the HIT.</p>";
+      } else if(state && state == 'complete') {
+      document.getElementById('show').style.display = 'none';
+      document.getElementById('kicked').innerHTML = "<p>Sorry. It looks like you have already completed the game. Please enter the code you received to complete the HIT.</p>";
+      } else {
       var port = QueryString.port;
       document.getElementById("agree").onclick = function () {
         location.replace("./instructions-3.html?port="+port);
       };
+      } 
+
     </script>
 
     <!-- Bootstrap core JavaScript
