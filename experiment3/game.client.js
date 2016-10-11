@@ -59,7 +59,7 @@ client_ondisconnect = function(data) {
     var URL = 'http://projects.csail.mit.edu/ci/turk/forms/away.html';
     //var URL = 'http://projects.csail.mit.edu/ci/turk/forms/error.html?id=' + my_id;
   } else if(game.get_player(my_id).lagging) {
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/latency.html?id=' + my_id;
+    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/survey.html?latency=true&id=' + my_id + '&score=' + (game.get_player(my_id).total_points).fixed(2);
   } else {
     var URL = 'http://projects.csail.mit.edu/ci/turk/forms/survey.html?id=' + my_id + '&score=' + (game.get_player(my_id).total_points).fixed(2);
   }
@@ -455,7 +455,7 @@ client_onjoingame = function(num_players) {
   game.get_player(my_id).color = game.self_color;
   // Start 'em moving
   game.get_player(my_id).speed = game.min_speed;
-  game.get_player(my_id).message = 'Please remain active while you wait.';
+  game.get_player(my_id).message = 'Please remain active and present in this tab while you wait.';
 }; 
 
 // Automatically registers whether user has switched tabs...
