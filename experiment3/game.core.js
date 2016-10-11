@@ -63,10 +63,10 @@ var game_core = function(game_instance){
     }
 
   // ( game length * 8 * a * 60 + b * 60 * 8 * (game length + waiting length)/10 + HIT base pay) * tasks per hour
-  // ( 5 * 8 * a * 60 + (b * 60 * 8 * 8)/10 + 0.5 ) * 6  = 15
-  // ( (b * 60 * 8 * 8)/10 + 0.5 ) * 6  = 7.25 
-  this.active_point_value = 0.00185;
-  this.star_point_value = 0.00054;
+  // s * 60 * 60 * 8 + a * 60 * 60 * 8 = 15; a * 60 * 60 * 8 = 7.25 
+  this.star_point_value = 0.00027;
+  this.active_point_value = 0.000252;
+
 
     // game and waiting length in seconds
     this.game_length = this.round_length*60*this.ticks_per_sec;
@@ -537,10 +537,10 @@ game_core.prototype.updateScores = function(p) {
       p.curr_active = 0;
     } else if(dist > 50) {
       p.curr_background = 0;
-      p.curr_active = 1 / 10.0;
+      p.curr_active = 1;
     } else {
       p.curr_background = 1;
-      p.curr_active = 1 / 10.0;
+      p.curr_active = 1;
     }
     
     //p.avg_score = (p.avg_score + p.curr_background/

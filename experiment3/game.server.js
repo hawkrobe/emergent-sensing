@@ -131,7 +131,7 @@ game_server.findGame = function(player) {
 game_server.createGame = function(player) {
     // Figure out variables
     //var thresholds = Array(3,3);
-  var thresholds = Array(1, 2, 5);
+  var thresholds = Array(1, 2, 2, 5, 5, 5);
   //var thresholds = Array(50, 50);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
@@ -201,7 +201,7 @@ game_server.createGame = function(player) {
 	    if(!game.active) {
 		game_server.holdGame(game);
 	    }
-	}, game.gamecore.waiting_room_limit*60*1000*4/5.0)
+	}, game.gamecore.waiting_room_limit*60*1000 - 30*1000)
 
     // schedule the game to start to prevent players from waiting too long
     setTimeout(function() {
