@@ -64,8 +64,8 @@ var game_core = function(game_instance){
 
   // ( game length * 8 * a * 60 + b * 60 * 8 * (game length + waiting length)/10 + HIT base pay) * tasks per hour
   // s * 60 * 60 * 8 + a * 60 * 60 * 8 = 15; a * 60 * 60 * 8 = 7.25 
-  this.star_point_value = 0.00027;
-  this.active_point_value = 0.000252;
+  this.star_point_value = 1/4800.0;
+  this.active_point_value = 1/3200.0;
 
 
     // game and waiting length in seconds
