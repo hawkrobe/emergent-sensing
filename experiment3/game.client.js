@@ -455,7 +455,7 @@ client_onjoingame = function(num_players) {
   game.get_player(my_id).color = game.self_color;
   // Start 'em moving
   game.get_player(my_id).speed = game.min_speed;
-  game.get_player(my_id).message = 'Please remain active and present in this tab while you wait.';
+  game.get_player(my_id).message = 'You will be disqualified for the HIT if you become inactive.';
 }; 
 
 // Automatically registers whether user has switched tabs...
