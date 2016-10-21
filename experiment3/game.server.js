@@ -167,10 +167,17 @@ game_server.createGame = function(player, demo) {
     game.gamecore.background_id = bg_id
   game.gamecore.name = name
 
+  // assign to exploratory or confirmatory data subsets
+  if(Math.random() < 0.5) {
+    game.gamecore.data_subset = 'exploratory'
+  } else {
+    game.gamecore.data_subset = 'confirmatory'
+  }
+
     // Set up the filesystem variable we'll use later, and write headers
-    var game_f = "data/waiting_games/" + name + ".csv"
-    var latency_f = "data/waiting_latencies/" + name + ".csv"
-    
+    var game_f = "data/" + game.gamecore.data_subset + "/waiting_games/" + name + ".csv"
+    var latency_f = "data/" + game.gamecore.data_subset + "/waiting_latencies/" + name + ".csv"
+
     game.gamecore.fs = fs;
     
     fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y\n", function (err) {if(err) throw err;})
@@ -262,8 +269,8 @@ game_server.startGame = function(game) {
 
     game.active = true;
       
-    var game_f = "data/games/" + game.gamecore.name + ".csv"
-    var latency_f = "data/latencies/" + game.gamecore.name + ".csv"
+    var game_f = "data/" + game.gamecore.data_subset + "/games/" + game.gamecore.name + ".csv"
+    var latency_f = "data/" + game.gamecore.data_subset + "/latencies/" + game.gamecore.name + ".csv"
     
     fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y\n", function (err) {if(err) throw err;})
     game.gamecore.gameDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
