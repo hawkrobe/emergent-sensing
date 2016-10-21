@@ -37,6 +37,7 @@ function getParameterByName(name, url) {
 var debug = getParameterByName('debug') == 'true';
 var video = getParameterByName('video') == 'true';
 var researcher = getParameterByName('researcher') == 'true';
+var demo = getParameterByName('demo') == 'true';
 
 // what happens when you press 'left'?
 left_turn = function() {
@@ -61,7 +62,11 @@ client_ondisconnect = function(data) {
   } else if(game.get_player(my_id).lagging) {
     var URL = 'http://projects.csail.mit.edu/ci/turk/forms/survey.html?latency=true&id=' + my_id + '&score=' + (game.get_player(my_id).total_points).fixed(2);
   } else {
-    var URL = 'http://projects.csail.mit.edu/ci/turk/forms/survey.html?id=' + my_id + '&score=' + (game.get_player(my_id).total_points).fixed(2);
+      if(demo) {
+	  var URL = 'http://projects.csail.mit.edu/ci/turk/forms/demo-end.html?id=' + my_id + '&score=' + game.get_player(my_id).star_points;
+      } else {
+	  var URL = 'http://projects.csail.mit.edu/ci/turk/forms/survey.html?id=' + my_id + '&score=' + (game.get_player(my_id).total_points).fixed(2);
+      }
   }
   window.location.replace(URL);
 };
@@ -455,7 +460,11 @@ client_onjoingame = function(num_players) {
   game.get_player(my_id).color = game.self_color;
   // Start 'em moving
   game.get_player(my_id).speed = game.min_speed;
-  game.get_player(my_id).message = 'You will be disqualified for the HIT if you become inactive.';
+  if(demo) {
+      game.get_player(my_id).message = 'Please remain active while you wait.';
+  } else {
+      game.get_player(my_id).message = 'You will be disqualified for the HIT if you become inactive.';
+  }
 }; 
 
 // Automatically registers whether user has switched tabs...

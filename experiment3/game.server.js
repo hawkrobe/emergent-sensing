@@ -78,7 +78,7 @@ game_server.server_onMessage = function(client,message) {
 
 // This is the important function that pairs people up into 'rooms'
 // all independent of one another.
-game_server.findGame = function(player) {
+game_server.findGame = function(player, demo) {
     this.log('looking for a game. We have : ' + this.game_count);
     //if there are any games created, add this player to it!
     if(this.game_count) {
@@ -118,17 +118,17 @@ game_server.findGame = function(player) {
             }
         }
         if(!joined_a_game) { // if we didn't join a game, we must create one
-            this.createGame(player);
+            this.createGame(player, demo);
         }
     }
     else { 
         //no games? create one!
-        this.createGame(player);
+        this.createGame(player, demo);
     }
 }; 
 
 // Will run when first player connects
-game_server.createGame = function(player) {
+game_server.createGame = function(player, demo) {
     // Figure out variables
     //var thresholds = Array(3,3);
   var thresholds = Array(1, 2, 2, 6, 6, 6);
@@ -152,12 +152,12 @@ game_server.createGame = function(player) {
 	//store list of players in the game
         player_instances: [{id: player.userid, player: player}],
 	//for simple checking of state
-        player_count: 1             
+        player_count: 1
     };
     
     
     //Create a new game core instance (defined in game.core.js)
-    game.gamecore = new game_core(game);
+    game.gamecore = new game_core(game, demo);
 
     // Tell the game about its own id
     game.gamecore.game_id = id;

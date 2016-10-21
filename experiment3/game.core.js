@@ -25,7 +25,7 @@ if( typeof _ === 'undefined' ) {
     else throw new Error('mymodule requires underscore, see http://underscorejs.org');
 }
 
-var game_core = function(game_instance){
+var game_core = function(game_instance, demo){
 
     this.debug = false
 
@@ -59,7 +59,7 @@ var game_core = function(game_instance){
 	this.waiting_room_limit = 3 // set maximum waiting room time (in minutes)
 	this.round_length = 5 // set how long each round will last (in minutes)
 	this.max_bonus = 1.25; // total $ players can make in bonuses 
-	this.booting = true;
+	this.booting = !demo;
     }
 
   // ( game length * 8 * a * 60 + b * 60 * 8 * (game length + waiting length)/10 + HIT base pay) * tasks per hour
