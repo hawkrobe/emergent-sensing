@@ -19,7 +19,6 @@ var game = {};
 var my_id = null;
 // Keeps track of whether player is paying attention...
 var visible;
-var active_keys = []; 
 var speed_change = "none";
 
 function getParameterByName(name, url) {
@@ -36,18 +35,6 @@ var debug = getParameterByName('debug') == 'true';
 var video = getParameterByName('video') == 'true';
 var researcher = getParameterByName('researcher') == 'true';
 var demo = getParameterByName('demo') == 'true';
-
-// what happens when you press 'left'?
-function left_turn () {
-  var self = game.get_player(my_id);
-  self.angle = (Number(self.angle) - 5) % 360;
-};
-
-// what happens when you press 'left'?
-function right_turn () {
-  var self = game.get_player(my_id);
-  self.angle = (Number(self.angle) + 5) % 360;
-};
 
 function client_ondisconnect (data) {
   // Redirect to exit survey
@@ -242,12 +229,6 @@ function client_update () {
     }
     game.socket.send("s." + String(player.speed).replace(/\./g,'-'));
     speed_change = "none"
-  }
-
-  // Turn if key is still being held... Don't do anything if both are held
-  if (active_keys.length == 1) {
-    if(_.contains(active_keys, 'right')) right_turn();
-    if(_.contains(active_keys, 'left')) left_turn() ;
   }
 
   //Draw opponent next 
