@@ -21,6 +21,8 @@ var my_id = null;
 var visible;
 var speed_change = "none";
 
+$.Finger.preventDefault = true;
+
 function getParameterByName(name, url) {
   if (!url) url = window.location.href;
   name = name.replace(/[\[\]]/g, "\\$&");
@@ -77,30 +79,29 @@ function client_onserverupdate_received (data){
   // server_send_update function in game.core.js
   
   if(data.players) {
-    _.map(_.zip(data.players, game.players),
-          function(z){
-            z[1].id = z[0].id
-            if (z[0].player == null) {
-              z[1].player = null
-            } else {
-              var s_player = z[0].player
-              var l_player = z[1].player
-	      // Don't update own angle if local info exists
-              if(z[0].id != my_id || l_player.angle == null) {
-		l_player.angle = s_player.angle
-	      }
-	      l_player.curr_background = s_player.cbg
-	      l_player.total_points = s_player.tot
-	      l_player.active_points = s_player.act
-	      l_player.star_points = s_player.star
-              l_player.pos = game.pos(s_player.pos)
-              l_player.speed = s_player.speed
-	      l_player.onwall = s_player.onwall
-              l_player.hidden = s_player.hidden
-              l_player.inactive = s_player.inactive
-              l_player.lagging = s_player.lagging
-            }
-          })
+    _.map(_.zip(data.players, game.players), function(z){
+      z[1].id = z[0].id
+      if (z[0].player == null) {
+        z[1].player = null
+      } else {
+        var s_player = z[0].player
+        var l_player = z[1].player
+	// Don't update own angle if local info exists
+        if(z[0].id != my_id || l_player.angle == null) {
+	  l_player.angle = s_player.angle
+	}
+	l_player.curr_background = s_player.cbg
+	l_player.total_points = s_player.tot
+	l_player.active_points = s_player.act
+	l_player.star_points = s_player.star
+        l_player.pos = game.pos(s_player.pos)
+        l_player.speed = s_player.speed
+	l_player.onwall = s_player.onwall
+        l_player.hidden = s_player.hidden
+        l_player.inactive = s_player.inactive
+        l_player.lagging = s_player.lagging
+      }
+    });
   }
   
   game.spotScoreLoc = data.spotScoreLoc;
@@ -220,6 +221,7 @@ function client_update () {
 
   // Alter speeds
   if (speed_change != "none") {
+    console.log("speed change:" + speed_change);
     if (speed_change == "up") {
       player.speed = game.max_speed;
     } else if (speed_change == "stop") {
@@ -350,32 +352,27 @@ window.onload = function(){
   game.viewport.width = game.world.width;
   game.viewport.height = game.world.height;
 
-  $('#viewport').click(function(e){
-    e.preventDefault();
-    // e.pageX is relative to whole page -- we want
-    // relative to GAME WORLD (i.e. viewport)
-    var offset = $(this).offset();
-    var borderWidth = 1; //parseInt($(this).css("border-width" )); // broken in firefox 48.0
+  // Add different controls for mobile & desktop
+  if(isMobile) {
+    $('#viewport').on('tap', clickEvent);
+    $("#viewport").on('doubletap', function(e) {
+      speed_change = game.get_player(my_id).speed == game.max_speed ? "down" : "up";
+    });
+    $("#viewport").on('press', function(e) {
+      speed_change = "stop";
+    });
+  } else {
+    $('#viewport').click(clickEvent);
+    
+    keyboardJS.bind('a',
+		  function(e){e.preventRepeat();speed_change = "up";},
+		  function(e){speed_change = "down"});
 
-    var relX = e.pageX - offset.left - borderWidth;
-    var relY = e.pageY - offset.top - borderWidth;
-
-    client_on_click(game, relX, relY);
-  });
-
-  // KeyboardJS.on('space', 
-  //     function(){speed_change = "up"}, 
-  //     function(){speed_change = "down"})
-
-  KeyboardJS.on('a', 
-		function(){speed_change = "up"}, 
-		function(){speed_change = "down"})
-
-  KeyboardJS.on('s', 
-		function(){speed_change = "stop"}, 
-		function(){speed_change = "down"})
-
-
+    keyboardJS.bind('s',
+		  function(e){e.preventRepeat();speed_change = "stop";}, 
+		  function(e){speed_change = "down"});
+  }
+  
   addSkipButton(game);
   if(researcher) {
     addStartButton(game);
@@ -390,6 +387,35 @@ window.onload = function(){
   //Finally, start the loop
   game.update();
 };
+
+function clickEvent (e) {
+  console.log("click event");
+  console.log(e.originalEvent);
+  e.preventDefault();
+
+  // If you're stopped and you click, start going again (not when accelerated)
+  if(isMobile && game.get_player(my_id).speed == 0) {
+    speed_change = "down";
+  }
+  
+  // e.pageX is relative to whole page -- we want
+  // relative to GAME WORLD (i.e. viewport)
+  var offset = $(this).offset();
+  var borderWidth = 1; //parseInt($(this).css("border-width" )); // broken in firefox 48.0
+  
+  // jquery event gives pageX, finger event gives x
+  var x = e.pageX ? e.pageX : e.x;
+  var y = e.pageY ? e.pageY : e.y;
+  var relX = x - offset.left - borderWidth;
+  var relY = y - offset.top - borderWidth;
+  console.log(relX, relY);
+  client_on_click(game, relX, relY);
+
+  // game.pressTimer = window.setTimeout(function() {
+  //   speed_change = "up";
+  // },1000);
+  return false;
+}
 
 // Associates callback functions corresponding to different socket messages
 function client_connect_to_server (game) {
