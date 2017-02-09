@@ -131,8 +131,8 @@ game_server.findGame = function(player, demo) {
 game_server.createGame = function(player, demo) {
     // Figure out variables
     //var thresholds = Array(3,3);
-  var thresholds = Array(1, 2, 3, 4, 5, 6);
-  //var thresholds = Array(50, 50);
+  //var thresholds = Array(1, 2, 3, 4, 5, 6);
+  var thresholds = Array(50, 50);
     var players_threshold = thresholds[Math.floor(Math.random()*thresholds.length)];
     //var noise_id = Math.floor(Math.random() * 4) + '-1en01'
 
