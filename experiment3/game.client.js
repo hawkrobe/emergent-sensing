@@ -463,7 +463,7 @@ client_onjoingame = function(num_players) {
   if(demo) {
       game.get_player(my_id).message = 'Please remain active while you wait.';
   } else {
-      game.get_player(my_id).message = 'You will be disqualified for the HIT if you become inactive.';
+      game.get_player(my_id).message = 'You will be disqualified and removed if you become inactive.';
   }
 }; 
 
