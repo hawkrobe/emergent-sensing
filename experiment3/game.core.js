@@ -392,7 +392,7 @@ game_core.prototype.create_physics_simulation = function() {
 		var p = active_players[i]
 		// ping players to estimate latencies
 		p.player.instance.emit('ping', {sendTime : Date.now(),
-					        tick_num: local_game.game_clock})
+					        tick_num: local_game.game_clock});
 		// compute scores
 		if(p.player) {
 
@@ -504,15 +504,14 @@ game_core.prototype.handleLatency = function(p, id) {
 };
 
 game_core.prototype.handleBootingConditions = function(p, id) {
+  if(this.booting) {
+    this.handleHiddenTab(p, id);
+    this.handleInactivity(p, id);
+    this.handleLatency(p, id);
+  }
   if((p.hidden || p.inactive || p.lagging) && !this.debug) {
     p.instance.disconnect();
-  } else {
-    if(this.booting) {
-      this.handleHiddenTab(p, id);
-      this.handleInactivity(p, id);
-      this.handleLatency(p, id);
-    }
-  }
+  } 
 };
 
 

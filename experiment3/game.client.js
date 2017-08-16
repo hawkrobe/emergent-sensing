@@ -19,10 +19,9 @@ var game = {};
 var my_id = null;
 // Keeps track of whether player is paying attention...
 var visible;
-var active_keys = []; 
 var speed_change = "none";
-var started = false;
-var ending = false;
+
+$.Finger.preventDefault = true;
 
 function getParameterByName(name, url) {
   if (!url) url = window.location.href;
@@ -39,19 +38,7 @@ var video = getParameterByName('video') == 'true';
 var researcher = getParameterByName('researcher') == 'true';
 var demo = getParameterByName('demo') == 'true';
 
-// what happens when you press 'left'?
-left_turn = function() {
-  var self = game.get_player(my_id);
-  self.angle = (Number(self.angle) - 5) % 360;
-};
-
-// what happens when you press 'left'?
-right_turn = function() {
-  var self = game.get_player(my_id);
-  self.angle = (Number(self.angle) + 5) % 360;
-};
-
-client_ondisconnect = function(data) {
+function client_ondisconnect (data) {
   // Redirect to exit survey
   console.log("server booted")
   if(game.get_player(my_id).hidden) {
@@ -86,36 +73,35 @@ client_ondisconnect = function(data) {
  the server regularly sends news about its variables to the clients so
  that they can update their variables to reflect changes.
  */
-client_onserverupdate_received = function(data){
+function client_onserverupdate_received (data){
 
   // Update client versions of variables with data received from
   // server_send_update function in game.core.js
   
   if(data.players) {
-    _.map(_.zip(data.players, game.players),
-          function(z){
-            z[1].id = z[0].id
-            if (z[0].player == null) {
-              z[1].player = null
-            } else {
-              var s_player = z[0].player
-              var l_player = z[1].player
-	      // Don't update own angle if local info exists
-              if(z[0].id != my_id || l_player.angle == null) {
-		l_player.angle = s_player.angle
-	      }
-	      l_player.curr_background = s_player.cbg
-	      l_player.total_points = s_player.tot
-	      l_player.active_points = s_player.act
-	      l_player.star_points = s_player.star
-              l_player.pos = game.pos(s_player.pos)
-              l_player.speed = s_player.speed
-	      l_player.onwall = s_player.onwall
-              l_player.hidden = s_player.hidden
-              l_player.inactive = s_player.inactive
-              l_player.lagging = s_player.lagging
-            }
-          })
+    _.map(_.zip(data.players, game.players), function(z){
+      z[1].id = z[0].id
+      if (z[0].player == null) {
+        z[1].player = null
+      } else {
+        var s_player = z[0].player
+        var l_player = z[1].player
+	// Don't update own angle if local info exists
+        if(z[0].id != my_id || l_player.angle == null) {
+	  l_player.angle = s_player.angle
+	}
+	l_player.curr_background = s_player.cbg
+	l_player.total_points = s_player.tot
+	l_player.active_points = s_player.act
+	l_player.star_points = s_player.star
+        l_player.pos = game.pos(s_player.pos)
+        l_player.speed = s_player.speed
+	l_player.onwall = s_player.onwall
+        l_player.hidden = s_player.hidden
+        l_player.inactive = s_player.inactive
+        l_player.lagging = s_player.lagging
+      }
+    });
   }
   
   game.spotScoreLoc = data.spotScoreLoc;
@@ -135,7 +121,7 @@ client_onserverupdate_received = function(data){
 
 // The corresponding function where the server parses messages from
 // clients, look for "server_onMessage" in game.server.js.
-client_onMessage = function(data) {
+function client_onMessage (data) {
 
   var commands = data.split('.');
   var command = commands[0];
@@ -172,7 +158,6 @@ client_onMessage = function(data) {
 
 
 function client_on_click(game, newX, newY ) {
-
   // Auto-correcting input, but only between rounds
   var self = game.get_player(my_id);
   if (newX > self.pos_limits.x_min && newX < self.pos_limits.x_max &&
@@ -199,14 +184,13 @@ function client_on_click(game, newX, newY ) {
 
 
 // Restarts things on the client side. Necessary for iterated games.
-client_newgame = function() {
+function client_newgame () {
   // Initiate countdown (with timeouts)
   //game.get_player(my_id).angle = null;
-  started = true;
   client_countdown();
 }; 
 
-client_countdown = function() {
+function client_countdown () {
   var player = game.get_player(my_id);
   player.message = 'Begin in 3...';
   setTimeout(function(){player.message = 'Begin in 2...';}, 
@@ -221,7 +205,7 @@ client_countdown = function() {
              4000);
 }
 
-client_update = function() {
+function client_update () {
   var player = game.get_player(my_id);
 
   //Clear the screen area
@@ -237,6 +221,7 @@ client_update = function() {
 
   // Alter speeds
   if (speed_change != "none") {
+    console.log("speed change:" + speed_change);
     if (speed_change == "up") {
       player.speed = game.max_speed;
     } else if (speed_change == "stop") {
@@ -246,12 +231,6 @@ client_update = function() {
     }
     game.socket.send("s." + String(player.speed).replace(/\./g,'-'));
     speed_change = "none"
-  }
-
-  // Turn if key is still being held... Don't do anything if both are held
-  if (active_keys.length == 1) {
-    if(_.contains(active_keys, 'right')) right_turn();
-    if(_.contains(active_keys, 'left')) left_turn() ;
   }
 
   //Draw opponent next 
@@ -268,9 +247,9 @@ client_update = function() {
     //$("#star_points").html("Star Points: " + parseInt(player.star_points) + "</br>Activity Points: " + parseInt(player.active_points));
 
   if(game.game_started) {
-    $("#curr_bonus").html("Game on!" )
+    $("#curr_bonus").html("Game on!" );
   } else {
-    $("#curr_bonus").html("Waiting Room" )
+    $("#curr_bonus").html("Waiting Room" );
   }
 
   onwall = player.onwall;
@@ -291,12 +270,6 @@ client_update = function() {
     }
   }
   }
-
-  // if(!started) {
-  //   var left = timeRemaining(game.waiting_remaining, game.waiting_room_limit)
-  //   var diff = game.players_threshold - game.player_count
-    //game.get_player(my_id).message = 'Waiting for ' + diff + ' more players or ' + left['t'] + ' more ' + left['unit'] + '.';
-  // }
 
   // Notify user of remaining time
   if(game.game_started) {
@@ -320,15 +293,14 @@ client_update = function() {
 
 // Game ends when game_clock >= game.game_length (measured in ticks)
 // We convert this to seconds and parse into min/sec representation
-var getTimeToEnd = function(game) {
+function getTimeToEnd (game) {
   var secondsLeft = (game.game_length - game.game_clock)/game.ticks_per_sec;
-  console.log(secondsLeft);
   return {minutes: Math.floor(secondsLeft / 60),
 	  seconds: Math.floor(secondsLeft % 60)};
 };
 
 // Handles appropriate plurals, and only displays seconds when min < 1
-var getTimeStr = function(timeToEnd) {
+function getTimeStr (timeToEnd) {
   var minuteStr = (timeToEnd.minutes > 1 ?
 		   [timeToEnd.minutes, "minutes"].join(" ") :
 		   [timeToEnd.minutes, "minute"].join(" "));
@@ -337,11 +309,11 @@ var getTimeStr = function(timeToEnd) {
 };
 
 var percentColors = [
-  //    { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
   { pct: 0.0, color: { r: 0xff, g: 0xff, b: 0xff } },
-  { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
+  { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } }
+];
 
-var getColorForPercentage = function(pct) {
+function getColorForPercentage (pct) {
   for (var i = 0; i < percentColors.length; i++) {
     if (pct <= percentColors[i].pct) {
       var lower = percentColors[i - 1] || { pct: 0.1, color: { r: 0x0, g: 0x00, b: 0 } };
@@ -380,32 +352,27 @@ window.onload = function(){
   game.viewport.width = game.world.width;
   game.viewport.height = game.world.height;
 
-  $('#viewport').click(function(e){
-    e.preventDefault();
-    // e.pageX is relative to whole page -- we want
-    // relative to GAME WORLD (i.e. viewport)
-    var offset = $(this).offset();
-    var borderWidth = 1; //parseInt($(this).css("border-width" )); // broken in firefox 48.0
+  // Add different controls for mobile & desktop
+  if(isMobile) {
+    $('#viewport').on('tap', clickEvent);
+    $("#viewport").on('doubletap', function(e) {
+      speed_change = game.get_player(my_id).speed == game.max_speed ? "down" : "up";
+    });
+    $("#viewport").on('press', function(e) {
+      speed_change = "stop";
+    });
+  } else {
+    $('#viewport').click(clickEvent);
+    
+    keyboardJS.bind('a',
+		  function(e){e.preventRepeat();speed_change = "up";},
+		  function(e){speed_change = "down"});
 
-    var relX = e.pageX - offset.left - borderWidth;
-    var relY = e.pageY - offset.top - borderWidth;
-
-    client_on_click(game, relX, relY);
-  });
-
-  // KeyboardJS.on('space', 
-  //     function(){speed_change = "up"}, 
-  //     function(){speed_change = "down"})
-
-  KeyboardJS.on('a', 
-		function(){speed_change = "up"}, 
-		function(){speed_change = "down"})
-
-  KeyboardJS.on('s', 
-		function(){speed_change = "stop"}, 
-		function(){speed_change = "down"})
-
-
+    keyboardJS.bind('s',
+		  function(e){e.preventRepeat();speed_change = "stop";}, 
+		  function(e){speed_change = "down"});
+  }
+  
   addSkipButton(game);
   if(researcher) {
     addStartButton(game);
@@ -421,8 +388,37 @@ window.onload = function(){
   game.update();
 };
 
+function clickEvent (e) {
+  console.log("click event");
+  console.log(e.originalEvent);
+  e.preventDefault();
+
+  // If you're stopped and you click, start going again (not when accelerated)
+  if(isMobile && game.get_player(my_id).speed == 0) {
+    speed_change = "down";
+  }
+  
+  // e.pageX is relative to whole page -- we want
+  // relative to GAME WORLD (i.e. viewport)
+  var offset = $(this).offset();
+  var borderWidth = 1; //parseInt($(this).css("border-width" )); // broken in firefox 48.0
+  
+  // jquery event gives pageX, finger event gives x
+  var x = e.pageX ? e.pageX : e.x;
+  var y = e.pageY ? e.pageY : e.y;
+  var relX = x - offset.left - borderWidth;
+  var relY = y - offset.top - borderWidth;
+  console.log(relX, relY);
+  client_on_click(game, relX, relY);
+
+  // game.pressTimer = window.setTimeout(function() {
+  //   speed_change = "up";
+  // },1000);
+  return false;
+}
+
 // Associates callback functions corresponding to different socket messages
-client_connect_to_server = function(game) {
+function client_connect_to_server (game) {
   //Store a local reference to our connection to the server
   game.socket = io.connect();
 
@@ -444,7 +440,7 @@ client_connect_to_server = function(game) {
   game.socket.on('message', client_onMessage.bind(game));
 }; 
 
-client_onconnected = function(data) {
+function client_onconnected (data) {
   //The server responded that we are now in a game,
   //this lets us store the information about ourselves  
   // so that we remember who we are.  
@@ -453,7 +449,7 @@ client_onconnected = function(data) {
   game.get_player(my_id).online = true;
 };
 
-client_onjoingame = function(num_players) {
+function client_onjoingame (num_players) {
   // Need client to know how many players there are, so they can set up the appropriate data structure
   _.map(_.range(num_players - 1), function(i){game.players.unshift({id: null, player: new game_player(game)})});
   // Set self color, leave others default white
