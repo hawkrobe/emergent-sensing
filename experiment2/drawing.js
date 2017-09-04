@@ -54,7 +54,7 @@ function getHatchPattern() {
 };
 
 var GOODCOLOR = getColorForPercentage(1.0);  
-var NEUTRALCOLOR = getColorForPercentage(0.2);
+var NEUTRALCOLOR = 'white';//getColorForPercentage(0.2);
 var BADCOLOR = "red";
 
 // Draw players as triangles using HTML5 canvas
@@ -125,36 +125,16 @@ function drawSpotlight(game, centerX, centerY) {
   }
 }
 
-function drawSafeArea(game, wallBG) {
+function drawSafeArea(game) {
   game.ctx.save();
-  if(wallBG) {
-    game.ctx.strokeStyle = NEUTRALCOLOR;
-    game.ctx.lineWidth = 25;
-    game.ctx.strokeRect(25/2, 25/2, game.world.width - 50/2, game.world.height - 50/2);
-  } else {
-    game.ctx.fillStyle = NEUTRALCOLOR;
-    game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
-  }
-  game.ctx.restore();
-};
-
-function drawForbiddenArea(game, wallBG) {
-  game.ctx.save();
-  var p = getHatchPattern();
-  if(wallBG) {
-    game.ctx.fillStyle=game.ctx.createPattern(p,'repeat');
-    game.ctx.fillRect(25, 25, game.world.width - 50, game.world.height - 50);
-  } else {
-    game.ctx.strokeStyle = game.ctx.createPattern(p, 'repeat');
-    game.ctx.lineWidth = 25;
-    game.ctx.strokeRect(25/2, 25/2, game.world.width - 50/2, game.world.height - 50/2);
-  }
+  game.ctx.fillStyle = NEUTRALCOLOR;
+  game.ctx.fillRect(0,0,game.world.width, game.world.height);
   game.ctx.restore();
 };
 
 function drawScoreField(game){
   
-  drawSafeArea(game, game.trialInfo.wallBG);
+  drawSafeArea(game);
 
   var centerX = game.trialInfo.spotScoreLoc.x;
   var centerY = game.trialInfo.spotScoreLoc.y;
