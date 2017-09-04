@@ -41,7 +41,8 @@ var game_core = function(options){
   //How often the players move forward <global_speed>px in ms.
   this.tick_frequency = 125;     //Update 8 times per second
   this.ticks_per_sec = 1000/125;
-
+  this.numFadeSteps = 10;
+  
   this.waiting_room_limit = 5; // set maximum waiting room time (in minutes)
   this.round_length = 1.0; // set how long each round will last (in minutes)
   this.max_bonus = 15.0 / 60 * this.round_length; // total $ players can make in bonuses 
@@ -438,9 +439,9 @@ game_core.prototype.server_update_physics = function() {
     var player = p.player;
 
     // Stop at destination
-    player.speed = (local_this.distance_between(player.pos, player.destination) < 8 ?
-		    0 :
-		    player.speed);
+    // player.speed = (local_this.distance_between(player.pos, player.destination) < 8 ?
+    // 		    0 :
+    // 		    player.speed);
     var theta = (player.angle - 90) * Math.PI / 180;
     var new_dir = {
       x : player.speed * Math.cos(theta), 

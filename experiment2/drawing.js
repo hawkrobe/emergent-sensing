@@ -101,6 +101,7 @@ function drawDestination(game, player) {
   var xCoord = parseFloat(player.destination.x);
   var yCoord = parseFloat(player.destination.y);
   game.ctx.save();
+  game.ctx.globalAlpha = game.remainingFadeSteps/game.numFadeSteps;
   game.ctx.strokeStyle = player.color;
   game.ctx.beginPath();
   game.ctx.moveTo(xCoord - 5, yCoord- 5);
@@ -110,6 +111,9 @@ function drawDestination(game, player) {
   game.ctx.lineTo(xCoord - 5, yCoord + 5);
   game.ctx.stroke();
   game.ctx.restore();
+  if(game.remainingFadeSteps > 0) { // stop if done
+    game.remainingFadeSteps--;
+  }
 };
 
 function drawSpotlight(game, centerX, centerY) {

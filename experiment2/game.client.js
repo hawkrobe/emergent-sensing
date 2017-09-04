@@ -52,6 +52,10 @@ function client_on_click(game, newX, newY ) {
     var dy = newY - oldY;
     
     self.destination = {x : Math.round(newX), y : Math.round(newY)};
+
+    // Reset destination visualization to fade again
+    globalGame.remainingFadeSteps = globalGame.numFadeSteps;
+    
     self.angle = Math.round((Math.atan2(dy,dx) * 180 / Math.PI) + 90);
 
     var info_packet = ("c." + self.angle +
@@ -196,7 +200,14 @@ function client_update() {
 
   // Alter speeds
   if (speed_change != "none") {
-    self.speed = speed_change == "up" ? globalGame.max_speed : globalGame.min_speed;
+    if (speed_change == "up") {
+      self.speed = globalGame.max_speed;
+    } else if (speed_change == "stop") {
+      self.speed = 0;
+    } else { 
+      self.speed = globalGame.min_speed;
+    }
+    
     globalGame.socket.send("s." + String(self.speed).replace(/\./g,'-'));
     speed_change = "none";
   }
@@ -289,10 +300,14 @@ window.onload = function(){
     var relY = e.pageY - offset.top - borderWidth;
     client_on_click(globalGame, relX, relY);
   });
-  
-  KeyboardJS.on('space', 
-		function(){speed_change = "up";}, 
-		function(){speed_change = "down";});
+
+  keyboardJS.bind('a',
+		  function(e){e.preventRepeat();speed_change = "up";},
+		  function(e){speed_change = "down"});
+
+  keyboardJS.bind('s',
+		  function(e){e.preventRepeat();speed_change = "stop";}, 
+		  function(e){speed_change = "down"});
 
   // Add skip button for debug/test model
   if((debug || test)) {
