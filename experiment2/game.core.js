@@ -90,7 +90,6 @@ var game_core = function(options){
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
     this.backgroundCondition = Math.random() < .5 ? "wall" : "spot";
-    this.exploitMechanism = Math.random() < .5 ? "move" : "stop";
     this.trialList = this.makeTrialList();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -622,23 +621,10 @@ game_core.prototype.updateScores = function(p) {
     }
 
     var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
-    
-    // If you're in a forbidden region: 0 
-    if((this.backgroundCondition == "wall" && !onWall) ||
-       (this.backgroundCondition == "spot" && onWall)) {
-      p.curr_background = 0;
-    // If you're in the right region, but too far away from the dist: .2 
-    } else if(dist > 50) {
-      p.curr_background = .2;
-    // If you're close to the dist, but not exploiting properly: .5?
-    } else if((this.exploitMechanism == "move" && p.speed == 0) ||
-	      (this.exploitMechanism == "stop" && p.speed > 0)) {
-      p.curr_background = .5;
-    // Otherwise, you get full points
-    } else {
-      p.curr_background = 1;
-    }
 
+    // get full points when inside spotlight
+    p.curr_background = dist < 50 ? 1 : .2;
+    
     p.avg_score = (p.avg_score + p.curr_background/
 		   this.game_length);
     p.total_points = p.avg_score * this.max_bonus;
