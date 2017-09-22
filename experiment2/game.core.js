@@ -66,15 +66,13 @@ var game_core = function(options){
   this.waiting_start = new Date(); 
 
   this.roundNum = -1;
-  this.numRounds = 8;
+  this.numRounds = 4;
   this.game_clock = 0;
 
-  this.countdown = poissonRandomNumber(10*8) + 1;
-    
   this.spotScoreLoc = {x:"",y:""};
   this.wallScoreLoc = {x:"",y:""};
-  this.closeScoreLoc = {x:"",y:""};
-    
+  this.closeScoreLoc = false;
+  
   //We create a player set, passing them the game that is running
   //them, as well. Both the server and the clients need separate
   //instances of both players, but the server has more information
@@ -89,7 +87,10 @@ var game_core = function(options){
       instance: options.player_instances[0].player,
       player: new game_player(this,options.player_instances[0].player,false,0)
     }];
-    this.backgroundCondition = Math.random() < .5 ? "wall" : "spot";
+    // Randomize which score field players get
+    this.backgroundCondition = _.sample(["wall", "spot"]);
+    // Randomize which half the close score field appears
+    this.closeHalf = _.sample(['first', 'second']);
     this.trialList = this.makeTrialList();
   } else {
     // Have to create a client-side player array of same length as server-side
@@ -209,7 +210,7 @@ game_core.prototype.initializeBots = function(trialInfo) {
 
 game_core.prototype.getInitInfo = function(condition, index) {
   // Note: utils.readCSV might be syncronous & blocking
-  var botPositions = utils.readCSV("../metadata/" + condition.botPositions);
+  var botPositions = utils.readCSV("../metadata/V2/" + condition.botPositions);
   return {
     pos : {x: parseFloat(botPositions[index]['x_pos']),
 	   y: parseFloat(botPositions[index]['y_pos'])},
@@ -225,11 +226,11 @@ game_core.prototype.getBotInfo = function(condition, index) {
 };
 
 game_core.prototype.getWallScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/" + condition.wallBackground );  
+  return utils.readCSV("../metadata/V2/" + condition.wallBackground );  
 };
 
 game_core.prototype.getSpotScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/" + condition.spotBackground );  
+  return utils.readCSV("../metadata/V2/" + condition.spotBackground );  
 };
 
 
@@ -292,7 +293,7 @@ game_core.prototype.newRound = function() {
     this.players = this.initializePlayers(this.trialInfo);
     this.trialInfo.wallScoreLocs = this.getWallScoreInfo(this.trialInfo);
     this.trialInfo.spotScoreLocs = this.getSpotScoreInfo(this.trialInfo);
-    this.closeScoreLoc = {x : '', y : ''};
+    this.closeScoreLoc = false;
     this.game_clock = 0;
     // (Re)start simulation
     this.physics_interval_id = this.create_physics_simulation();
@@ -303,51 +304,44 @@ game_core.prototype.newRound = function() {
 game_core.prototype.getFixedConds = function() {
   return [{
     name: "initialVisible",
-    scoreLocCondition : "far",
     numBots : 0,
     showBackground : true,
-    botPositions : "spot-spot-close_simulation-0-non-social.csv",
-    wallBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-0-non-social.csv",
-    spotBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-1-non-social.csv",
-    oneBackground : true,
+    botPositions : "spot-spot-close_simulation-0-non-social.csv", // ignored
+    wallBackground : this.backgroundCondition + "-close_first-asocial-naive-0-0-social-match_bg.csv",
+    spotBackground : undefined,
+    oneBackground : true
   }, {
     name: "initialInvisible",
-    scoreLocCondition : "far",
     numBots : 0,
     botPositions : "spot-spot-close_simulation-0-non-social.csv",
-    wallBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-2-non-social.csv",
-    spotBackground : this.backgroundCondition + "-" + this.backgroundCondition + "-far_player_bg-3-non-social.csv",
-    oneBackground : true,
+    wallBackground : this.backgroundCondition + "-close_first-asocial-naive-0-0-social-match_bg.csv",    
+    spotBackground : undefined,
+    oneBackground : true
   }];
 };
 
 game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
-    var simulationNum = Math.floor(Math.random() * 50);
-    var nonsocial = condition.split("-")[0] == 'none';
-    if(nonsocial) {
-      condition = 'wall-' + condition.split("-")[1]
-      numBots = 0
-    } else {
-      numBots = 2
-    }
-    var conditionPrefix = this.backgroundCondition + "-" + condition;
-    var conditionSuffix = "-" + simulationNum + "-non-social.csv";
+    var simulationNum = _.sample(_.range(2));
+    var numBots = condition === 'social' ? 4 : 0;
+
+    var conditionPrefix = this.backgroundCondition + '-' + this.close_half;
+    var fileStr = conditionPrefix + '-asocial-naive-0-' + simulationNum + '-social-';
+    var match = fileStr + 'match_bg.csv';
+    var mismatch = fileStr + 'mismatch_bg.csv';
+    
     return {
       name : condition,
       numBots : numBots,
-      nonsocial : nonsocial,
-      otherBGCondition : condition.split("-")[0],
-      scoreLocCondition : condition.split("-")[1],
-      botPositions : conditionPrefix + "_simulation" + conditionSuffix,
-      wallBackground : this.backgroundCondition + "-wall-far_player_bg-" + simulationNum + "-non-social.csv",
-      spotBackground : this.backgroundCondition + "-spot-far_player_bg-" + simulationNum + "-non-social.csv", 
+      botPositions : fileStr + 'simulations.csv',
+      wallBackground : this.backgroundCondition === 'wall' ? match : mismatch,
+      spotBackground : this.backgroundCondition === 'wall' ? mismatch : match
     };
   }, this);
 };
 
 game_core.prototype.makeTrialList = function() {
-  var conditions = _.shuffle(['spot-close','spot-far','wall-close','wall-far','none-close','none-far']);
+  var conditions = _.shuffle(['social', 'nonsocial']);
   var defaults = {showBackground : false,
 		  oneBackground : false,
 		  wallBG : this.backgroundCondition == "wall"};
@@ -561,37 +555,22 @@ game_core.prototype.handleBootingConditions = function(p) {
   }
 };
 
-// http://stackoverflow.com/questions/16110758/generate-random-number-with-a-non-uniform-distribution
-poissonRandomNumber = function(lambda) {
-    var L = Math.exp(-lambda),
-        k = 0,
-        p = 1;
-
-    do {
-        k = k + 1;
-        p = p * Math.random();
-    } while (p > L);
-
-    return k - 1;
-}
-
 game_core.prototype.updateCloseScoreLoc = function(p) {
-  // Every so many seconds, move location of score center close to player or turn off
+  // Move score field to player at specified time
+  // (i.e. a second before the bot intervention in the specified half)
+  var botInterventionTimes = [5, 35];
+  var startTime = botInterventionTimes[this.closeHalf] - 1;
+  var endTime = startTime + 15;
 
-  if(this.trialInfo.scoreLocCondition == "close") {
-    this.countdown = this.countdown - 1;
-    if(this.countdown == 0) {
-      if(this.validLoc(this.closeScoreLoc)) {
-	this.closeScoreLoc = {x : '', y : ''};
-	this.countdown = poissonRandomNumber(10*8) + 1;
-      } else {
-	this.closeScoreLoc = this.v_add(p.pos, utils.sampleGaussianJitter(10));
-	this.countdown = poissonRandomNumber(20*8) + 1;
-      }
-    }
-  } else {
-    this.closeScoreLoc = {x : '', y : ''};
+  // place score 
+  if(!this.closeScoreLoc && this.game_clock > startTime && this.game_clock < endTime) {
+    this.closeScoreLoc = this.v_add(p.pos, utils.sampleGaussianJitter(10));
   }
+
+  // Turn off score loc after endTime
+  if (this.closeScoreLoc && this.game_clock > endTime) {
+    this.closeScoreLoc = false;
+  } 
 };
 
 game_core.prototype.updateScores = function(p) {
@@ -610,8 +589,9 @@ game_core.prototype.updateScores = function(p) {
       this.wallScoreLoc = {x:this.trialInfo.wallScoreLocs[this.game_clock]["x_pos"],
 			   y:this.trialInfo.wallScoreLocs[this.game_clock]["y_pos"]};
     }
-    
-    if(this.trialInfo.scoreLocCondition == "close") {
+
+    // TODO: make close score circle bigger if necessary
+    if(this.closeScoreLoc) {
       var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
 			this.distance_between(this.wallScoreLoc, p.pos),
 			this.distance_between(this.closeScoreLoc, p.pos)]);
