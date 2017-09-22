@@ -219,7 +219,7 @@ game_core.prototype.getInitInfo = function(condition, index) {
 };
 
 game_core.prototype.getBotInfo = function(condition, index) {
-  var botInput = utils.readCSV("../metadata/" + condition.botPositions);
+  var botInput = utils.readCSV("../metadata/v2/" + condition.botPositions);
   return _.filter(botInput, function(line) {
     return parseInt(line.pid) === index;
   });
@@ -302,20 +302,25 @@ game_core.prototype.newRound = function() {
 };
 
 game_core.prototype.getFixedConds = function() {
+  var fileStr = (
+    'v2-' + this.backgroundCondition + "-close_first-asocial-naive-0-0-social-"
+  );
+  var matched = fileStr + 'matched_bg.csv';
+  var mismatch = fileStr + 'mismatch_bg.csv';
   return [{
     name: "initialVisible",
     numBots : 0,
     showBackground : true,
-    botPositions : "spot-spot-close_simulation-0-non-social.csv", // ignored
-    wallBackground : this.backgroundCondition + "-close_first-asocial-naive-0-0-social-match_bg.csv",
-    spotBackground : undefined,
+    botPositions : fileStr + 'simulation.csv',
+    wallBackground : this.backgroundCondition === 'wall' ? matched : mismatch,
+    spotBackground : this.backgroundCondition === 'wall' ? mismatch : matched,
     oneBackground : true
   }, {
     name: "initialInvisible",
     numBots : 0,
-    botPositions : "spot-spot-close_simulation-0-non-social.csv",
-    wallBackground : this.backgroundCondition + "-close_first-asocial-naive-0-0-social-match_bg.csv",    
-    spotBackground : undefined,
+    botPositions : fileStr + 'simulation.csv',
+    wallBackground : this.backgroundCondition === 'wall' ? matched : mismatch,
+    spotBackground : this.backgroundCondition === 'wall' ? mismatch : matched,
     oneBackground : true
   }];
 };
@@ -325,15 +330,15 @@ game_core.prototype.getShuffledConds = function(conditions) {
     var simulationNum = _.sample(_.range(2));
     var numBots = condition === 'social' ? 4 : 0;
 
-    var conditionPrefix = this.backgroundCondition + '-' + this.close_half;
+    var conditionPrefix = 'v2-' + this.backgroundCondition + '-close_' + this.closeHalf;
     var fileStr = conditionPrefix + '-asocial-naive-0-' + simulationNum + '-social-';
-    var match = fileStr + 'match_bg.csv';
+    var match = fileStr + 'matched_bg.csv';
     var mismatch = fileStr + 'mismatch_bg.csv';
     
     return {
       name : condition,
       numBots : numBots,
-      botPositions : fileStr + 'simulations.csv',
+      botPositions : fileStr + 'simulation.csv',
       wallBackground : this.backgroundCondition === 'wall' ? match : mismatch,
       spotBackground : this.backgroundCondition === 'wall' ? mismatch : match
     };
@@ -347,7 +352,8 @@ game_core.prototype.makeTrialList = function() {
 		  wallBG : this.backgroundCondition == "wall"};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
-  return _.map(fixedConds.concat(shuffledConds), function(obj) {
+  return _.map(shuffledConds, function(obj) {
+//  return _.map(fixedConds.concat(shuffledConds), function(obj) {
     return _.defaults(obj, defaults);
   });
 };

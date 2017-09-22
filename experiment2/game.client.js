@@ -278,7 +278,7 @@ var timeRemaining = function(remaining, limit) {
 // drawing canvases, and initiate a game instance.
 window.onload = function(){
   //Create our game client instance.
-  globalGame = new game_core({server: false, numBots : 2});
+  globalGame = new game_core({server: false, numBots : 4});
   
   //Connect to the socket.io server!
   client_connect_to_server(globalGame);
