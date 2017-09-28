@@ -69,8 +69,7 @@ var game_core = function(options){
   this.numRounds = 4;
   this.game_clock = 0;
 
-  this.spotScoreLoc = {x:"",y:""};
-  this.wallScoreLoc = {x:"",y:""};
+  this.currScoreLocs = {spot : {x : '', y : ''}, wall : {x : '', y: ''}};
   this.closeScoreLoc = false;
   
   //We create a player set, passing them the game that is running
@@ -89,6 +88,7 @@ var game_core = function(options){
     }];
     // Randomize which score field players get
     this.backgroundCondition = _.sample(["wall", "spot"]);
+    console.log('assigned to ' + this.backgroundCondition + ' condition');
     // Randomize which half the close score field appears
     this.closeHalf = _.sample(['first', 'second']);
     this.trialList = this.makeTrialList();
@@ -210,27 +210,27 @@ game_core.prototype.initializeBots = function(trialInfo) {
 
 game_core.prototype.getInitInfo = function(condition, index) {
   // Note: utils.readCSV might be syncronous & blocking
-  var botPositions = utils.readCSV("../metadata/V2/" + condition.botPositions);
+  var positions = utils.readCSV("../metadata/v2/" + condition.positions);
   return {
-    pos : {x: parseFloat(botPositions[index]['x_pos']),
-	   y: parseFloat(botPositions[index]['y_pos'])},
-    angle : parseFloat(botPositions[index]['angle'])
+    pos : {x: parseFloat(positions[index]['x_pos']),
+	   y: parseFloat(positions[index]['y_pos'])},
+    angle : parseFloat(positions[index]['angle'])
   };
 };
 
 game_core.prototype.getBotInfo = function(condition, index) {
-  var botInput = utils.readCSV("../metadata/v2/" + condition.botPositions);
+  var botInput = utils.readCSV("../metadata/v2/" + condition.positions);
   return _.filter(botInput, function(line) {
     return parseInt(line.pid) === index;
   });
 };
 
 game_core.prototype.getWallScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/V2/" + condition.wallBackground );  
+  return utils.readCSV("../metadata/v2/" + condition.wallBackground );  
 };
 
 game_core.prototype.getSpotScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/V2/" + condition.spotBackground );  
+  return utils.readCSV("../metadata/v2/" + condition.spotBackground );  
 };
 
 
@@ -302,27 +302,27 @@ game_core.prototype.newRound = function() {
 };
 
 game_core.prototype.getFixedConds = function() {
-  var fileStr = this.backgroundCondition + 'demo.csv';
-  var fileStr = (
-    'v2-' + this.backgroundCondition + "-close_first-asocial-naive-0-0-social-"
-  );
-  var matched = fileStr + 'matched_bg.csv';
-  var mismatch = fileStr + 'mismatch_bg.csv';
+  
+  var visibleSimulationNum = _.sample(_.range(20));
+  var invisibleSimulationNum = _.sample(_.range(20));
+  var positionSimulationNum = _.sample(_.range(20));
+  var position = ['v2', this.backgroundCondition, 'close_first-asocial-naive-0',
+		  positionSimulationNum, 'social-simulation.csv'].join('-');
   return [{
     name: "initialVisible",
     numBots : 0,
+    positions : position,
+    wallBackground : 'wall-demo' + visibleSimulationNum + '_bg.csv',
+    spotBackground : 'spot-demo' + visibleSimulationNum + '_bg.csv',
     showBackground : true,
     nonsocial: true,
-    botPositions : fileStr + 'simulation.csv',
-    wallBackground : this.backgroundCondition === 'wall' ? matched : mismatch,
-    spotBackground : this.backgroundCondition === 'wall' ? mismatch : matched,
     oneBackground : true
   }, {
     name: "initialInvisible",
     numBots : 0,
-    botPositions : fileStr + 'simulation.csv',
-    wallBackground : this.backgroundCondition === 'wall' ? matched : mismatch,
-    spotBackground : this.backgroundCondition === 'wall' ? mismatch : matched,
+    positions : position,
+    wallBackground : 'wall-demo' + invisibleSimulationNum + '_bg.csv',
+    spotBackground : 'spot-demo' + invisibleSimulationNum + '_bg.csv', 
     nonsocial: true,
     oneBackground : true
   }];
@@ -330,7 +330,7 @@ game_core.prototype.getFixedConds = function() {
 
 game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
-    var simulationNum = _.sample(_.range(2));
+    var simulationNum = _.sample(_.range(20));
     var numBots = condition === 'social' ? 4 : 0;
 
     var conditionPrefix = 'v2-' + this.backgroundCondition + '-close_' + this.closeHalf;
@@ -342,7 +342,7 @@ game_core.prototype.getShuffledConds = function(conditions) {
       name : condition,
       nonsocial: condition === 'nonsocial',      
       numBots : numBots,
-      botPositions : fileStr + 'simulation.csv',
+      positions : fileStr + 'simulation.csv',
       wallBackground : this.backgroundCondition === 'wall' ? match : mismatch,
       spotBackground : this.backgroundCondition === 'wall' ? mismatch : match
     };
@@ -356,8 +356,7 @@ game_core.prototype.makeTrialList = function() {
 		  wallBG : this.backgroundCondition == "wall"};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
-  return _.map(shuffledConds, function(obj) {
-//  return _.map(fixedConds.concat(shuffledConds), function(obj) {
+  return _.map(fixedConds.concat(shuffledConds), function(obj) {
     return _.defaults(obj, defaults);
   });
 };
@@ -376,7 +375,7 @@ game_core.prototype.v_add = function(a,b) {
   return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() };
 };
 
-game_core.prototype.distance_between = function(obj1, obj2) {
+game_core.prototype.distance = function(obj1, obj2) {
   if(this.validLoc(obj1) && this.validLoc(obj2)) {
     var x1 = obj1.x;
     var x2 = obj2.x;
@@ -418,15 +417,14 @@ game_core.prototype.server_send_update = function(){
     roundNum : this.roundNum,
     gs : this.game_started,
     players: player_packet,
+    condition: this.backgroundCondition,
     trialInfo: {nonsocial : this.trialInfo.nonsocial,
 		oneBackground : this.trialInfo.oneBackground,
-		spotScoreLoc: this.spotScoreLoc,
-		closeScoreLoc: this.closeScoreLoc,
-		wallScoreLoc: this.wallScoreLoc,
+		spotScoreLoc: this.currScoreLocs['spot'],
+		wallScoreLoc: this.currScoreLocs['wall'],
 		showBackground : this.trialInfo.showBackground,
 		wallBG : this.trialInfo.wallBG}
   };
-
   //Send the snapshot to the players
   this.state = state;
   _.map(this.get_active_players(), function(p){
@@ -442,7 +440,7 @@ game_core.prototype.server_update_physics = function() {
     var player = p.player;
 
     // Stop at destination
-    // player.speed = (local_this.distance_between(player.pos, player.destination) < 8 ?
+    // player.speed = (local_this.distance(player.pos, player.destination) < 8 ?
     // 		    0 :
     // 		    player.speed);
     var theta = (player.angle - 90) * Math.PI / 180;
@@ -576,39 +574,38 @@ game_core.prototype.updateCloseScoreLoc = function(p) {
 
   // place score 
   if(!this.closeScoreLoc && inTimeWindow) {
+    console.log('close mode is on!');
     this.closeScoreLoc = true;
   }
 
   // Turn off score loc after endTime
   if (this.closeScoreLoc && this.game_clock > endTime) {
+    console.log('close mode is off...');
     this.closeScoreLoc = false;
   } 
 };
 
 game_core.prototype.updateScores = function(p) {
   if(p) {
-    this.updateCloseScoreLoc(p);
-        
-    // To make social info valid, concatenate score fields with bot's    
-    this.spotScoreLoc = {x:this.trialInfo.spotScoreLocs[this.game_clock]["x_pos"],
-			 y:this.trialInfo.spotScoreLocs[this.game_clock]["y_pos"]};
+    // Only do close spotlight intervention in expt conditions
+    this.currScoreLocs = {
+      'spot' : {
+	x : this.trialInfo.spotScoreLocs[this.game_clock]["x_pos"],
+	y : this.trialInfo.spotScoreLocs[this.game_clock]["y_pos"]},
+      'wall' : {
+	x : this.trialInfo.wallScoreLocs[this.game_clock]["x_pos"],
+	y : this.trialInfo.wallScoreLocs[this.game_clock]["y_pos"]}};
 
-    // TODO: If oneBackground set, ignore wall (double-check this)
-    if(this.trialInfo.oneBackground) {
-      this.wallScoreLoc = {x:"", y:""};
-
-    } else {
-      this.wallScoreLoc = {x:this.trialInfo.wallScoreLocs[this.game_clock]["x_pos"],
-			   y:this.trialInfo.wallScoreLocs[this.game_clock]["y_pos"]};
-    }
-
-    var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
-		      this.distance_between(this.wallScoreLoc, p.pos)]);
-
+    // if oneBackground set, only use background from your condition
+    // otherwise concatenate score fields
+    var dist = (this.trialInfo.oneBackground ?
+		this.distance(this.currScoreLocs[this.backgroundCondition], p.pos) :
+		_.min(_.map(function(x) {this.distance(x, p.pos);},
+			    _.values(this.currScoreLocs))));
+    console.log(dist);
+    
     // get full points when inside spotlight
-    console.log(this.closeScoreLoc);
     p.curr_background = (dist < 50 | this.closeScoreLoc) ? 1 : .2;
-    console.log(p.curr_background);
     p.avg_score = (p.avg_score + p.curr_background/
 		   this.game_length);
     p.total_points = p.avg_score * this.max_bonus;
