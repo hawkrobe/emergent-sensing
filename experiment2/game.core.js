@@ -302,6 +302,7 @@ game_core.prototype.newRound = function() {
 };
 
 game_core.prototype.getFixedConds = function() {
+  var fileStr = this.backgroundCondition + 'demo.csv';
   var fileStr = (
     'v2-' + this.backgroundCondition + "-close_first-asocial-naive-0-0-social-"
   );
@@ -565,15 +566,17 @@ game_core.prototype.handleBootingConditions = function(p) {
 };
 
 game_core.prototype.updateCloseScoreLoc = function(p) {
-  // Move score field to player at specified time
+  // Move score field to player at specified time (in seconds)
   // (i.e. a second before the bot intervention in the specified half)
-  var botInterventionTimes = [5, 35];
-  var startTime = botInterventionTimes[this.closeHalf] - 1;
-  var endTime = startTime + 15;
+  var botInterventionTimes = {'first' : 5, 'second' : 35};
+  var duration = 5;
+  var startTime = (botInterventionTimes[this.closeHalf] - 1) * this.ticks_per_sec;
+  var endTime = startTime + duration * this.ticks_per_sec;
+  var inTimeWindow = this.game_clock > startTime && this.game_clock < endTime;
 
   // place score 
-  if(!this.closeScoreLoc && this.game_clock > startTime && this.game_clock < endTime) {
-    this.closeScoreLoc = this.v_add(p.pos, utils.sampleGaussianJitter(10));
+  if(!this.closeScoreLoc && inTimeWindow) {
+    this.closeScoreLoc = true;
   }
 
   // Turn off score loc after endTime
@@ -586,11 +589,11 @@ game_core.prototype.updateScores = function(p) {
   if(p) {
     this.updateCloseScoreLoc(p);
         
-    // To make social info valid, concatenate score fields with bot's
-    
+    // To make social info valid, concatenate score fields with bot's    
     this.spotScoreLoc = {x:this.trialInfo.spotScoreLocs[this.game_clock]["x_pos"],
 			 y:this.trialInfo.spotScoreLocs[this.game_clock]["y_pos"]};
-    
+
+    // TODO: If oneBackground set, ignore wall (double-check this)
     if(this.trialInfo.oneBackground) {
       this.wallScoreLoc = {x:"", y:""};
 
@@ -599,21 +602,13 @@ game_core.prototype.updateScores = function(p) {
 			   y:this.trialInfo.wallScoreLocs[this.game_clock]["y_pos"]};
     }
 
-    // TODO: make close score circle bigger if necessary
-    if(this.closeScoreLoc) {
-      var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
-			this.distance_between(this.wallScoreLoc, p.pos),
-			this.distance_between(this.closeScoreLoc, p.pos)]);
-    } else {
-      var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
-			this.distance_between(this.wallScoreLoc, p.pos)]);
-    }
-
-    var onWall = this.checkCollision(p, {tolerance: 25, stop: false});
+    var dist = _.min([this.distance_between(this.spotScoreLoc, p.pos),
+		      this.distance_between(this.wallScoreLoc, p.pos)]);
 
     // get full points when inside spotlight
-    p.curr_background = dist < 50 ? 1 : .2;
-    
+    console.log(this.closeScoreLoc);
+    p.curr_background = (dist < 50 | this.closeScoreLoc) ? 1 : .2;
+    console.log(p.curr_background);
     p.avg_score = (p.avg_score + p.curr_background/
 		   this.game_length);
     p.total_points = p.avg_score * this.max_bonus;
