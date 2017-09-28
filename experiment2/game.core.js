@@ -226,11 +226,15 @@ game_core.prototype.getBotInfo = function(condition, index) {
 };
 
 game_core.prototype.getWallScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/v2/" + condition.wallBackground );  
+  return _.map(utils.readCSV("../metadata/v2/" + condition.wallBackground ), row => {
+    return _.mapObject(row, (val, key) => parseFloat(val));
+  });
 };
 
 game_core.prototype.getSpotScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/v2/" + condition.spotBackground );  
+  return _.map(utils.readCSV("../metadata/v2/" + condition.spotBackground ), row => {
+    return _.mapObject(row, (val, key) => parseFloat(val));
+  });
 };
 
 
@@ -356,6 +360,7 @@ game_core.prototype.makeTrialList = function() {
 		  wallBG : this.backgroundCondition == "wall"};
   var fixedConds = this.getFixedConds();
   var shuffledConds = this.getShuffledConds(conditions);
+//  return _.map(shuffledConds, function(obj) {  
   return _.map(fixedConds.concat(shuffledConds), function(obj) {
     return _.defaults(obj, defaults);
   });
@@ -603,12 +608,12 @@ game_core.prototype.updateScores = function(p) {
 
     // if oneBackground set, only use background from your condition
     // otherwise concatenate score fields
+    var that = this;    
     var dist = (this.trialInfo.oneBackground ?
 		this.distance(this.currScoreLocs[this.backgroundCondition], p.pos) :
-		_.min(_.map(function(x) {this.distance(x, p.pos);},
-			    _.values(this.currScoreLocs))));
-    console.log(dist);
-    
+		_.min(_.map(_.values(this.currScoreLocs),
+			    function(x) {return that.distance(x, p.pos);})));
+
     // get full points when inside spotlight
     p.curr_background = (dist < 50 | this.closeScoreLoc) ? 1 : .2;
     p.avg_score = (p.avg_score + p.curr_background/
