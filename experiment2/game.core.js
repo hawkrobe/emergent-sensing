@@ -587,7 +587,12 @@ game_core.prototype.updateCloseScoreLoc = function(p) {
 
 game_core.prototype.updateScores = function(p) {
   if(p) {
+
     // Only do close spotlight intervention in expt conditions
+    if(_.contains(['social', 'nonsocial'], this.trialInfo.name)) {
+      this.updateCloseScoreLoc(p);
+    }
+
     this.currScoreLocs = {
       'spot' : {
 	x : this.trialInfo.spotScoreLocs[this.game_clock]["x_pos"],
