@@ -137,21 +137,14 @@ function drawSafeArea(game) {
 };
 
 function drawScoreField(game){
-  
+  // Only draw the one in your condition...
+  console.log(game.condition);
+  var loc = (game.condition === 'spot' ?
+	     game.trialInfo.spotScoreLoc :
+	     game.trialInfo.wallScoreLoc);
+
   drawSafeArea(game);
-
-  var centerX = game.trialInfo.spotScoreLoc.x;
-  var centerY = game.trialInfo.spotScoreLoc.y;
-  drawSpotlight(game, centerX, centerY);
-
-  var centerX = game.trialInfo.wallScoreLoc.x;
-  var centerY = game.trialInfo.wallScoreLoc.y;
-  drawSpotlight(game, centerX, centerY);
-  
-  var centerX = game.trialInfo.closeScoreLoc.x;
-  var centerY = game.trialInfo.closeScoreLoc.y;
-  drawSpotlight(game, centerX, centerY);
-  
+  drawSpotlight(game, loc.x, loc.y);  
 };
 
 var getMessage = function(roundNum, exploitMechanism) {
