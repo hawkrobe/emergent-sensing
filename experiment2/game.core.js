@@ -311,6 +311,7 @@ game_core.prototype.getFixedConds = function() {
     name: "initialVisible",
     numBots : 0,
     showBackground : true,
+    nonsocial: true,
     botPositions : fileStr + 'simulation.csv',
     wallBackground : this.backgroundCondition === 'wall' ? matched : mismatch,
     spotBackground : this.backgroundCondition === 'wall' ? mismatch : matched,
@@ -321,6 +322,7 @@ game_core.prototype.getFixedConds = function() {
     botPositions : fileStr + 'simulation.csv',
     wallBackground : this.backgroundCondition === 'wall' ? matched : mismatch,
     spotBackground : this.backgroundCondition === 'wall' ? mismatch : matched,
+    nonsocial: true,
     oneBackground : true
   }];
 };
@@ -337,6 +339,7 @@ game_core.prototype.getShuffledConds = function(conditions) {
     
     return {
       name : condition,
+      nonsocial: condition === 'nonsocial',      
       numBots : numBots,
       botPositions : fileStr + 'simulation.csv',
       wallBackground : this.backgroundCondition === 'wall' ? match : mismatch,
