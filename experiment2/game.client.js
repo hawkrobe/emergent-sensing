@@ -108,6 +108,9 @@ function client_onserverupdate_received(data){
       l_player.destination = s_player.destination;
       l_player.curr_background = s_player.cbg;
       l_player.total_points = s_player.tot;
+      l_player.active_points = s_player.act;
+      l_player.star_points = s_player.star;
+      l_player.onwall = s_player.onwall;
       l_player.angle = s_player.angle;
       l_player.pos = globalGame.pos(s_player.pos);
       l_player.speed = s_player.speed;
@@ -222,23 +225,23 @@ function client_update() {
   });
   
   // Draw points scoreboard 
-  $("#cumulative_bonus").html("Total bonus this round: $" +
-			      (self.total_points).fixed(2));
+  $("#star_points").html("Total bonus this round: $" + parseInt(self.star_points));
 
-  $("#curr_bonus").html("Current Score: <span style='color: " 
-			+ getColorForPercentage(self.curr_background) 
-			+";'>" + Math.floor(self.curr_background*100) + "%</span>");
-
-  if(self.curr_background > .2) {
+  // Handle spotlight indicators
+  if(self.onwall) {
+    self.warning = 'Warning: Move off the wall!';
+    document.getElementById('viewport').style.borderColor = 'red';
+  } else if(!globalGame.game_started) {
+    document.getElementById('viewport').style.borderColor = '#333';
+  } else if (self.curr_background > 0.2) {
+    self.warning = '';    
     drawSparkles(globalGame, self);
-  };
-  
-  if(!started) {
-    var left = timeRemaining(globalGame.waiting_remaining,
-			     globalGame.waiting_room_limit);
-    var diff = globalGame.players_threshold - globalGame.player_count;
+    document.getElementById('viewport').style.borderColor = 'yellow';
+  } else {
+    self.warning = '';    
+    document.getElementById('viewport').style.borderColor = 'blue';
   }
-  
+   
   if(globalGame.game_started) {
     var left = Date.now() - globalGame.start_time;
     left = timeRemaining(left, globalGame.round_length);
