@@ -1,9 +1,18 @@
 html , body {
-    background: #ffffff;
-     color: #000000; 
+     background: #212121; 
+     color: #fff; 
      font-family: Helvetica;
      margin: 0; 
      padding: 0;
+}
+
+body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .alignleft {
@@ -16,7 +25,7 @@ html , body {
 
 #main {
 	width: 485px;
-	height: 350px;
+	height: 500px;
 	text-align: center;
 	margin-left: auto;
 	margin-right: auto;
@@ -33,13 +42,25 @@ html , body {
 #second_row {
 	width: 485px;
 	height: 10px;
+	text-align: left;
 }
+
+
 
 #instructions {
 	width: 485px;
 	height: 15px;
 	font: 10pt Helvetica;
+	text-align: center;
 }
+
+#warnings {
+	width: 485px;
+	height: 15px;
+	font: 10pt Helvetica;
+	text-align: left;
+}
+
 
 #viewport {
     border-width: 1px;
