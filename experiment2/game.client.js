@@ -170,6 +170,7 @@ function client_onMessage(data) {
       flashTitle("GO!");  break;
     case 'showInstructions' :
       globalGame.pause = true;
+      document.getElementById('viewport').style.borderColor = '#333';            
       drawInstructions(globalGame);
     }        
     break; 
@@ -220,12 +221,11 @@ function client_update() {
   _.map(globalGame.get_others(globalGame.my_id), function(p){
     if(p.id && !globalGame.trialInfo.nonsocial) {
       drawPlayer(globalGame, p.player);
-      //drawLabel(globalGame, p.player, "Player " + p.id.slice(0,4));
     }
   });
   
   // Draw points scoreboard 
-  $("#star_points").html("Total bonus this round: $" + parseInt(self.star_points));
+  $("#star_points").html("Total points: " + parseInt(self.star_points));
 
   // Handle spotlight indicators
   if(self.onwall) {
