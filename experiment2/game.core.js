@@ -666,6 +666,7 @@ game_core.prototype.create_physics_simulation = function() {
     if(this.server && this.game_started && this.game_clock >= this.game_length) {
       this.stop_update();
       _.map(this.get_active_players(), function(p){
+	p.player.curr_background = 0;
 	p.player.instance.send('s.showInstructions');
       });
     }
