@@ -86,9 +86,12 @@ function drawPlayer(game, player){
 function drawMessage(game, player){
   // Draw message in center (for countdown, e.g.)
   game.ctx.font = "bold 12pt Helvetica";
-  game.ctx.fillStyle = 'red';
+  game.ctx.fillStyle = 'yellow';
   game.ctx.textAlign = 'center';
   game.ctx.fillText(player.message, game.world.width/2, game.world.height/5);
+  game.ctx.fillStyle = 'red';
+  game.ctx.fillText(player.warning, game.world.width/2, game.world.height/2 - 20);
+  
 }; 
 
 function drawLabel(game, player, label) {
@@ -129,13 +132,6 @@ function drawSpotlight(game, centerX, centerY) {
   }
 }
 
-function drawSafeArea(game) {
-  game.ctx.save();
-  game.ctx.fillStyle = NEUTRALCOLOR;
-  game.ctx.fillRect(0,0,game.world.width, game.world.height);
-  game.ctx.restore();
-};
-
 function drawScoreField(game){
   // Only draw the one in your condition...
   console.log(game.condition);
@@ -143,7 +139,6 @@ function drawScoreField(game){
 	     game.trialInfo.spotScoreLoc :
 	     game.trialInfo.wallScoreLoc);
 
-  drawSafeArea(game);
   drawSpotlight(game, loc.x, loc.y);  
 };
 
