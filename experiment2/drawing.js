@@ -147,13 +147,6 @@ var getMessage = function(roundNum, exploitMechanism) {
   if(roundNum == -1) {
     message += "In the first round, the score field " +
       "that determines your reward will be visible. ";
-    if(exploitMechanism == "move") {
-      message += "You will only receive a full score of 100% " +
-	"whenever you are moving.";
-    } else {
-      message += "You will only receive a full score of 100% " +
-	"when you stop moving.";
-    }
   } else if(roundNum == 0) {
     message += "In the next round, the score field will be hidden.";
   } else if(roundNum == 1) {
