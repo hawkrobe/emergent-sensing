@@ -45,8 +45,10 @@ var game_core = function(options){
   
   this.waiting_room_limit = 5; // set maximum waiting room time (in minutes)
   this.round_length = 1.0; // set how long each round will last (in minutes)
-  this.max_bonus = 15.0 / 60 * this.round_length; // total $ players can make in bonuses 
-  this.booting = false;
+  this.max_bonus = 15.0 / 60 * this.round_length; // total $ players can make in bonuses
+
+  // If set to true, boot players for inactivity, hidden tab, and latency issue
+  this.booting = true;
   this.game_started = true;
   this.players_threshold = 1;
 
@@ -528,55 +530,6 @@ game_core.prototype.stop_update = function() {
   clearInterval(this.physics_interval_id);
 };
 
-game_core.prototype.handleHiddenTab = function(p) {
-  // count ticks with hidden tab
-  if(p.visible == 'hidden') {
-    p.hidden_count += 1;
-  }
-  // kick after being hidden for 15 seconds  
-  if(p.hidden_count > this.ticks_per_sec * 15 && !this.debug && !this.test) { 
-    p.hidden = true;
-    console.log('Player ' + p.id + ' will be disconnected for being hidden.');
-  }
-};
-
-game_core.prototype.handleInactivity = function(p) {
-  // Player is inactive if they're sitting in one place; reset after they move again
-  if(p.speed == 0) {
-    p.inactive_count += 1;
-  } else {
-    p.inactive_count = 0;
-  }
-  
-  // kick after being inactive for 30 seconds
-  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug && !this.test) {  
-    p.inactive = true;
-    console.log('Player ' + p.id + ' will be disconnected for inactivity.');
-  }
-};
-
-game_core.prototype.handleLatency = function(p) {
-  // Count time spent experiencing lag (but only when viewing page)
-  if(p.latency > this.tick_frequency && p.visible != 'hidden') {
-    p.lag_count += 1;
-  }
-  // Kick if latency persists 10% of game
-  if(p.lag_count > this.game_length*0.1 && !this.debug && !this.test) {
-    p.lagging = true;
-    console.log('Player ' + p.id + ' will be disconnected because of latency.');
-  }
-};
-
-game_core.prototype.handleBootingConditions = function(p) {
-  if(p.hidden || p.inactive || p.lagging && !this.debug && !this.test) {
-    p.instance.disconnect();
-  } else {
-    this.handleHiddenTab(p);
-    this.handleInactivity(p);
-    this.handleLatency(p);
-  }
-};
-
 game_core.prototype.updateCloseScoreLoc = function(p) {
   // Move score field to player at specified time (in seconds)
   // (i.e. a second before the bot intervention in the specified half)
@@ -636,6 +589,45 @@ game_core.prototype.updateScores = function(p) {
   }
 };
 
+game_core.prototype.handleHiddenTab = function(p, id) {
+  // count ticks with hidden tab
+  if(p.visible == 'hidden') {
+    p.hidden_count += 1;
+  }
+
+  // kick after being hidden for 15 seconds  
+  if(p.hidden_count > this.ticks_per_sec * 30 && !this.debug) { 
+    p.hidden = true;
+    console.log('Player ' + id + ' will be disconnected for being hidden.');
+  }
+};
+
+game_core.prototype.handleInactivity = function(p, id) {
+  // Player is inactive if they're sitting in one place; reset after they move again
+  if(p.onWall) {
+    p.inactive_count += 1;
+  } else {
+    p.inactive_count = 0;
+  }
+  
+  // kick after being inactive for 30 seconds
+  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug) {  
+    p.inactive = true;
+    console.log('Player ' + id + ' will be disconnected for inactivity.');
+  }
+};
+
+game_core.prototype.handleBootingConditions = function(p, id) {
+  console.log('inside booting');
+  if(this.booting) {
+    this.handleHiddenTab(p, id);
+    this.handleInactivity(p, id);
+  }
+  if((p.hidden || p.inactive || p.lagging) && !this.debug) {
+    p.instance.disconnect();
+  } 
+};
+
 game_core.prototype.create_physics_simulation = function() {    
   return setInterval(function(){
     // finish this interval by writing and checking whether it's the end
@@ -654,7 +646,7 @@ game_core.prototype.create_physics_simulation = function() {
 	this.updateScores(p.player);
 
 	// Handle inactive, hidden, or high latency players...
-	this.handleBootingConditions(p.player);
+	this.handleBootingConditions(p.player, p.id);
       }
 
       this.server_send_update();
