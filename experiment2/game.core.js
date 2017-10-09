@@ -49,6 +49,9 @@ var game_core = function(options){
   this.booting = false;
   this.game_started = true;
   this.players_threshold = 1;
+
+  this.star_point_value = 1/4800.0;
+  this.active_point_value = 1/3200.0;
   
   // game and waiting length in seconds
   this.game_length = this.round_length*60*this.ticks_per_sec;
@@ -126,6 +129,9 @@ var game_player = function( game_instance, player_instance, index) {
   this.curr_background = 0; // keep track of current background val
   this.avg_score = 0; // keep track of average score, for bonus
   this.total_points = 0; // keep track of total score, for paying participant
+  this.active_points = 0; // keep track of total score, for paying participant
+  this.star_points = 0; // keep track of total score, for paying participant
+
 
   //This is used in moving us around later
   this.old_state = {pos:{x:0,y:0}};
@@ -406,6 +412,9 @@ game_core.prototype.server_send_update = function(){
 		destination : p.player.destination,
                 cbg: p.player.curr_background,
 		tot: p.player.total_points,
+		act: p.player.active_points,
+		star: p.player.star_points,
+		onwall: p.player.onWall,		
                 angle: p.player.angle,
                 speed: p.player.speed,
 		hidden: p.player.hidden,
@@ -614,11 +623,16 @@ game_core.prototype.updateScores = function(p) {
 		_.min(_.map(_.values(this.currScoreLocs),
 			    function(x) {return that.distance(x, p.pos);})));
 
-    // get full points when inside spotlight
-    p.curr_background = (dist < 50 | this.closeScoreLoc) ? 1 : .2;
-    p.avg_score = (p.avg_score + p.curr_background/
-		   this.game_length);
-    p.total_points = p.avg_score * this.max_bonus;
+    // check whether on wall
+    p.onWall = this.checkCollision(p, {tolerance: 0, stop: false});
+    
+    // get full points when inside spotlight & not on wall
+    p.curr_background = !p.onWall & (dist < 50 | this.closeScoreLoc);
+    
+    p.star_points += p.curr_background;
+    p.active_points += parseInt(!p.onWall); 
+    p.total_points = (this.star_point_value * p.curr_background +
+		      this.active_point_value * parseInt(!p.onWall));
   }
 };
 
