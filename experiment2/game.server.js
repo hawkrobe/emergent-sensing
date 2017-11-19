@@ -205,7 +205,7 @@ game_server.startGame = function(game) {
   game.active = true;
   
   var d = new Date();
-  var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
+  var start_time = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
   
   var name = start_time + '_' + game.player_count + '_' + game.id;
 
@@ -216,7 +216,7 @@ game_server.startGame = function(game) {
 
   game.fs = fs;
   
-  fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y\n", function (err) {if(err) throw err;})
+  fs.writeFile(game_f, "pid,tick,active,x_pos,y_pos,velocity,angle,bg_val,total_points,obs_bg_val,goal_x,goal_y,on_wall,in_close,in_far,round,round_type,bg_cond,vis_file,invis_file,treat_file\n", function (err) {if(err) throw err;})
   game.gameDataStream = fs.createWriteStream(game_f, {'flags' : 'a'});
   
   fs.writeFile(latency_f, "pid,tick,latency\n", function (err) {if(err) throw err;})
