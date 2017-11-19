@@ -315,10 +315,15 @@ game_core.prototype.newRound = function() {
 
 game_core.prototype.getFixedConds = function() {
   
-  var visibleSimulationNum = _.sample(_.range(20));
-  var invisibleSimulationNum = _.sample(_.range(20));
+  var shuffled_list = _.shuffle(_.range(20));
+
+  var visibleSimulationNum = shuffled_list[0];
+  var invisibleSimulationNum = shuffled_list[1];
+
+  console.log(visibleSimulationNum + ' ' + invisibleSimulationNum)
+  
   var positionSimulationNum = _.sample(_.range(20));
-  var position = ['v2', this.backgroundCondition, 'close_first-asocial-naive-0',
+  var position = ['v2', this.backgroundCondition, 'close_first-asocial-smart-0',
 		  positionSimulationNum, 'social-simulation.csv'].join('-');
   return [{
     name: "initialVisible",
@@ -346,7 +351,7 @@ game_core.prototype.getShuffledConds = function(conditions) {
     var numBots = condition === 'social' ? 4 : 0;
 
     var conditionPrefix = 'v2-' + this.backgroundCondition + '-close_' + this.closeHalf;
-    var fileStr = conditionPrefix + '-asocial-naive-0-' + simulationNum + '-social-';
+    var fileStr = conditionPrefix + '-asocial-smart-0-' + simulationNum + '-social-';
     var match = fileStr + 'matched_bg.csv';
     var mismatch = fileStr + 'mismatch_bg.csv';
     
@@ -533,11 +538,18 @@ game_core.prototype.stop_update = function() {
 game_core.prototype.updateCloseScoreLoc = function(p) {
   // Move score field to player at specified time (in seconds)
   // (i.e. a second before the bot intervention in the specified half)
-  var botInterventionTimes = {'first' : 5, 'second' : 35};
-  var duration = 5;
-  var startTime = (botInterventionTimes[this.closeHalf] - 1) * this.ticks_per_sec;
-  var endTime = startTime + duration * this.ticks_per_sec;
-  var inTimeWindow = this.game_clock > startTime && this.game_clock < endTime;
+  var onOne = {'first' : 8, 'second' : 38}[this.closeHalf] * this.ticks_per_sec;
+  var offOne = {'first' : 9, 'second' : 39}[this.closeHalf] * this.ticks_per_sec;
+  var onTwo = {'first' : 10, 'second' : 40}[this.closeHalf] * this.ticks_per_sec;
+  var offTwo = {'first' : 13, 'second' : 43}[this.closeHalf] * this.ticks_per_sec;
+  var onThree = {'first' : 14, 'second' : 44}[this.closeHalf] * this.ticks_per_sec;
+  var offThree = {'first' : 17, 'second' : 47}[this.closeHalf] * this.ticks_per_sec;
+  var onFour = {'first' : 18, 'second' : 48}[this.closeHalf] * this.ticks_per_sec;
+  var offFour = {'first' : 20, 'second' : 50}[this.closeHalf] * this.ticks_per_sec;
+
+  var t = this.game_clock;
+  
+  var inTimeWindow =  (t > onOne && t < offOne) || (t > onTwo && t < offTwo) || (t > onThree && t < offThree) || (t > onFour && t < offFour);
 
   // place score 
   if(!this.closeScoreLoc && inTimeWindow) {
@@ -546,7 +558,7 @@ game_core.prototype.updateCloseScoreLoc = function(p) {
   }
 
   // Turn off score loc after endTime
-  if (this.closeScoreLoc && this.game_clock > endTime) {
+  if (this.closeScoreLoc && !inTimeWindow) {
     console.log('close mode is off...');
     this.closeScoreLoc = false;
   } 
@@ -618,14 +630,10 @@ game_core.prototype.handleInactivity = function(p, id) {
 };
 
 game_core.prototype.handleBootingConditions = function(p, id) {
-  console.log('inside booting');
   if(this.booting) {
     this.handleHiddenTab(p, id);
     this.handleInactivity(p, id);
   }
-  if((p.hidden || p.inactive || p.lagging) && !this.debug) {
-    p.instance.disconnect();
-  } 
 };
 
 game_core.prototype.create_physics_simulation = function() {    
@@ -652,6 +660,15 @@ game_core.prototype.create_physics_simulation = function() {
       this.server_send_update();
       this.writeData();
       this.game_clock += 1;
+
+      for (var i=0; i < active_players.length; i++) {
+	var p = active_players[i].player;
+
+	if((p.hidden || p.inactive || p.lagging) && !this.debug) {
+	  p.instance.disconnect();
+	} 
+      }
+
     }
 
     // Pause & show player next instruction set when time is out

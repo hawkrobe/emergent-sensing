@@ -208,9 +208,11 @@ game_server.startGame = function(game) {
   var start_time = d.getFullYear() + '-' + d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds() + '-' + d.getMilliseconds()
   
   var name = start_time + '_' + game.player_count + '_' + game.id;
+
+  var data_subset = Math.random() < .5 ? 'exploratory' : 'confirmatory';
   
-  var game_f = "data/games/" + name + ".csv"
-  var latency_f = "data/latencies/" + name + ".csv"
+  var game_f = "data/" + data_subset + "/games/" + name + ".csv"
+  var latency_f = "data/" + data_subset + "/latencies/" + name + ".csv"
 
   game.fs = fs;
   
