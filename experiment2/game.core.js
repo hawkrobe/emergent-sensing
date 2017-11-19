@@ -597,13 +597,11 @@ game_core.prototype.updateCloseScoreLoc = function(p) {
 
   // place score 
   if(inTimeWindow) {
-    console.log('far mode is on!');
     this.farScoreLoc = 1;
   }
 
   // Turn off score loc after endTime
   if (!inTimeWindow) {
-    console.log('far mode is off...');
     this.farScoreLoc = 0;
   } 
 
