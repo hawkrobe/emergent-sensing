@@ -525,6 +525,7 @@ game_core.prototype.writeData = function() {
     line += String(local_game.roundNum) + ',';
     line += String(local_game.trialInfo.name)  + ',';
     line += local_game.backgroundCondition + ',';
+    line += local_game.closeHalf + ',';
     line += local_game.visibleSimulationNum + ',';
     line += local_game.invisibleSimulationNum + ',';
     line += local_game.simulationNum;
@@ -641,7 +642,7 @@ game_core.prototype.updateScores = function(p) {
     p.active_points += p.onWall; 
 
     p.total_points += (this.star_point_value * p.curr_background +
-		       this.active_point_value * p.onWall);
+		       this.active_point_value * (1 - p.onWall));
   }
 };
 
