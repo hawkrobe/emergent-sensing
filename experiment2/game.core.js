@@ -322,15 +322,13 @@ game_core.prototype.getFixedConds = function() {
   var visibleSimulationNum = shuffled_list[0];
   var invisibleSimulationNum = shuffled_list[1];
 
-  this.visibleSimulationNum = visibleSimulationNum;
-  this.invisibleSimulationNum = invisibleSimulationNum;
-
   var positionSimulationNum = _.sample(_.range(100));
   var position = ['v2', this.backgroundCondition, 'close_first-asocial-smart-0',
 		  positionSimulationNum, 'social-simulation.csv'].join('-');
   return [{
     name: "initialVisible",
     numBots : 0,
+    simulationNum : visibleSimulationNum,
     positions : position,
     wallBackground : 'wall-demo' + visibleSimulationNum + '_bg.csv',
     spotBackground : 'spot-demo' + visibleSimulationNum + '_bg.csv',
@@ -340,6 +338,7 @@ game_core.prototype.getFixedConds = function() {
   }, {
     name: "initialInvisible",
     numBots : 0,
+    simulationNum : invisibleSimulationNum,
     positions : position,
     wallBackground : 'wall-demo' + invisibleSimulationNum + '_bg.csv',
     spotBackground : 'spot-demo' + invisibleSimulationNum + '_bg.csv', 
@@ -352,9 +351,7 @@ game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
 
     var simulationNum = _.sample(_.range(100));
-
-    this.simulationNum = simulationNum;
-
+    
     var numBots = condition === 'social' ? 4 : 0;
 
     var conditionPrefix = 'v2-' + this.backgroundCondition + '-close_' + this.closeHalf;
@@ -366,6 +363,7 @@ game_core.prototype.getShuffledConds = function(conditions) {
       name : condition,
       nonsocial: condition === 'nonsocial',      
       numBots : numBots,
+      simulationNum : simulationNum,
       positions : fileStr + 'simulation.csv',
       wallBackground : this.backgroundCondition === 'wall' ? match : mismatch,
       spotBackground : this.backgroundCondition === 'wall' ? mismatch : match
@@ -526,9 +524,8 @@ game_core.prototype.writeData = function() {
     line += String(local_game.trialInfo.name)  + ',';
     line += local_game.backgroundCondition + ',';
     line += local_game.closeHalf + ',';
-    line += local_game.visibleSimulationNum + ',';
-    line += local_game.invisibleSimulationNum + ',';
-    line += local_game.simulationNum;
+    line += String(local_game.trialInfo.simulationNum);
+
     local_game.gameDataStream.write(String(line) + "\n",
     				    function (err) {if(err) throw err;});
   });
