@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../favicon.ico">
+
+    <title>Experiment</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="theme.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body role="document">
+    
+    <div class="container theme-showcase" role="main">
+
+      </br>
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100" style="width: 5%;"><span class="sr-only">5% Complete</span></div>
+      </div>
+
+
+      <div class="page-header">
+        <h1>Instructions</h1>
+      </div>
+
+<p>The game you will play is a kind of digital easter egg hunt / hide and seek.</p>
+
+<p>You will navigate your avatar through a rectangular playing area, possibly together with other players, as in this image:</p>
+
+      <p>
+      <img src="no-sparkles.png" alt="Example gameplay" style="width:304px">
+	  </p>
+
+<p>At each point in time during the game, some regions of this area will be “magical bonus regions”.</p>
+
+<p>When you are in a magical bonus region, your avatar will sparkle, as in this image:</p>
+
+      <p>
+      <img src="sparkles.png" alt="Example gameplay" style="width:304px">
+	  </p>
+
+<p>The locations of the magical bonus region moves continuously over time from one point to another, as shown in the following video (you will not be able to view the moving area during gameplay). Hover over the video and press play to see it again:</p>
+
+<video width="304" controls="controls" autoplay>
+  <source src="background-illustration.mov">
+Your browser does not support the video tag.
+</video>
+
+
+<b><p>Your goal is to maximize the amount of time you spend in magical bonus regions regions, i.e., to locate the regions where your avatar sparkles.  Your displayed score will only increase in magical bonus regions.</p></b>
+
+<p>You will only see sparkles on your own avatar, never on other avatars, even if they are in a magical bonus region, but the magical bonus regions are in the same places for everyone.</p>
+
+<b><p>There is no competition between players; the magical region is not consumed by players. It simply changes location over time.</p></b>
+
+      <p>
+        <center><button id="agree" type="button" class="btn btn-sm btn-primary">START</button></center>
+	<noscript><strong>JavaScript must be enabled to start.</strong></noscript>
+      </p>
+
+    </div> <!-- /container -->
+
+
+
+    <script src="parse_url.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      var port = QueryString.port;
+      document.getElementById("agree").onclick = function () {
+      var name = Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10) + '' + Math.floor(Math.random() * 10);
+      var id = name + '-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+      });
+        //location.replace("http://128.52.178.240/index.html?demo=true&id=" + id);
+      location.replace("http://nospoon.mit.edu:8000/index.html?id=" + id);
+      };
+    </script>
+
+   
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="../dist/js/bootstrap.min.js"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+id,0330-607031a6-3b51-47c0-9e31-3ac7f2dfc222
+time,2016-10-23-11-58-25-888
+strategy,accelerate to scan the space, slow down whenever hitting the target, try to scan nearby if the target disappears
+changes,Yes. Changed once to stopping when hitting target. Changed about half way into the game.
+others,Probably
+relative,same
+bugs,Sometimes clicking the screen didn&#039;t seem to change the direction of the pointer
+instructions,No
+fair,Yes
+comments,No

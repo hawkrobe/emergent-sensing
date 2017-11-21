@@ -1,0 +1,10 @@
+id,1206-1db003cf-0b78-4a76-ad28-a7084f3d830b
+time,2016-10-24-22-15-25-191
+strategy,I tried to follow the sparkle area in a particular trajectory. 
+changes,I tried to follow the other avatar to see if the were in a sparkle area.
+others,Yes.
+relative,same
+bugs,After less than a minute, the avatar would not move forward either by clicking or pressing the &quot;A&quot; button, but would still change direction it was pointing in by clicking. The game ended after less than a minute.
+instructions,No.
+fair,Yes.
+comments,Thank you.

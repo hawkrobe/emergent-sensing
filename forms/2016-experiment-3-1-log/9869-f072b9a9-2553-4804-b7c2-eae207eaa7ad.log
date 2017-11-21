@@ -1,0 +1,10 @@
+id,9869-f072b9a9-2553-4804-b7c2-eae207eaa7ad
+time,2016-10-21-16-1-31-285
+strategy,try to find when people stop on the screen
+changes,no
+others,yes
+relative,same
+bugs,choppy sometimes
+instructions,It looked like there was a hidden circle that moved in the instructions but didn&#039;t seem like it in the game
+fair,yes
+comments,no
