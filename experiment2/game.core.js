@@ -71,7 +71,7 @@ var game_core = function(options){
   this.waiting_start = new Date(); 
 
   this.roundNum = -1;
-  this.numRounds = 4;
+  this.numRounds = 6;
   this.game_clock = 0;
 
   this.currScoreLocs = {spot : {x : '', y : ''}, wall : {x : '', y: ''}};
@@ -315,33 +315,52 @@ game_core.prototype.newRound = function() {
   }
 };
 
+game_core.prototype.getPositionFile = function(positionSimulationNum) {
+  return(['v2', this.backgroundCondition, 'close_first-asocial-smart-0',
+	  positionSimulationNum, 'social-simulation.csv'].join('-'));
+}
+
 game_core.prototype.getFixedConds = function() {
   
-  var shuffled_list = _.shuffle(_.range(100));
+  var bg_list = _.shuffle(_.range(100));
+  var position_list = _.shuffle(_.range(100));
 
-  var visibleSimulationNum = shuffled_list[0];
-  var invisibleSimulationNum = shuffled_list[1];
-
-  var positionSimulationNum = _.sample(_.range(100));
-  var position = ['v2', this.backgroundCondition, 'close_first-asocial-smart-0',
-		  positionSimulationNum, 'social-simulation.csv'].join('-');
   return [{
-    name: "initialVisible",
+    name: "initialVisible1",
     numBots : 0,
-    simulationNum : visibleSimulationNum,
-    positions : position,
-    wallBackground : 'wall-demo' + visibleSimulationNum + '_bg.csv',
-    spotBackground : 'spot-demo' + visibleSimulationNum + '_bg.csv',
+    simulationNum : visibleSimulationNum1,
+    positions : this.getPositionFile(position_list[0]),
+    wallBackground : 'wall-demo' + bg_list[0] + '_bg.csv',
+    spotBackground : 'spot-demo' + bg_list[0] + '_bg.csv',
     showBackground : true,
     nonsocial: true,
     oneBackground : true
   }, {
-    name: "initialInvisible",
+    name: "initialVisible2",
     numBots : 0,
-    simulationNum : invisibleSimulationNum,
-    positions : position,
-    wallBackground : 'wall-demo' + invisibleSimulationNum + '_bg.csv',
-    spotBackground : 'spot-demo' + invisibleSimulationNum + '_bg.csv', 
+    simulationNum : visibleSimulationNum2,
+    positions : this.getPositionFile(position_list[1]),
+    wallBackground : 'wall-demo' + bg_list[1] + '_bg.csv',
+    spotBackground : 'spot-demo' + bg_list[1] + '_bg.csv',
+    showBackground : true,
+    nonsocial: true,
+    oneBackground : true
+  }, {
+    name: "initialInvisible1",
+    numBots : 0,
+    simulationNum : invisibleSimulationNum1,
+    positions : this.getPositionFile(position_list[2]),
+    wallBackground : 'wall-demo' + bg_list[2] + '_bg.csv',
+    spotBackground : 'spot-demo' + bg_list[2] + '_bg.csv', 
+    nonsocial: true,
+    oneBackground : true
+  }, {
+    name: "initialInvisible2",
+    numBots : 0,
+    simulationNum : invisibleSimulationNum2,
+    positions : this.getPositionFile(position_list[3]),
+    wallBackground : 'wall-demo' + bg_list[3] + '_bg.csv',
+    spotBackground : 'spot-demo' + bg_list[3] + '_bg.csv', 
     nonsocial: true,
     oneBackground : true
   }];
