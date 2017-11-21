@@ -336,6 +336,15 @@ game_core.prototype.getFixedConds = function() {
     nonsocial: true,
     oneBackground : true
   }, {
+    name: "initialInvisible1",
+    numBots : 0,
+    simulationNum : bg_list[2],
+    positions : this.getPositionFile(position_list[2]),
+    wallBackground : 'wall-demo' + bg_list[2] + '_bg.csv',
+    spotBackground : 'spot-demo' + bg_list[2] + '_bg.csv', 
+    nonsocial: true,
+    oneBackground : true
+  }, {
     name: "initialVisible2",
     numBots : 0,
     simulationNum : bg_list[1],
@@ -343,15 +352,6 @@ game_core.prototype.getFixedConds = function() {
     wallBackground : 'wall-demo' + bg_list[1] + '_bg.csv',
     spotBackground : 'spot-demo' + bg_list[1] + '_bg.csv',
     showBackground : true,
-    nonsocial: true,
-    oneBackground : true
-  }, {
-    name: "initialInvisible1",
-    numBots : 0,
-    simulationNum : bg_list[2],
-    positions : this.getPositionFile(position_list[2]),
-    wallBackground : 'wall-demo' + bg_list[2] + '_bg.csv',
-    spotBackground : 'spot-demo' + bg_list[2] + '_bg.csv', 
     nonsocial: true,
     oneBackground : true
   }, {

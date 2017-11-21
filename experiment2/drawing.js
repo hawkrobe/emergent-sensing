@@ -148,11 +148,16 @@ var getMessage = function(roundNum, exploitMechanism) {
     message += "In the first round, the score field " +
       "that determines your reward will be visible. ";
   } else if(roundNum == 0) {
-    message += "In the next round, the score field will be hidden.";
+    message += "In the next round, the score field " +
+      "that determines your reward will be hidden. ";
   } else if(roundNum == 1) {
+    message += "In the next round, the score field will be visible again.";
+  } else if(roundNum == 2) {
+    message += "In the next round, the score field will be hidden again.";
+  } else if(roundNum == 3) {
     message += "In the next rounds, the score field will be hidden " +
       "and you may participate with other players.";
-  } else if(roundNum > 1) {
+  } else if(roundNum > 3) {
     message += "Click 'Ready' to begin the next round";
   };
   return message;
