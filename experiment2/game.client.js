@@ -90,7 +90,8 @@ function client_ondisconnect(data) {
   } else if(self.lagging) {
     URL += 'latency.html';
   } else {
-    URL += 'end.html';
+    // URL += 'end.html';
+    URL = 'http://mit.co1.qualtrics.com/jfe/form/SV_dak292w2bf2t9m5'
   }
   window.location.replace(URL + '?id=' + globalGame.my_id);
 };

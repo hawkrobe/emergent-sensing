@@ -75,7 +75,8 @@ var game_core = function(options){
   this.game_clock = 0;
 
   this.currScoreLocs = {spot : {x : '', y : ''}, wall : {x : '', y: ''}};
-  this.closeScoreLoc = false;
+  this.closeScoreLoc = 0;
+  this.farScoreLoc = 0;
   
   //We create a player set, passing them the game that is running
   //them, as well. Both the server and the clients need separate
@@ -305,7 +306,8 @@ game_core.prototype.newRound = function() {
     this.players = this.initializePlayers(this.trialInfo);
     this.trialInfo.wallScoreLocs = this.getWallScoreInfo(this.trialInfo);
     this.trialInfo.spotScoreLocs = this.getSpotScoreInfo(this.trialInfo);
-    this.closeScoreLoc = false;
+    this.closeScoreLoc = 0;
+    this.farScoreLoc = 0;
     this.game_clock = 0;
     // (Re)start simulation
     this.physics_interval_id = this.create_physics_simulation();
@@ -315,14 +317,18 @@ game_core.prototype.newRound = function() {
 
 game_core.prototype.getFixedConds = function() {
   
-  var visibleSimulationNum = _.sample(_.range(20));
-  var invisibleSimulationNum = _.sample(_.range(20));
-  var positionSimulationNum = _.sample(_.range(20));
-  var position = ['v2', this.backgroundCondition, 'close_first-asocial-naive-0',
+  var shuffled_list = _.shuffle(_.range(100));
+
+  var visibleSimulationNum = shuffled_list[0];
+  var invisibleSimulationNum = shuffled_list[1];
+
+  var positionSimulationNum = _.sample(_.range(100));
+  var position = ['v2', this.backgroundCondition, 'close_first-asocial-smart-0',
 		  positionSimulationNum, 'social-simulation.csv'].join('-');
   return [{
     name: "initialVisible",
     numBots : 0,
+    simulationNum : visibleSimulationNum,
     positions : position,
     wallBackground : 'wall-demo' + visibleSimulationNum + '_bg.csv',
     spotBackground : 'spot-demo' + visibleSimulationNum + '_bg.csv',
@@ -332,6 +338,7 @@ game_core.prototype.getFixedConds = function() {
   }, {
     name: "initialInvisible",
     numBots : 0,
+    simulationNum : invisibleSimulationNum,
     positions : position,
     wallBackground : 'wall-demo' + invisibleSimulationNum + '_bg.csv',
     spotBackground : 'spot-demo' + invisibleSimulationNum + '_bg.csv', 
@@ -342,11 +349,13 @@ game_core.prototype.getFixedConds = function() {
 
 game_core.prototype.getShuffledConds = function(conditions) {
   return _.map(_.shuffle(conditions), function(condition) {
-    var simulationNum = _.sample(_.range(20));
+
+    var simulationNum = _.sample(_.range(100));
+    
     var numBots = condition === 'social' ? 4 : 0;
 
     var conditionPrefix = 'v2-' + this.backgroundCondition + '-close_' + this.closeHalf;
-    var fileStr = conditionPrefix + '-asocial-naive-0-' + simulationNum + '-social-';
+    var fileStr = conditionPrefix + '-asocial-smart-0-' + simulationNum + '-social-';
     var match = fileStr + 'matched_bg.csv';
     var mismatch = fileStr + 'mismatch_bg.csv';
     
@@ -354,6 +363,7 @@ game_core.prototype.getShuffledConds = function(conditions) {
       name : condition,
       nonsocial: condition === 'nonsocial',      
       numBots : numBots,
+      simulationNum : simulationNum,
       positions : fileStr + 'simulation.csv',
       wallBackground : this.backgroundCondition === 'wall' ? match : mismatch,
       spotBackground : this.backgroundCondition === 'wall' ? mismatch : match
@@ -506,7 +516,16 @@ game_core.prototype.writeData = function() {
     line += p.player.total_points.fixed(2) +',';
     line += p.player.curr_background +',';
     line += p.player.destination.x +',';
-    line += p.player.destination.y;
+    line += p.player.destination.y + ',';
+    line += p.player.onWall + ',';
+    line += String(local_game.closeScoreLoc) + ',';
+    line += String(local_game.farScoreLoc) + ',';
+    line += String(local_game.roundNum) + ',';
+    line += String(local_game.trialInfo.name)  + ',';
+    line += local_game.backgroundCondition + ',';
+    line += local_game.closeHalf + ',';
+    line += String(local_game.trialInfo.simulationNum);
+
     local_game.gameDataStream.write(String(line) + "\n",
     				    function (err) {if(err) throw err;});
   });
@@ -530,26 +549,60 @@ game_core.prototype.stop_update = function() {
   clearInterval(this.physics_interval_id);
 };
 
+game_core.prototype.getInClose = function(whichHalf) {
+
+  var onOne = {'first' : 8, 'second' : 38}[whichHalf] * this.ticks_per_sec;
+  var offOne = {'first' : 9, 'second' : 39}[whichHalf] * this.ticks_per_sec;
+  var onTwo = {'first' : 10, 'second' : 40}[whichHalf] * this.ticks_per_sec;
+  var offTwo = {'first' : 13, 'second' : 43}[whichHalf] * this.ticks_per_sec;
+  var onThree = {'first' : 14, 'second' : 44}[whichHalf] * this.ticks_per_sec;
+  var offThree = {'first' : 17, 'second' : 47}[whichHalf] * this.ticks_per_sec;
+  var onFour = {'first' : 18, 'second' : 48}[whichHalf] * this.ticks_per_sec;
+  var offFour = {'first' : 20, 'second' : 50}[whichHalf] * this.ticks_per_sec;
+
+  var t = this.game_clock;
+  
+  var inTimeWindow =  (t > onOne && t < offOne) || (t > onTwo && t < offTwo) || (t > onThree && t < offThree) || (t > onFour && t < offFour);
+
+  return(inTimeWindow);
+}
+
 game_core.prototype.updateCloseScoreLoc = function(p) {
   // Move score field to player at specified time (in seconds)
   // (i.e. a second before the bot intervention in the specified half)
-  var botInterventionTimes = {'first' : 5, 'second' : 35};
-  var duration = 5;
-  var startTime = (botInterventionTimes[this.closeHalf] - 1) * this.ticks_per_sec;
-  var endTime = startTime + duration * this.ticks_per_sec;
-  var inTimeWindow = this.game_clock > startTime && this.game_clock < endTime;
+
+  var farHalf;
+  if(this.closeHalf == 'first') {
+    farHalf = 'second';
+  } else {
+    farHalf = 'first';
+  }
+
+  var inTimeWindow = this.getInClose(this.closeHalf);
 
   // place score 
-  if(!this.closeScoreLoc && inTimeWindow) {
-    console.log('close mode is on!');
-    this.closeScoreLoc = true;
+  if(inTimeWindow) {
+    this.closeScoreLoc = 1;
   }
 
   // Turn off score loc after endTime
-  if (this.closeScoreLoc && this.game_clock > endTime) {
-    console.log('close mode is off...');
-    this.closeScoreLoc = false;
+  if (!inTimeWindow) {
+    this.closeScoreLoc = 0;
   } 
+
+
+  var inTimeWindow = this.getInClose(farHalf);
+
+  // place score 
+  if(inTimeWindow) {
+    this.farScoreLoc = 1;
+  }
+
+  // Turn off score loc after endTime
+  if (!inTimeWindow) {
+    this.farScoreLoc = 0;
+  } 
+
 };
 
 game_core.prototype.updateScores = function(p) {
@@ -583,9 +636,10 @@ game_core.prototype.updateScores = function(p) {
     p.curr_background = !p.onWall & (dist < 50 | this.closeScoreLoc);
     
     p.star_points += p.curr_background;
-    p.active_points += parseInt(!p.onWall); 
-    p.total_points = (this.star_point_value * p.curr_background +
-		      this.active_point_value * parseInt(!p.onWall));
+    p.active_points += p.onWall; 
+
+    p.total_points += (this.star_point_value * p.curr_background +
+		       this.active_point_value * (1 - p.onWall));
   }
 };
 
@@ -618,14 +672,10 @@ game_core.prototype.handleInactivity = function(p, id) {
 };
 
 game_core.prototype.handleBootingConditions = function(p, id) {
-  console.log('inside booting');
   if(this.booting) {
     this.handleHiddenTab(p, id);
     this.handleInactivity(p, id);
   }
-  if((p.hidden || p.inactive || p.lagging) && !this.debug) {
-    p.instance.disconnect();
-  } 
 };
 
 game_core.prototype.create_physics_simulation = function() {    
@@ -652,6 +702,15 @@ game_core.prototype.create_physics_simulation = function() {
       this.server_send_update();
       this.writeData();
       this.game_clock += 1;
+
+      for (var i=0; i < active_players.length; i++) {
+	var p = active_players[i].player;
+
+	if((p.hidden || p.inactive || p.lagging) && !this.debug) {
+	  p.instance.disconnect();
+	} 
+      }
+
     }
 
     // Pause & show player next instruction set when time is out
@@ -673,30 +732,30 @@ game_core.prototype.showInstructions = function() {
 
 //Prevents people from leaving the arena
 game_core.prototype.checkCollision = function(item, options) {
-  var collision = false;
+  var collision = 0;
   var tolerance = options.tolerance;
   var stop = options.stop;
   
   //Left wall.
   if(item.pos.x <= item.pos_limits.x_min + tolerance){
-    collision = true;
+    collision = 1;
     item.pos.x = stop ? item.pos_limits.x_min : item.pos.x;
   }
   //Right wall
   if(item.pos.x >= item.pos_limits.x_max - tolerance){
-    collision = true;
+    collision = 1;
     item.pos.x = stop ? item.pos_limits.x_max : item.pos.x;
   }
 
   //Roof wall.
   if(item.pos.y <= item.pos_limits.y_min + tolerance) {
-    collision = true;
+    collision = 1;
     item.pos.y = stop ? item.pos_limits.y_min : item.pos.y;
   }
 
   //Floor wall
   if(item.pos.y >= item.pos_limits.y_max - tolerance) {
-    collision = true;
+    collision = 1;
     item.pos.y = stop ? item.pos_limits.y_max : item.pos.y;
   }
 
