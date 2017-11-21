@@ -1,0 +1,10 @@
+id,6714-e719eac6-3271-428a-ba34-4e7888f248b9
+time,2016-10-22-14-37-46-932
+strategy,Search for the bonus region, try to follow it or stop in it. If I see another player purposefully moving in an area (not accelerating) or stopped, go to that area.
+changes,No, once I developed this strategy I stuck with it.
+others,Yes.
+relative,same
+bugs,Yes, sometimes movement was choppy, sometimes my cursor did not respond right away to my signals (directions, accelerate, stop).
+instructions,No.
+fair,Yes.
+comments,No comments.

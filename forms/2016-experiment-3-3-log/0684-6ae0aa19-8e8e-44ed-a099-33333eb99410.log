@@ -1,0 +1,10 @@
+id,0684-6ae0aa19-8e8e-44ed-a099-33333eb99410
+time,2016-10-24-11-2-15-468
+strategy,went to other players if they suddenly stopped
+changes,no
+others,yes
+relative,same
+bugs,buggy movements when moving fast, game stopped for about 20 seconds then everything moved fast without any input to compensate for lost time
+instructions,no
+fair,yes
+comments,

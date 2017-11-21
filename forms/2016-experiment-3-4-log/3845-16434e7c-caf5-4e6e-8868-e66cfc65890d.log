@@ -1,0 +1,10 @@
+id,3845-16434e7c-caf5-4e6e-8868-e66cfc65890d
+time,2016-10-26-13-22-49-411
+strategy,Randomly move around, then follow other players when they slow down and group together
+changes,I gradually shifted more toward following other players.
+others,Yes
+relative,same
+bugs,slight choppiness
+instructions,yes, about the magical areas moving around for everybody
+fair,yes
+comments,
