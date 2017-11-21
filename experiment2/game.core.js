@@ -328,7 +328,7 @@ game_core.prototype.getFixedConds = function() {
   return [{
     name: "initialVisible1",
     numBots : 0,
-    simulationNum : visibleSimulationNum1,
+    simulationNum : bg_list[0],
     positions : this.getPositionFile(position_list[0]),
     wallBackground : 'wall-demo' + bg_list[0] + '_bg.csv',
     spotBackground : 'spot-demo' + bg_list[0] + '_bg.csv',
@@ -338,7 +338,7 @@ game_core.prototype.getFixedConds = function() {
   }, {
     name: "initialVisible2",
     numBots : 0,
-    simulationNum : visibleSimulationNum2,
+    simulationNum : bg_list[1],
     positions : this.getPositionFile(position_list[1]),
     wallBackground : 'wall-demo' + bg_list[1] + '_bg.csv',
     spotBackground : 'spot-demo' + bg_list[1] + '_bg.csv',
@@ -348,7 +348,7 @@ game_core.prototype.getFixedConds = function() {
   }, {
     name: "initialInvisible1",
     numBots : 0,
-    simulationNum : invisibleSimulationNum1,
+    simulationNum : bg_list[2],
     positions : this.getPositionFile(position_list[2]),
     wallBackground : 'wall-demo' + bg_list[2] + '_bg.csv',
     spotBackground : 'spot-demo' + bg_list[2] + '_bg.csv', 
@@ -357,7 +357,7 @@ game_core.prototype.getFixedConds = function() {
   }, {
     name: "initialInvisible2",
     numBots : 0,
-    simulationNum : invisibleSimulationNum2,
+    simulationNum : bg_list[3],
     positions : this.getPositionFile(position_list[3]),
     wallBackground : 'wall-demo' + bg_list[3] + '_bg.csv',
     spotBackground : 'spot-demo' + bg_list[3] + '_bg.csv', 
