@@ -7,6 +7,7 @@ output: html_notebook
 
 ```{r}
 library(tidyverse)
+library(tidyboot)
 source('./helpers.R')
 ```
 
@@ -66,6 +67,10 @@ clicks = d %>%
   filter(click)
 ```
 
+# Visualize
+
+Look at full distribution 
+
 ```{r}
 ggplot(clicks %>% filter(goal_condition != 'none') %>%
          mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')), 
@@ -75,4 +80,22 @@ ggplot(clicks %>% filter(goal_condition != 'none') %>%
   theme_bw() +
   xlab("distance between bot and click") +
   ylab("density") 
+```
+
+Version with bootstrapped error bars
+
+```{r}
+dodge <- position_dodge(width=0.9)
+
+clicks.toplot <- clicks %>% 
+   mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+   filter(goal_condition != 'none') %>% 
+    group_by(botExploiting, goal_condition) %>%
+   tidyboot_mean(dist_bw_goal_and_bot) 
+ggplot(clicks.toplot, aes(x = botExploiting, y = empirical_stat, color = goal_condition)) +
+    geom_bar(stat = 'identity', position = dodge, alpha = .5) +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), position =dodge, width = 0) +
+    theme_bw() +
+    xlab("distance between bot and click") +
+    ylab("density") 
 ```
