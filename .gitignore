@@ -4,6 +4,7 @@ db/*
 .DS_Store
 light-fields/*
 node_modules/*
+*.nb.html
 */node_modules/*
 */data/games/*.csv 
 */data/latencies/*.csv
@@ -13,3 +14,4 @@ node_modules/*
 */log/*
 datapile/*
 */data/metadata/*
+.Rproj.user
