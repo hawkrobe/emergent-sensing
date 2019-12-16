@@ -16,15 +16,9 @@ var
     _               = require('underscore'),
     fs              = require('fs');
 
-if (use_db) {
-    database        = require(__dirname + "/database"),
-    connection      = database.getConnection();
-}
-
-game_server = require('./game.server.js');
-utils = require('./utils.js');
-
-global_player_set = {}
+var game_server = require('./game.server.js');
+var utils = require('./utils.js');
+var global_player_set = {};
 
 // Log something so we know that server-side setup succeeded
 console.log("info  - socket.io started");
@@ -37,37 +31,39 @@ app.get( '/*' , function( req, res ) {
     var file = req.params[0]; 
     console.log('\t :: Express :: file requested: ' + file);    
     
-    if(req.query.id && !valid_id(req.query.id)) {
-	res.redirect('http://projects.csail.mit.edu/ci/turk/forms/invalid.html')
-    } else {
-	if(req.query.id && req.query.id in global_player_set) {
-	    res.redirect('http://projects.csail.mit.edu/ci/turk/forms/duplicate.html')
-	} else {
-	    // give them what they want
-	    res.sendfile("./" + file);
-	}
-    }
+   res.sendfile("./" + file);
+
+    // if(req.query.id && !valid_id(req.query.id)) {
+    // 	res.redirect('http://projects.csail.mit.edu/ci/turk/forms/invalid.html')
+    // } else {
+    // 	if(req.query.id && req.query.id in global_player_set) {
+    // 	    res.redirect('http://projects.csail.mit.edu/ci/turk/forms/duplicate.html')
+    // 	} else {
+    // 	    // give them what they want
+    // 	    res.sendfile("./" + file);
+    // 	}
+    // }
 }); 
 
 // Socket.io will call this function when a client connects. We check
 // to see if the client supplied a id. If so, we distinguish them by
 // that, otherwise we assign them one at random
 io.on('connection', function (client) {
-    // Recover query string information and set condition
-    var hs = client.handshake;    
-    var query = require('url').parse(client.handshake.headers.referer, true).query;
+  // Recover query string information and set condition
+  var hs = client.request;
+  try {
+    var query = require('url').parse(hs.headers.referer, true).query;
     if( !(query.id && query.id in global_player_set) ) {
-	if(query.id) {
-	    global_player_set[query.id] = true
-	    var id = query.id; // use id from query string if exists
-	} else {
-	    var id = utils.UUID();
-	}
-	if(valid_id(id)) {
-	    console.log("user connecting...")
-	    initialize(query, client, id);
-	}
+      var id = query.id ? query.id : utils.UUID();
+      global_player_set[query.id] = true;
+      if(valid_id(id)) {
+	console.log("user connecting...");
+	initialize(query, client, id);
+      }
     }
+  } catch (err) {
+    console.log("connection failed with error: " + err);
+  }
 });
 
 var valid_id = function(id) {
@@ -82,7 +78,7 @@ var initialize = function(query, client, id) {
     console.log('\t socket.io:: player ' + client.userid + ' connected');
 
     //Pass off to game.server.js code
-    game_server.findGame(client);
+    game_server.findGame(client, query.demo == 'true');
     
     // Now we want set up some callbacks to handle messages that clients will send.
     // We'll just pass messages off to the server_onMessage function for now.

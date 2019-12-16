@@ -15,17 +15,16 @@
   client creates one for itself to play the game. When you set a
   variable, remember that it's only set in that instance.
 */
-var has_require = typeof require !== 'undefined';
+var has_require = typeof require !== 'undefined'
 
 if( typeof _ === 'undefined' ) {
     if( has_require ) {
-      var _ = require('underscore');
-      var fs = require("fs");
+        _ = require('underscore')
     }
     else throw new Error('mymodule requires underscore, see http://underscorejs.org');
 }
 
-var game_core = function(game_instance, demo){
+var game_core = function(game_instance){
 
     this.debug = false
 
@@ -46,31 +45,22 @@ var game_core = function(game_instance, demo){
     //How often the players move forward <global_speed>px in ms.
     this.tick_frequency = 125;     //Update 8 times per second
     this.ticks_per_sec = 1000/125
-  this.numFadeSteps = 50;
 
-  this.background_id = ''
-  
     if(this.debug) {
 	this.waiting_room_limit = 0.25; // set maximum waiting room time (in minutes)
 	this.round_length = 1; // set how long each round will last (in minutes)
-	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonus 
+	this.max_bonus = 1.25*6/this.round_length; // total $ players can make in bonuses 
 	this.booting = true;
     } else {
-	this.waiting_room_limit = 3 // set maximum waiting room time (in minutes)
-	this.round_length = 5 // set how long each round will last (in minutes)
+	this.waiting_room_limit = 5 // set maximum waiting room time (in minutes)
+	this.round_length = 6 // set how long each round will last (in minutes)
 	this.max_bonus = 1.25; // total $ players can make in bonuses 
-	this.booting = !demo;
+	this.booting = false;
     }
-
-  // ( game length * 8 * a * 60 + b * 60 * 8 * (game length + waiting length)/10 + HIT base pay) * tasks per hour
-  // s * 60 * 60 * 8 + a * 60 * 60 * 8 = 15; a * 60 * 60 * 8 = 7.25 
-  this.star_point_value = 1/4800.0;
-  this.active_point_value = 1/3200.0;
-
 
     // game and waiting length in seconds
     this.game_length = this.round_length*60*this.ticks_per_sec;
-  
+
     //The speed at which the clients move (e.g. # px/tick)
     this.min_speed = 17 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
     this.max_speed = 57 /this.ticks_per_sec; // 7.5cm * 3 * .5s 
@@ -125,15 +115,12 @@ var game_player = function( game_instance, player_instance) {
     this.lagging = false;
     this.lag_count = 0;
     this.message = '';
-    this.warning = '';
 
     this.info_color = 'rgba(255,255,255,0)';
     this.id = '';
     this.curr_background = 0; // keep track of current background val
     this.avg_score = 0; // keep track of average score, for bonus
     this.total_points = 0; // keep track of total score, for paying participant
-    this.active_points = 0; // keep track of total score, for paying participant
-    this.star_points = 0; // keep track of total score, for paying participant
 
     //This is used in moving us around later
     this.old_state = {pos:{x:0,y:0}};
@@ -153,7 +140,6 @@ var game_player = function( game_instance, player_instance) {
         this.angle = null;
     }
     this.speed = this.game.min_speed;
-  this.destination = {x:'',y:''};//this.pos;
     this.old_speed = this.speed
     this.old_angle = this.angle
     this.color = 'white';
@@ -201,10 +187,6 @@ game_core.prototype.pos = function(a) { return {x:a.x,y:a.y}; };
 //Add a 2d vector with another one and return the resulting vector
 game_core.prototype.v_add = function(a,b) { return { x:(a.x+b.x).fixed(), y:(a.y+b.y).fixed() }; };
 
-game_core.prototype.getSpotScoreInfo = function(condition) {
-  return utils.readCSV("../metadata/background-" + this.background_id + ".csv");  
-};
-
 
 // SERVER FUNCTIONS
 
@@ -222,12 +204,10 @@ game_core.prototype.server_send_update = function(){
                         pos: p.player.pos,
                         cbg: p.player.curr_background,
 			tot: p.player.total_points,
-			act: p.player.active_points,
-			star: p.player.star_points,
                         angle: p.player.angle,
                         speed: p.player.speed,
 			onwall: p.player.onwall,
-			hidden: p.player.hidden,
+			kicked: p.player.kicked,
 			inactive: p.player.inactive,
 			lagging: p.player.lagging}}
         } else {
@@ -237,8 +217,7 @@ game_core.prototype.server_send_update = function(){
     })
     if(this.game_started) {
 	var state = {
-	  spotScoreLoc : this.spotScoreLoc,
-          gs : this.game_started,                      // true when game's started
+            gs : this.game_started,                      // true when game's started
 	};
     } else {
 	var state = {
@@ -249,8 +228,7 @@ game_core.prototype.server_send_update = function(){
 	};
     }
     _.extend(state, {players: player_packet})
-  _.extend(state, {game_clock: this.game_clock});
-  
+    
     //Send the snapshot to the players
     this.state = state;
     _.map(local_game.get_active_players(), function(p){
@@ -263,11 +241,6 @@ game_core.prototype.server_update_physics = function() {
     var local_gamecore = this;
     _.map(this.get_active_players(), function(p){
         var player = p.player;
-
-      // player.speed = (local_this.distance_between(player.pos, player.destination) < 8 ?
-      // 		    0 :
-      // 		    player.speed);
-
         r1 = player.speed; 
         theta1 = (player.angle - 90) * Math.PI / 180;
         player.old_state.pos = local_gamecore.pos(player.pos) ;
@@ -277,7 +250,7 @@ game_core.prototype.server_update_physics = function() {
         };  
         player.pos = local_gamecore.v_add( player.old_state.pos, new_dir );
 	if(player.pos) {
-	  player.game.checkCollision( player, {tolerance: 0, stop: true});
+            player.game.check_collision( player );
 	}
         // Also update the current points at this new position
     })
@@ -301,10 +274,7 @@ game_core.prototype.writeData = function() {
 	line += p.player.speed +',';
 	line += player_angle +',';
 	line += p.player.curr_background +',';
-	line += p.player.total_points.fixed(2) +',';
-    line += p.player.curr_background +',';
-      line += p.player.destination.x +',';
-      line += p.player.destination.y;
+	line += p.player.total_points.fixed(2) ;
 	if(local_game.game_started) {
 	    local_game.gameDataStream.write(String(line) + "\n",
 					    function (err) {if(err) throw err;});
@@ -322,12 +292,6 @@ game_core.prototype.writeData = function() {
 game_core.prototype.server_newgame = function() {
     var local_gamecore = this;
     
-  this.spotScoreLoc = {x:"",y:""};
-
-    if(this.server) {
-      this.spotScoreLocs = this.getSpotScoreInfo();
-    }
-
     // Don't want players moving during countdown
     //_.map(local_gamecore.get_active_players(), function(p) {p.player.speed = 0;})
         
@@ -336,13 +300,14 @@ game_core.prototype.server_newgame = function() {
 
     //Tell clients about it so they can call their newgame procedure (which does countdown)
     _.map(local_gamecore.get_active_players(), function(p) {
-      p.player.instance.send('s.begin_game.');
-    })
+	p.player.instance.send('s.begin_game.')})
 
     // Launch game after countdown;
     setTimeout(function(){
         local_gamecore.game_started = true;
 	local_gamecore.game_clock = 0;
+//        _.map(local_gamecore.get_active_players(), function(p) {
+//	    p.player.speed = local_gamecore.min_speed});
     }, 3000);
 };
 
@@ -382,7 +347,7 @@ game_core.prototype.create_physics_simulation = function() {
 	    // finish this interval by writing and checking whether it's the end
 
 	if (this.server){
-	    this.server_update_physics();
+	    this.update_physics();
 	}
 	
 	var local_game = this; // need a new local game w/ game clock change
@@ -392,15 +357,64 @@ game_core.prototype.create_physics_simulation = function() {
 		var p = active_players[i]
 		// ping players to estimate latencies
 		p.player.instance.emit('ping', {sendTime : Date.now(),
-					        tick_num: local_game.game_clock});
+					        tick_num: local_game.game_clock})
 		// compute scores
 		if(p.player) {
 
-		  // handle scoring
-		  this.updateScores(p.player);
-		  
-		  // Handle inactive, hidden, or high latency players...
-		  this.handleBootingConditions(p.player, p.id);
+		    var on_wall = local_game.check_collision(p.player)
+		    if(on_wall) {
+			p.player.curr_background = 0;
+			p.player.onwall = true;
+		    } else if(!this.game_started) {
+			p.player.curr_background = local_game.waiting_background;
+			p.player.onwall = false;
+		    } else {
+			p.player.onwall = false;
+		    }
+		    
+		    p.player.avg_score = p.player.avg_score + p.player.curr_background/local_game.game_length;
+		    p.player.total_points = p.player.avg_score * local_game.max_bonus;
+		    
+		    // Handle inactive, hidden, or high latency players...
+		    if(p.player.kicked || p.player.inactive || p.player.lagging) {
+			p.player.instance.disconnect();
+		    } else {
+			if(p.player.visible == 'hidden') {
+			    p.player.hidden_count += 1
+			}
+			if(p.player.hidden_count > local_game.ticks_per_sec*15) { // kick after being hidden for 15 seconds
+			    if(local_game.booting) {
+				p.player.kicked = true
+				console.log('Player ' + p.id + ' will be disconnected for being hidden.')
+			    }
+			}
+			var not_changing = p.player.last_speed == p.player.speed && p.player.last_angle == p.player.angle;
+			p.player.last_speed = p.player.speed
+			p.player.last_angle = p.player.angle
+			if(on_wall && not_changing) {
+			    p.player.inactive_count += 1
+			}
+			if(p.player.inactive_count > local_game.ticks_per_sec*30) {  // kick after being inactive for 30 seconds
+			    if(local_game.booting) {
+				if(p.player.lag_count > local_game.game_clock*0.1) {
+				    p.player.lagging = true
+				    console.log('Player ' + p.id + ' will be disconnected because of latency.')
+				} else {
+				    p.player.inactive = true
+				    console.log('Player ' + p.id + ' will be disconnected for inactivity.')
+				}
+			    }
+			}
+			if(p.player.latency > this.tick_frequency) {
+			    if(p.player.visible != 'hidden') {
+				p.player.lag_count += 1
+			    }
+			}
+			if(p.player.lag_count > local_game.game_length*0.1) {
+			    p.player.lagging = true
+			    console.log('Player ' + p.id + ' will be disconnected because of latency.')
+			}
+		    }
 		}
 	    }
 	}
@@ -428,130 +442,86 @@ game_core.prototype.create_physics_simulation = function() {
     }.bind(this), this.tick_frequency);
 };
 
-game_core.prototype.checkCollision = function(item, options) {
-  var collision = false;
-  var tolerance = options.tolerance;
-  var stop = options.stop;
-  
-  //Left wall.
-  if(item.pos.x <= item.pos_limits.x_min + tolerance){
-    collision = true;
-    item.pos.x = stop ? item.pos_limits.x_min : item.pos.x;
-  }
-  //Right wall
-  if(item.pos.x >= item.pos_limits.x_max - tolerance){
-    collision = true;
-    item.pos.x = stop ? item.pos_limits.x_max : item.pos.x;
-  }
+game_core.prototype.update_physics = function() {
+    if(this.server) {
+        this.server_update_physics();
+	var t = 0;
+        // start reading csv and updating background once game starts
+	if(this.game_started && this.game_clock < this.game_length) {
+	    t = this.game_clock;
+	}
+	if(t % 1 == 0) {
+            var local_game = this;
+	    var this_file = this.noise_location+'t'+t+'.csv'
+            local_game.fs.open(this_file,
+			       'r', function(err, fd) {
+				   var players = local_game.get_active_players()
+				   for (i=0; i < players.length; i++) {
+				       var p = players[i];
+				       var pos = null
+				       if(p)
+					   pos = p.player.pos;
+				       
+				       if(pos) {
+					   var loc = (280*5 + 1)*Math.round(pos.x) + Math.round(pos.y)*5;
+					   var buf = new Buffer(p.id.length + 4)
+					   buf.write(p.id)
+					   local_game.fs.read(fd, buf, p.id.length, 4, loc, 
+							      function(err, bytesRead, buffer) {
+								  var buf_string = buffer.toString('utf8')
+								  var pid = buf_string.slice(0,p.id.length)
+								  var val = buf_string.slice(p.id.length)
+								  if(err) 
+								      console.log('update_physics: ' + err + ' pos.x: ' + pos.x + ' pos.y: ' + pos.y + ' loc: ' + loc)
+								  else {
+								      var player = local_game.get_player(pid)
+								      if(player) {
+									  player.curr_background = 1 - val
+								      }
+								  }
+							      });
+				       }
+				   }
+				   local_game.fs.close(fd, function(){})
+				   
+			       })
+	}
+	
+    };
+}
 
-  //Roof wall.
-  if(item.pos.y <= item.pos_limits.y_min + tolerance) {
-    collision = true;
-    item.pos.y = stop ? item.pos_limits.y_min : item.pos.y;
-  }
-
-  //Floor wall
-  if(item.pos.y >= item.pos_limits.y_max - tolerance) {
-    collision = true;
-    item.pos.y = stop ? item.pos_limits.y_max : item.pos.y;
-  }
-
-  //Fixed point helps be more deterministic
-  item.pos.x = item.pos.x.fixed(4);
-  item.pos.y = item.pos.y.fixed(4);
-  return collision;
-};
-
-
-game_core.prototype.handleHiddenTab = function(p, id) {
-  // count ticks with hidden tab
-  if(p.visible == 'hidden') {
-    p.hidden_count += 1;
-  }
-
-  // kick after being hidden for 15 seconds  
-  if(p.hidden_count > this.ticks_per_sec * 30 && !this.debug) { 
-    p.hidden = true;
-    console.log('Player ' + id + ' will be disconnected for being hidden.');
-  }
-};
-
-game_core.prototype.handleInactivity = function(p, id) {
-  // Player is inactive if they're sitting in one place; reset after they move again
-  if(p.onwall) {
-    p.inactive_count += 1;
-  } else {
-    p.inactive_count = 0;
-  }
-  
-  // kick after being inactive for 30 seconds
-  if(p.inactive_count > this.ticks_per_sec*30 && !this.debug) {  
-    p.inactive = true;
-    console.log('Player ' + id + ' will be disconnected for inactivity.');
-  }
-};
-
-game_core.prototype.handleLatency = function(p, id) {
-  // Count time spent experiencing lag (but only when viewing page)
-  if(p.latency > this.tick_frequency && p.visible != 'hidden') {
-    p.lag_count += 1;
-  }
-  // Kick if latency persists 10% of game
-  if(p.lag_count > this.game_length*0.25 && !this.debug) {
-    p.lagging = true;
-    console.log('Player ' + id + ' will be disconnected because of latency.');
-  }
-};
-
-game_core.prototype.handleBootingConditions = function(p, id) {
-  if(this.booting) {
-    this.handleHiddenTab(p, id);
-    this.handleInactivity(p, id);
-    this.handleLatency(p, id);
-  }
-  if((p.hidden || p.inactive || p.lagging) && !this.debug) {
-    p.instance.disconnect();
-  } 
-};
-
-
-game_core.prototype.updateScores = function(p) {
-  if(p) {
+//Prevents people from leaving the arena
+game_core.prototype.check_collision = function( item ) {
     
-    if(this.game_started) {
-      this.spotScoreLoc = {x:this.spotScoreLocs[this.game_clock]["x_pos"],
-			   y:this.spotScoreLocs[this.game_clock]["y_pos"]};
-
-      var dist = this.distance_between(this.spotScoreLoc, p.pos);
-    } else {
-      var dist = 100000
+    var collision = false
+    //Left wall.
+    if(item.pos.x <= item.pos_limits.x_min){
+	collision = true
+        item.pos.x = item.pos_limits.x_min;
     }
-    
-    var onWall = this.checkCollision(p, {tolerance: 0, stop: false});
-    p.onwall = onWall
-
-    // If you're in a forbidden region: 0 
-    if(onWall) {
-      p.curr_background = 0;
-      p.curr_active = 0;
-    } else if(dist > 50) {
-      p.curr_background = 0;
-      p.curr_active = 1;
-    } else {
-      p.curr_background = 1;
-      p.curr_active = 1;
+    //Right wall
+    if(item.pos.x >= item.pos_limits.x_max ){
+	collision = true
+        item.pos.x = item.pos_limits.x_max;
     }
-    
-    //p.avg_score = (p.avg_score + p.curr_background/
-		   //this.game_length);
-    //p.total_points = p.avg_score * this.max_bonus;
-    p.active_points += p.curr_active
-    p.star_points += p.curr_background
-    p.total_points += this.star_point_value * p.curr_background + this.active_point_value * p.curr_active //p.avg_score * this.max_bonus;
-    
-  }
-};
 
+    //Roof wall.
+    if(item.pos.y <= item.pos_limits.y_min) {
+	collision = true
+        item.pos.y = item.pos_limits.y_min;
+    }
+
+    //Floor wall
+    if(item.pos.y >= item.pos_limits.y_max ) {
+	collision = true
+        item.pos.y = item.pos_limits.y_max;
+    }
+
+    //Fixed point helps be more deterministic
+    item.pos.x = item.pos.x.fixed(4);
+    item.pos.y = item.pos.y.fixed(4);
+    return collision
+};
 
 // MATH FUNCTIONS
 

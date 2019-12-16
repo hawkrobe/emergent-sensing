@@ -6,6 +6,15 @@ html , body {
      padding: 0;
 }
 
+body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 .alignleft {
 	float: left;
 }
@@ -16,7 +25,7 @@ html , body {
 
 #main {
 	width: 485px;
-	height: 350px;
+	height: 500px;
 	text-align: center;
 	margin-left: auto;
 	margin-right: auto;
@@ -33,19 +42,33 @@ html , body {
 #second_row {
 	width: 485px;
 	height: 10px;
+	text-align: left;
 }
+
+
 
 #instructions {
 	width: 485px;
 	height: 15px;
 	font: 10pt Helvetica;
+	text-align: center;
 }
 
+#warnings {
+	width: 485px;
+	height: 15px;
+	font: 10pt Helvetica;
+	text-align: left;
+}
+
+
 #viewport {
-	  border:solid 1px #333;
-	  height : 280px;
-	  width : 485px;
-	  left:0; right:0; top:0; bottom:0;
-	  z-index:100;
-	  background: #383838; 
+    border-width: 1px;
+    border-style: solid;
+    border-color: #333;
+    height : 280px;
+    width : 485px;
+    left:0; right:0; top:0; bottom:0;
+    z-index:100;
+    background: #383838; 
 }
