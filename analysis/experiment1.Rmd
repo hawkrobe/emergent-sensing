@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(lme4)
+library(ggthemes)
+d <- read_csv('../data/experiment1/combined-exp-conf-disc-emerg-exp-data-2.csv')
+```
+
+```{r}
+toplot <- d %>% 
+  mutate(n_players = fn_players) %>%
+  group_by(n_players, game) %>%
+  summarize(m = mean(half_score)) %>%
+  filter(n_players > 0) %>%
+  group_by(n_players) %>%
+  tidyboot::tidyboot_mean(m) 
+
+toplot %>%
+  ggplot(aes(x = n_players, y = empirical_stat)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = .05) +
+    geom_smooth(method = 'lm', formula = y ~ poly(x, 2), se = F) +
+    theme_few() +
+    ylab("mean score") +
+    xlab("number of players") +
+    scale_x_continuous(breaks = c(1, 2, 3, 4, 5, 6)) +
+    theme(aspect.ratio = 2/3)
+
+ggsave('./performance-summary-exp1.pdf', width = 5, height = 3, units = 'in', useDingbats = F)
+```
+
+```{r}
+library(lmerTest)
+summary(lmer(half_score ~ fn_players + (1 | game) + (1 | noise), data = d %>% mutate(score = 100*score)))
+```
