@@ -8,10 +8,39 @@ output: html_notebook
 ```{r}
 library(tidyverse)
 library(tidyboot)
+library(ggthemes)
 source('./helpers.R')
 ```
 
-# Combine player data with metadata on bot locations
+# Qualitative coding
+
+```{r}
+codes <- read_csv('../data/experiment2/coding.csv') %>%
+  mutate(independence = 1 - anti_exploratory) %>%
+  rename(selectivity = selective) %>%
+  select(-anti_exploratory, -ends_with('bin')) %>%
+  gather(property, value, -gameid) %>%
+  mutate(binary = value > 0.5)
+
+ggplot(codes, aes(x = property, y = value)) +
+  geom_boxplot() +
+  theme_few() +
+  xlab("") +
+  ylab("rating")
+
+ggsave("./coding.pdf", height = 3, width = 5, unit = "in")
+```
+
+```{r}
+codes %>% group_by(property) %>% tidyboot_mean(value)
+binom.test(table((codes %>% filter(property == 'selectivity'))$binary))
+binom.test(table((codes %>% filter(property == 'independence'))$binary))
+binom.test(table((codes %>% filter(property == 'eagerness'))$binary))
+```
+
+# Quantitative behavioral analysis
+
+## Combine player data with metadata on bot locations
 
 ```{r}
 d_raw <- read_csv('../data/experiment2/games/all_games.csv') %>%
@@ -54,7 +83,7 @@ bot_locations <- relevant_files %>%
 d <- left_join(d_raw, bot_locations, by= c('metadatafilestring', 'tick'))
 ```
 
-# Calculate measures of interest between player and bot
+## Calculate measures of interest between player and bot
 
 ```{r}
 clicks = d %>% 
@@ -75,7 +104,7 @@ clicks = d %>%
   filter(!(goal_condition == "none" & insideWindow))
 ```
 
-# Visualize
+## Visualize
 
 Look at full distribution 
 
@@ -124,6 +153,8 @@ ggplot(clicks.toplot, aes(x = botExploiting, y = empirical_stat, fill = goal_con
 
 ggsave('./proximity.pdf', height = 3, width = 5, units = 'in')
 ```
+
+## Stats
 
 ```{r}
 library(lme4)
