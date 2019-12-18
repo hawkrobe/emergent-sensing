@@ -7,7 +7,7 @@ output: html_notebook
 library(tidyverse)
 library(lme4)
 library(ggthemes)
-d <- read_csv('../data/experiment1/combined-exp-conf-disc-emerg-exp-data-2.csv')
+d <- read_csv('../data/experiment1/all_games.csv')
 ```
 
 ```{r}
