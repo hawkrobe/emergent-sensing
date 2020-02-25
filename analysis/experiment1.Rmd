@@ -7,20 +7,23 @@ output: html_notebook
 library(tidyverse)
 library(lme4)
 library(ggthemes)
+source('./helpers.R')
 d <- read_csv('../data/experiment1/all_games.csv')
+inactive <- read_csv('../data/experiment1/inactive_games.csv',col_names = 'gameid')
 ```
 
 ```{r}
 toplot <- d %>% 
+  gather(half, score, first_half_score, second_half_score) %>%
   mutate(n_players = fn_players) %>%
-  group_by(n_players, game) %>%
-  summarize(m = mean(half_score)) %>%
+  group_by(n_players, half, game) %>%
+  summarize(m = mean(score)) %>%
   filter(n_players > 0) %>%
-  group_by(n_players) %>%
+  group_by(n_players, half) %>%
   tidyboot::tidyboot_mean(m) 
 
 toplot %>%
-  ggplot(aes(x = n_players, y = empirical_stat)) +
+  ggplot(aes(x = n_players, y = empirical_stat, color=half)) +
     geom_point() +
     geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = .05) +
     geom_smooth(method = 'lm', formula = y ~ poly(x, 2), se = F) +
@@ -37,3 +40,54 @@ ggsave('./performance-summary-exp1.pdf', width = 5, height = 3, units = 'in', us
 library(lmerTest)
 summary(lmer(half_score ~ fn_players + (1 | game) + (1 | noise), data = d %>% mutate(score = 100*score)))
 ```
+
+Analyze clicks
+
+```{r}
+d_raw <- read_csv('../data/experiment1/raw_games/all_raw_games.csv')
+player_locations <- d_raw %>%
+  group_by(gameid) %>%
+  mutate(pid = as.numeric(factor(pid))) %>%
+  unite(pos, x_pos,y_pos, bg_val, velocity) %>%
+  select(pid, tick, gameid, pos) %>%
+  group_by(gameid, tick) %>%
+  spread(pid, pos) %>%
+  ungroup() 
+  
+tmp <- left_join(d_raw, player_locations, by = c('gameid', 'tick')) %>%
+  left_join(d  %>% select(pid, fn_players) %>% ungroup(), by = c('pid')) %>%
+  filter(fn_players > 1)
+
+clicks <- tmp %>%
+  group_by(pid) %>%
+  mutate(click = lag(goal_x) != goal_x | lag(goal_y) != goal_y) %>%
+  gather(playerid, value, `1`:`6`) %>%
+  filter(!is.na(value)) %>%
+  separate(value, into = c('player_x', 'player_y',
+                           'player_bg_val','player_velocity'), sep = '_') %>%
+  mutate(player_x = as.numeric(player_x),
+         player_y =as.numeric(player_y),
+         dist_bw_goal_and_player = dist(goal_x, goal_y, player_x,player_y),
+         angle_bw_location_and_bot = angle(x_pos, y_pos, player_x, player_y),
+         gap_bw_current_angle_and_bot = abs(angle- angle_bw_location_and_bot),
+) %>%
+  filter(click) %>%
+  filter(tick >  1200)
+
+clicks %>% 
+  arrange(gameid, pid, tick) %>%
+  filter(!(gameid %in% inactive)) %>%
+  ungroup() %>%
+  filter(!(abs(x_pos - player_x) < 1 & 
+            abs(y_pos - player_y) < 1)) %>%# Remove comparisons to oneself
+  group_by(pid, tick, bg_val, player_velocity) %>%
+  summarize(minDistance = min(dist_bw_goal_and_player)) %>%
+  group_by(pid,tick,bg_val) %>%
+  filter(length(minDistance) > 1) %>%
+  # spread(player_velocity,  minDistance) %>%
+  # mutate(diff = `0` - `1`) %>%
+  # group_by(pid,  bg_val) %>%
+  # summarize(diff =  mean(diff)) %>%
+  group_by(bg_val, player_velocity) %>%
+  summarize(m =  mean(minDistance))
+``` 
