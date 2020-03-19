@@ -1,0 +1,552 @@
+info  - socket.io started
+	 :: Express :: Listening on port 8888
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 0465-2d310b49-34a4-44d5-b531-20d3fe363a0d connected
+looking for a game. We have : 0
+player 0465-2d310b49-34a4-44d5-b531-20d3fe363a0d created a game with id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 0122-6f1e7612-180d-4d69-8790-44f256e777ac connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 2876-f97ea980-f940-464b-88b5-badd4640ce57 connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 8656-4bbef628-efaa-4261-b291-c4b7c647e28c connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+	 :: Express :: file requested: favicon.ico
+user connecting...
+	 socket.io:: player 4535-cae10e80-9777-4622-a5d2-6ea5f1bc02fa connected
+looking for a game. We have : 1
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 2367-4fb8c761-70c9-4e6c-80b7-3190334f4706 connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 4710-203f9a9d-6b1a-4a08-94e1-e5ce023ff0d9 connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 8498-3f2c76b7-d438-4f1c-b9d7-43dec09e62d2 connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 8730-e23ab1aa-22f5-451a-aa82-ea8eae30977b connected
+looking for a game. We have : 1
+player 8730-e23ab1aa-22f5-451a-aa82-ea8eae30977b created a game with id 2015-01-26-18-29-31-323_4_1-2en01_330250806175
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: drawing.js
+	 :: Express :: file requested: game.client.js
+user connecting...
+	 socket.io:: player 0585-2aa68765-bbf4-459c-8126-f5f407b1791c connected
+looking for a game. We have : 2
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+Player 4710-203f9a9d-6b1a-4a08-94e1-e5ce023ff0d9 will be disconnected for inactivity.
+	 socket.io:: client id 4710-203f9a9d-6b1a-4a08-94e1-e5ce023ff0d9 disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 8 players
+Player 8656-4bbef628-efaa-4261-b291-c4b7c647e28c will be disconnected for inactivity.
+	 socket.io:: client id 8656-4bbef628-efaa-4261-b291-c4b7c647e28c disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 7 players
+Player 2367-4fb8c761-70c9-4e6c-80b7-3190334f4706 will be disconnected for inactivity.
+	 socket.io:: client id 2367-4fb8c761-70c9-4e6c-80b7-3190334f4706 disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 6 players
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 2356-f05dfac2-15f6-476c-b6f9-27739f6aba33 connected
+looking for a game. We have : 2
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 7612-b6428582-7dff-4dfc-8bcd-f4036695df75 connected
+looking for a game. We have : 2
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+	 :: Express :: file requested: lib/keyboard.js
+user connecting...
+	 socket.io:: player 6343-2c7ea062-820f-457b-abd6-41821560ce73 connected
+looking for a game. We have : 2
+player 6343-2c7ea062-820f-457b-abd6-41821560ce73 created a game with id 2015-01-26-18-30-14-457_4_1-2en01_563063794746
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 5463-99575d0a-52df-44f9-af0d-8b57fc736cba connected
+looking for a game. We have : 3
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 4873-16757d71-6add-4e42-9f4b-edab9fbc130f connected
+looking for a game. We have : 3
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 302.081 pos.y: 142.633 loc: 423817
+Player 6343-2c7ea062-820f-457b-abd6-41821560ce73 will be disconnected for inactivity.
+	 socket.io:: client id 6343-2c7ea062-820f-457b-abd6-41821560ce73 disconnected from game id 2015-01-26-18-30-14-457_4_1-2en01_563063794746
+calling end game...
+removing... game has 3 players
+update_physics: Error: EBADF, read pos.x: 254.197 pos.y: 169.426 loc: 356699
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 4609-6c3acce1-ce42-4c16-9f96-6357bd331e7a connected
+looking for a game. We have : 3
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 125.07 pos.y: 141.31 loc: 175830
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 7303-e6b5b4e5-b661-4314-8d6e-ca88652d3404 connected
+looking for a game. We have : 3
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 1121-5c30591e-ba1e-49b8-aa53-5e5d8c88dd49 connected
+looking for a game. We have : 3
+player 1121-5c30591e-ba1e-49b8-aa53-5e5d8c88dd49 created a game with id 2015-01-26-18-32-24-628_4_1-2en01_62834353884
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 240.709 pos.y: 60.837 loc: 337946
+Player 5463-99575d0a-52df-44f9-af0d-8b57fc736cba will be disconnected for inactivity.
+	 socket.io:: client id 5463-99575d0a-52df-44f9-af0d-8b57fc736cba disconnected from game id 2015-01-26-18-30-14-457_4_1-2en01_563063794746
+calling end game...
+removing... game has 4 players
+update_physics: Error: EBADF, read pos.x: 301.168 pos.y: 82.55 loc: 422116
+update_physics: Error: EBADF, read pos.x: 181.233 pos.y: 85.023 loc: 254006
+update_physics: Error: EBADF, read pos.x: 372.795 pos.y: 112.562 loc: 523138
+update_physics: Error: EBADF, read pos.x: 379.015 pos.y: 104.226 loc: 531499
+update_physics: Error: EBADF, read pos.x: 392.981 pos.y: 102.573 loc: 551108
+update_physics: Error: EBADF, read pos.x: 400.693 pos.y: 96.923 loc: 562286
+update_physics: Error: EBADF, read pos.x: 194.757 pos.y: 126.514 loc: 273830
+update_physics: Error: EBADF, read pos.x: 205.95 pos.y: 144.434 loc: 289326
+	 socket.io:: client id 0465-2d310b49-34a4-44d5-b531-20d3fe363a0d disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 5 players
+	 socket.io:: client id 0122-6f1e7612-180d-4d69-8790-44f256e777ac disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 4 players
+	 socket.io:: client id 2876-f97ea980-f940-464b-88b5-badd4640ce57 disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 3 players
+	 socket.io:: client id 4535-cae10e80-9777-4622-a5d2-6ea5f1bc02fa disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 2 players
+	 socket.io:: client id 8498-3f2c76b7-d438-4f1c-b9d7-43dec09e62d2 disconnected from game id 2015-01-26-18-27-37-42_8_2-2en01_390403241617
+calling end game...
+removing... game has 1 players
+game removed. there are now 3 games
+	 socket.io:: client id 8730-e23ab1aa-22f5-451a-aa82-ea8eae30977b disconnected from game id 2015-01-26-18-29-31-323_4_1-2en01_330250806175
+calling end game...
+removing... game has 4 players
+	 socket.io:: client id 0585-2aa68765-bbf4-459c-8126-f5f407b1791c disconnected from game id 2015-01-26-18-29-31-323_4_1-2en01_330250806175
+calling end game...
+removing... game has 3 players
+	 socket.io:: client id 2356-f05dfac2-15f6-476c-b6f9-27739f6aba33 disconnected from game id 2015-01-26-18-29-31-323_4_1-2en01_330250806175
+calling end game...
+removing... game has 2 players
+	 socket.io:: client id 7612-b6428582-7dff-4dfc-8bcd-f4036695df75 disconnected from game id 2015-01-26-18-29-31-323_4_1-2en01_330250806175
+calling end game...
+removing... game has 1 players
+game removed. there are now 2 games
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 4791-f9e8da9b-aa8b-4091-bffd-6eb9ffde21ae connected
+looking for a game. We have : 2
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 244.99 pos.y: 158.748 loc: 344040
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 4640-2b79e5c5-b166-4e80-8e4f-4726b0968225 connected
+looking for a game. We have : 2
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 432.986 pos.y: 152.069 loc: 607393
+	 socket.io:: client id 4873-16757d71-6add-4e42-9f4b-edab9fbc130f disconnected from game id 2015-01-26-18-30-14-457_4_1-2en01_563063794746
+calling end game...
+removing... game has 3 players
+	 socket.io:: client id 4609-6c3acce1-ce42-4c16-9f96-6357bd331e7a disconnected from game id 2015-01-26-18-30-14-457_4_1-2en01_563063794746
+calling end game...
+removing... game has 2 players
+	 socket.io:: client id 7303-e6b5b4e5-b661-4314-8d6e-ca88652d3404 disconnected from game id 2015-01-26-18-30-14-457_4_1-2en01_563063794746
+calling end game...
+removing... game has 1 players
+game removed. there are now 1 games
+update_physics: Error: EBADF, read pos.x: 190.705 pos.y: 147.462 loc: 268326
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 4098-f79f97e1-25b0-4383-84e8-e75d11f40c52 connected
+looking for a game. We have : 1
+player 4098-f79f97e1-25b0-4383-84e8-e75d11f40c52 created a game with id 2015-01-26-18-40-7-36_4_2-2en01_528503514360
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 3250-846c3cb8-23c4-453f-adfc-e6968a1ba0aa connected
+looking for a game. We have : 2
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 229.038 pos.y: 115.596 loc: 321409
+Player 4098-f79f97e1-25b0-4383-84e8-e75d11f40c52 will be disconnected because of latency.
+	 socket.io:: client id 4098-f79f97e1-25b0-4383-84e8-e75d11f40c52 disconnected from game id 2015-01-26-18-40-7-36_4_2-2en01_528503514360
+calling end game...
+removing... game has 2 players
+update_physics: Error: EBADF, read pos.x: 176.607 pos.y: 253.569 loc: 249247
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 7340-86c53303-122d-44aa-914c-d566c330bd3d connected
+looking for a game. We have : 2
+update_physics: Error: EBADF, read pos.x: 413.489 pos.y: 228.142 loc: 579753
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 441.147 pos.y: 161.037 loc: 618646
+update_physics: Error: EBADF, read pos.x: 378.32 pos.y: 135.231 loc: 530253
+update_physics: Error: EBADF, read pos.x: 242.213 pos.y: 173.041 loc: 339907
+Player 7340-86c53303-122d-44aa-914c-d566c330bd3d will be disconnected for inactivity.
+	 socket.io:: client id 7340-86c53303-122d-44aa-914c-d566c330bd3d disconnected from game id 2015-01-26-18-40-7-36_4_2-2en01_528503514360
+calling end game...
+removing... game has 2 players
+	 socket.io:: client id 1121-5c30591e-ba1e-49b8-aa53-5e5d8c88dd49 disconnected from game id 2015-01-26-18-32-24-628_4_1-2en01_62834353884
+calling end game...
+removing... game has 3 players
+	 socket.io:: client id 4791-f9e8da9b-aa8b-4091-bffd-6eb9ffde21ae disconnected from game id 2015-01-26-18-32-24-628_4_1-2en01_62834353884
+calling end game...
+removing... game has 2 players
+	 socket.io:: client id 4640-2b79e5c5-b166-4e80-8e4f-4726b0968225 disconnected from game id 2015-01-26-18-32-24-628_4_1-2en01_62834353884
+calling end game...
+removing... game has 1 players
+game removed. there are now 1 games
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 9268-9f73d4ed-6049-43a2-8628-3517fcb59b02 connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: NaN pos.y: NaN loc: NaN
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+update_physics: Error: EBADF, read pos.x: NaN pos.y: NaN loc: NaN
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 4450-ebf6d84c-bfff-472a-ad58-00b6eb161322 connected
+looking for a game. We have : 1
+player 4450-ebf6d84c-bfff-472a-ad58-00b6eb161322 created a game with id 2015-01-26-18-50-48-369_4_2-2en01_408396919025
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: NaN pos.y: NaN loc: NaN
+	 socket.io:: client id 3250-846c3cb8-23c4-453f-adfc-e6968a1ba0aa disconnected from game id 2015-01-26-18-40-7-36_4_2-2en01_528503514360
+calling end game...
+removing... game has 2 players
+	 socket.io:: client id 9268-9f73d4ed-6049-43a2-8628-3517fcb59b02 disconnected from game id 2015-01-26-18-40-7-36_4_2-2en01_528503514360
+calling end game...
+removing... game has 1 players
+game removed. there are now 1 games
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 3573-0d99f46a-7f04-45ca-91c5-5ddc387e0672 connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+Player 4450-ebf6d84c-bfff-472a-ad58-00b6eb161322 will be disconnected for inactivity.
+	 socket.io:: client id 4450-ebf6d84c-bfff-472a-ad58-00b6eb161322 disconnected from game id 2015-01-26-18-50-48-369_4_2-2en01_408396919025
+calling end game...
+removing... game has 2 players
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 0352-ac93ea3d-6c9d-49fc-932f-63d070075bfa connected
+looking for a game. We have : 1
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+Player 3573-0d99f46a-7f04-45ca-91c5-5ddc387e0672 will be disconnected for inactivity.
+	 socket.io:: client id 3573-0d99f46a-7f04-45ca-91c5-5ddc387e0672 disconnected from game id 2015-01-26-18-50-48-369_4_2-2en01_408396919025
+calling end game...
+removing... game has 2 players
+update_physics: Error: EBADF, read pos.x: 139.406 pos.y: 63.702 loc: 195059
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 0956-21b031da-ef4e-4993-a88a-107c61890b3d connected
+looking for a game. We have : 1
+player 0956-21b031da-ef4e-4993-a88a-107c61890b3d created a game with id 2015-01-26-19-1-3-50_8_0-2en01_839818577980
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 socket.io:: client id 0352-ac93ea3d-6c9d-49fc-932f-63d070075bfa disconnected from game id 2015-01-26-18-50-48-369_4_2-2en01_408396919025
+calling end game...
+removing... game has 1 players
+game removed. there are now 1 games
+update_physics: Error: EBADF, read pos.x: 405.709 pos.y: 99.894 loc: 569306
+	 socket.io:: client id 0956-21b031da-ef4e-4993-a88a-107c61890b3d disconnected from game id 2015-01-26-19-1-3-50_8_0-2en01_839818577980
+calling end game...
+removing... game has 1 players
+game removed. there are now 0 games
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 9624-b7429a2e-4d6a-4033-9b6f-5f6c49997f37 connected
+looking for a game. We have : 0
+player 9624-b7429a2e-4d6a-4033-9b6f-5f6c49997f37 created a game with id 2015-01-26-19-13-22-165_8_0-2en01_476911404868
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: index.html
+	 :: Express :: file requested: index.css
+	 :: Express :: file requested: lib/sprintf.min.js
+	 :: Express :: file requested: game.client.js
+	 :: Express :: file requested: game.core.js
+	 :: Express :: file requested: lib/keyboard.js
+	 :: Express :: file requested: drawing.js
+user connecting...
+	 socket.io:: player 5747-ef26a4c9-fd9b-4864-ba7c-26b2f71b3a25 connected
+looking for a game. We have : 1
+player 5747-ef26a4c9-fd9b-4864-ba7c-26b2f71b3a25 created a game with id 2015-01-26-19-18-31-610_4_3-2en01_904589432757
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+	 :: Express :: file requested: favicon.ico
+Error: ENOENT, stat './favicon.ico'
+update_physics: Error: EBADF, read pos.x: 209.239 pos.y: 153.988 loc: 293579
+Player 5747-ef26a4c9-fd9b-4864-ba7c-26b2f71b3a25 will be disconnected for being hidden.
+	 socket.io:: client id 5747-ef26a4c9-fd9b-4864-ba7c-26b2f71b3a25 disconnected from game id 2015-01-26-19-18-31-610_4_3-2en01_904589432757
+calling end game...
+removing... game has 1 players
+game removed. there are now 1 games
+	 socket.io:: client id 9624-b7429a2e-4d6a-4033-9b6f-5f6c49997f37 disconnected from game id 2015-01-26-19-13-22-165_8_0-2en01_476911404868
+calling end game...
+removing... game has 1 players
+game removed. there are now 0 games
