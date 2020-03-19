@@ -7,7 +7,7 @@ Experiments
 
 *Experiment 3:* multi-player experiment with single, smooth spotlight & binary reward
 
-Note: This is an unofficial fork of [MWERT](https://github.com/hawkrobe/MWERT), adapted to allow arbitrary numbers of players to join a single room and participate in a collective behavior task. This task was originally used by Ian Couzin's lab to investigate collective behavior in fish.
+Note: This is an unofficial fork of [MWERT](https://github.com/hawkrobe/MWERT), adapted to allow arbitrary numbers of players to join a single room and participate in a collective behavior task. 
 
 Local demo (from scratch)
 =========================
