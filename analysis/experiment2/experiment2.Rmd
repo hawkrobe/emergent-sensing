@@ -1,0 +1,234 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Import 
+
+```{r}
+library(tidyverse)
+library(tidyboot)
+library(ggthemes)
+source('./helpers.R')
+```
+
+# Qualitative coding
+
+```{r}
+codes <- read_csv('../data/experiment2/coding.csv') %>%
+  mutate(independence = 1 - anti_exploratory) %>%
+  rename(selectivity = selective) %>%
+  select(-anti_exploratory, -ends_with('bin')) %>%
+  gather(property, value, -gameid) %>%
+  mutate(binary = value > 0.5)
+
+ggplot(codes, aes(x = property, y = value)) +
+  geom_boxplot() +
+  theme_few() +
+  xlab("") +
+  ylab("rating")
+
+ggsave("./coding.pdf", height = 3, width = 5, unit = "in")
+```
+
+```{r}
+codes %>% group_by(property) %>% tidyboot_mean(value)
+binom.test(table((codes %>% filter(property == 'selectivity'))$binary))
+binom.test(table((codes %>% filter(property == 'independence'))$binary))
+binom.test(table((codes %>% filter(property == 'eagerness'))$binary))
+```
+
+# Quantitative behavioral analysis
+
+## Combine player data with metadata on bot locations
+
+```{r}
+d_raw <- read_csv('../data/experiment2/all_games.csv') %>%
+  rowwise() %>%
+  mutate(metadatafilestringpt1 = paste0(
+            c('../data/experiment2/metadata/v2/v2', bg_cond, 'close_'), 
+            collapse = '-'), 
+         metadatafilestringpt2 = paste0(
+            c(close_cond, 'asocial-smart-0', sim_num,'social-simulation.csv'),
+            collapse = '-'),
+         metadatafilestring = paste0(c(metadatafilestringpt1, metadatafilestringpt2),
+                                     collapse = '')) %>%
+  select(-metadatafilestringpt1, -metadatafilestringpt2) %>%
+  filter(round_type %in% c("nonsocial", "social")) %>%
+  mutate(goal_condition = case_when(in_close == 1 ~ 'close',
+                                    in_far == 1 ~ 'far',
+                                    TRUE ~ 'none'))
+
+early_window_times = c(65, 159)
+late_window_times = c(305, 399)
+```
+
+```{r}
+relevant_files = unique(d_raw$metadatafilestring)
+
+bot_locations <- relevant_files %>% 
+  map( ~ suppressMessages(read_csv(.x)) %>% mutate(metadatafilestring = .x)) %>% 
+  reduce(rbind) %>%
+  filter(pid != 0) %>%
+  rowwise() %>%
+  mutate(pid = paste0(c("bot", pid), collapse = "")) %>%
+  ungroup() %>%
+  select(pid, x_pos, y_pos, tick, metadatafilestring) %>%
+  gather(coord, value, x_pos, y_pos) %>% 
+  separate(coord, into=c('coord', 'garbage')) %>%
+  unite(key, pid, coord) %>% 
+  select(-garbage) %>% 
+  pivot_wider(names_from = key, values_from = value) 
+
+d <- left_join(d_raw, bot_locations, by= c('metadatafilestring', 'tick')) 
+```
+
+## Calculate measures of interest between player and bot
+
+```{r}
+clicks = d %>% 
+  select(-metadatafilestring, -sim_num, -in_close, -in_far) %>%
+  group_by(pid) %>%
+  mutate(click = lag(goal_x) != goal_x | lag(goal_y) != goal_y) %>%
+  gather(bot, value, bot1_x:bot4_y) %>%
+  separate(bot, into = c('botid', 'coord')) %>%
+  spread(coord, value) %>%
+  # mutate(botWallVsSpot = case_when(botid %in% c('bot1', 'bot2') ~ playerWallVsSpot,
+  #                                 TRUE ~ ifelse(playerWallVsSpot == 'wall', 'spot', 'wall'))) %>%
+  mutate(dist_bw_goal_and_bot = dist(goal_x, goal_y, x, y),
+         dist_bw_location_and_bot = dist(x_pos, y_pos, x, y),
+         angle_bw_location_and_bot = angle(x_pos, y_pos, x, y),
+         tmp = abs(angle - angle_bw_location_and_bot),
+         gap_bw_current_angle_and_bot = ifelse(tmp > 180, 360 - tmp, tmp),
+         botExploiting = lag(x) == x & lag(y) == y,
+         insideWindow = between(tick, early_window_times[1], early_window_times[2]) |
+                        between(tick, late_window_times[1], late_window_times[2])) %>%
+  filter(click) %>%
+  filter(!(goal_condition == "none" & insideWindow))
+```
+
+## Visualize
+
+Version with bootstrapped error bars
+
+```{r}
+library(ggthemes)
+dodge <- position_dodge(width=0.9)
+
+clicks.toplot <- clicks %>% 
+  mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+  # look at windows during goal manipulation
+  filter(goal_condition != 'none') %>% 
+  arrange(pid, tick) %>%
+  # remove points in far condition where you've already found the spotlight
+  # since just clicking to stay inside will inflate 'copying' measures, since bots also there
+  filter(!(goal_condition == 'far' & bg_val == 1)) %>% 
+  group_by(pid, tick, botExploiting, goal_condition, round_type) %>%
+  # Look at min distance to bots (i.e. assume people are picking one bot to copy, not clicking in centroid)
+  summarize(minDistance = min(dist_bw_goal_and_bot)) %>% 
+  group_by(pid, goal_condition, botExploiting, round_type) %>%
+  summarize(minDistance = mean(minDistance)) %>% 
+  group_by(goal_condition, botExploiting, round_type) %>%
+  tidyboot_mean(minDistance) 
+
+clicks.toplot %>%
+  ungroup() %>%
+  #mutate(bg_cond = ifelse(bg_cond == 'wall', 'wall condition', 'spot condition')) %>%
+  ggplot(aes(x = goal_condition, y = empirical_stat, fill = botExploiting)) +
+    geom_bar(stat = 'identity', position = dodge) +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), position =dodge, width = 0) +
+    labs(x = "", y = "distance between bot and click") +
+    theme_few() +
+    theme(aspect.ratio = 2/3) +
+    facet_grid( ~ round_type) +
+    scale_fill_colorblind()
+
+ggsave('./proximity.pdf', height = 3, width = 5, units = 'in')
+```
+
+Another diagnostic about which bot you're copying...
+
+```{r}
+# library(ggthemes)
+# dodge <- position_dodge(width=0.9)
+# 
+# closest.toplot <- clicks %>% 
+#   mutate(botExploiting = ifelse(botExploiting, 'bot exploiting', 'bot not exploiting')) %>%
+#   # look at windows during goal manipulation
+#   filter(goal_condition != 'none') %>% 
+#   # remove points in far condition where you've already found the spotlight
+#   # since just clicking to stay inside will inflate 'copying' measures, since bots also there
+#   filter(!(goal_condition == 'far' & bg_val == 1)) %>% 
+#   group_by(pid, tick, bg_cond, goal_condition, round_type) %>%
+#   # Look at min distance to bots (i.e. assume people are picking one bot to copy, not clicking in centroid)
+#   filter(dist_bw_goal_and_bot == min(dist_bw_goal_and_bot)) %>% 
+#   group_by(goal_condition, bg_cond, round_type, botExploiting) %>%
+#   tally()
+# 
+# 
+# closest.toplot %>%
+#   #filter(goal_condition == 'far') %>%
+#   ggplot(aes(x = goal_condition, y = n, fill = botExploiting)) +
+#     geom_bar(stat = 'identity', position = dodge) +
+#     #geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), position =dodge, width = 0) +
+#     labs(x = "", y = "# closest to click") +
+#     theme_few() +
+#     theme(aspect.ratio = 2/3) +
+#     facet_grid(bg_cond ~ round_type) +
+#     scale_fill_colorblind()
+# 
+# ggsave('./proximity.pdf', height = 3, width = 5, units = 'in')
+```
+
+## Stats
+
+```{r}
+library(lme4)
+library(lmerTest)
+clicks %>%
+  mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+  filter(goal_condition != 'none') %>%
+  filter(round_type == 'social') %>%
+  filter(!(goal_condition == 'far' & bg_val == 1)) %>% 
+  group_by(pid, tick, goal_condition, bg_cond, botExploiting) %>%
+  summarize(minDistance = min(dist_bw_goal_and_bot)) %>%
+  lmer(minDistance ~ goal_condition * botExploiting + bg_cond + (1 + goal_condition + botExploiting| pid),
+       data = .) %>%
+  summary()
+
+clicks %>%
+  mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+  filter(goal_condition == 'far') %>%
+  group_by(pid, tick, round_type, botExploiting) %>%
+  summarize(minDistance = min(dist_bw_goal_and_bot)) %>%
+  lmer(minDistance ~ round_type * botExploiting + (1 + round_type + botExploiting | pid),
+       data = .) %>%
+  summary()
+
+clicks %>%
+  mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+  filter(goal_condition == 'far', round_type == 'nonsocial') %>%
+  group_by(pid, tick, botExploiting) %>%
+  summarize(minDistance = min(dist_bw_goal_and_bot)) %>%
+  lmer(minDistance ~ botExploiting + (1 + botExploiting | pid), 
+      data = .) %>%
+  summary()
+
+```
+
+```{r}
+dodge <- position_dodge(width=0.9)
+
+clicks.toplot <- clicks %>% 
+   mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+   filter(goal_condition != 'none') %>% 
+    group_by(botExploiting) %>%
+   tidyboot_mean(angle_bw_location_and_bot) 
+
+ggplot(clicks.toplot, aes(x = botExploiting, y = empirical_stat)) +
+    geom_bar(stat = 'identity') +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),, width = 0) +
+    theme_bw() +
+    xlab("") +
+    ylab("distance between bot and click") 
+```
