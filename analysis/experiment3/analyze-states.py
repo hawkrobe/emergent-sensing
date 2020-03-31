@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import pylab
 import matplotlib as mpl
 
-sys.path.append("../utils/")
-from utils import *
+sys.path.append("../")
+from game_utils import *
 
 in_dir = '../../processed/'
 subset = '1en01'
@@ -41,8 +41,8 @@ x = []
 y = dict([(s,[]) for s in state_names])
 
 
-print
-print 'states as a function of score'
+print()
+print('states as a function of score')
 for val in sorted(list(set(df['score']))):
     states = df[df['score'] == val]['state']
     x += [val]

@@ -9,13 +9,13 @@ def get_games(data_dir, label):
             dirs += [f]
     return dirs
 
-def get_inactive(game_id):
+def get_inactive(in_dir, game_id):
     
     hidden_line = 'Player .* will be disconnected for being hidden.'
     inactive_line = 'Player .* will be disconnected for inactivity.'
     lag_line = 'Player .* will be disconnected because of latency.'
     
-    log = open('../../out/' + game_id + '/log')
+    log = open(in_dir + game_id + '/log')
     
     inactive = {}
     for line in log:
@@ -56,7 +56,7 @@ def get_data(in_dir, games):
         latency_dir = in_dir + game_id + '/latencies/'
         waiting_dir = in_dir + game_id + '/waiting_games/'
 
-        inactive = get_inactive(game_id)
+        inactive = get_inactive(in_dir, game_id)
         
         wait_locs = {}
         for game in os.listdir(waiting_dir):
@@ -136,9 +136,9 @@ def get_data(in_dir, games):
     
     df = pd.DataFrame(dict(pid = pids,
                            assigned_n_players = assigned_n_players,
-                           bn_players = bn_players,                           
-                           hn_players = hn_players,
-                           fn_players = fn_players,                           
+                           begin_n_players = bn_players,                           
+                           active_n_players = hn_players,
+                           final_n_players = fn_players,                           
                            score = bonuses,
                            first_half_score = first_half_bonuses,
                            second_half_score = second_half_bonuses,                                                      
@@ -163,7 +163,7 @@ def get_group_data(in_dir, games):
 
         data_dir = in_dir + game_id + '/games/'
 
-        inactive = get_inactive(game_id)
+        inactive = get_inactive(in_dir, game_id)
         
         for game in os.listdir(data_dir):
             if game[-4:] != '.csv':

@@ -1,3 +1,5 @@
+*__pycache__*
+*.pyc
 data/*
 db/*
 *~
@@ -15,3 +17,5 @@ node_modules/*
 datapile/*
 */data/metadata/*
 .Rproj.user
+processed/
+plots/

@@ -3,7 +3,7 @@ import numpy as np
 import os, sys
 
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -11,10 +11,10 @@ from matplotlib.font_manager import FontProperties
 
 #from parse import *
 
-sys.path.append("../utils/")
+sys.path.append("../")
 from game_utils import *
 
-data_dir = '../../out/'
+data_dir = '../../data/experiment3/out/'
 games = []
 games += get_games(data_dir, 'experiment')
 #games += ['tmp']
@@ -34,7 +34,7 @@ data["Noise Level"].replace({'1en01':'Low', '2en01':'Medium'}, inplace=True)
 sns.set(font = "serif", context = "poster", style = "white")
 sns.despine()
 
-sns.factorplot("n_players", "score", hue = "Noise Level", markers = ["o", "s"], linestyles = ["-","--"], data = data, kind="point", dodge = 0.15, units = "game", order = [1,2,3,4,5,6])
+sns.factorplot("active_n_players", "score", hue = "Noise Level", markers = ["o", "s"], linestyles = ["-","--"], data = data, kind="point", dodge = 0.15, units = "game", order = [1,2,3,4,5,6])
 
 plt.xlabel('Number of Players')#, fontsize=50)
 plt.ylabel('Mean Score')#, fontsize=50)
