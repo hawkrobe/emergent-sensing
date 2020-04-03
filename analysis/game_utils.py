@@ -205,3 +205,45 @@ def get_group_data(in_dir, games):
                            difficulty = difficulties))
                 
     return df
+
+
+def get_state_scores(in_dir, subset):
+
+    scores = []
+    states = []
+
+    for game in os.listdir(in_dir):
+        if game[-4:] != '.csv':
+            continue
+
+        if game.split('_')[-2].split('-')[1] != subset:
+            continue    
+
+        data = pd.io.parsers.read_csv(in_dir + game)
+        players = set(data['pid'])
+        n = len(players)
+        if n < 2 or n > 5:
+            continue
+        for p in players:
+            sub = data[data['pid'] == p]
+            for j in list(sub.index):
+                scores += [sub['bg_val'][j]]
+                states += [sub['state'][j]]
+
+    df = pd.DataFrame(dict(score = scores,
+                           state = states))
+
+    state_names = ['exploring', 'exploiting', 'copying']
+    x = []
+    y = dict([(s,[]) for s in state_names])
+
+
+    print()
+    print('states as a function of score')
+    for val in sorted(list(set(df['score']))):
+        states = df[df['score'] == val]['state']
+        x += [val]
+        for s in state_names:
+            y[s] += [np.mean(states == s)]
+            
+    return x,y

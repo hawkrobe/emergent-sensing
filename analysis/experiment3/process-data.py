@@ -4,11 +4,13 @@ import sys,os
 from multiprocessing import Pool
 
 sys.path.append("../")
+sys.path.append("./helpers/")
 import game_utils 
+import process_utils
 
 import pandas as pd
 import numpy as np
-import process_utils
+
 
 waits = False
 all_players = False

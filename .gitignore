@@ -19,3 +19,4 @@ datapile/*
 .Rproj.user
 processed/
 plots/
+*.ipynb_checkpoints
