@@ -3,7 +3,7 @@ import numpy as np
 from noise import Noise
 from multiprocessing import Process
 
-# GNU Public Licence Copyright (c) Peter Krafft
+# GNU Public Licence Copyright (c) P.M. Krafft
 # Comments and questions to pkrafft@mit.edu
 # This code is provided freely, however when using this code you are asked to cite our related paper: 
 # Krafft et al. (2015) Emergent Collective Sensing in Human Groups, CogSci
@@ -14,6 +14,8 @@ from multiprocessing import Process
 # Berdahl, A., Torney, C.J., Ioannou, C.C., Faria, J. & Couzin, I.D. (2013) Emergent sensing of complex environments by mobile animal groups, Science
 
 DEBUG = False
+N_REPS = 4
+scales = [0.1, 0.25, 0.4]
 
 base_dir = sys.argv[1] + '/'
 
@@ -21,16 +23,18 @@ def main():
     
     if DEBUG:
         ids = map(str, range(2))
-        scales = [0.1, 0.25, 0.4]
     else:
-        ids = map(str, range(8))
-        scales = [0.1, 0.25, 0.4]
+        ids = map(str, range(N_REPS))
 
-    running = []    
+
+    running = []
+
+    print('id,scale,seed')
+    
     for out_id in ids:
         for scale_noise in scales:
             
-            seed = np.random.randint(sys.maxint)
+            seed = np.random.randint(2**32 - 1)
             
             args = (
                 out_id,
@@ -39,7 +43,7 @@ def main():
                 base_dir,
                 )
             
-            print out_id + ',' + str(scale_noise) + ',' + str(seed)
+            print(out_id + ',' + str(scale_noise) + ',' + str(seed))
             process = Process(target = create_field,
                               args = args)
             process.start()
@@ -57,7 +61,7 @@ def create_field(out_id, seed, scale_noise, base_dir):
     #srand(randseed+seedoffset);
     
     np.random.seed(seed)
-    seed = np.random.randint(sys.maxint)
+    seed = np.random.randint(2**32 - 1)
 
     nx = 500
     ny = 300
@@ -101,7 +105,7 @@ def create_field(out_id, seed, scale_noise, base_dir):
     try:
         os.makedirs(out_dir)
     except OSError:
-        print 'Warning: ' + out_dir + ' directory exists'
+        print('Warning: ' + out_dir + ' directory exists')
         pass
 
     for t in range(tmax):
@@ -141,7 +145,7 @@ def create_field(out_id, seed, scale_noise, base_dir):
 
                 out += ["{0:0.2f}".format(grey)]
 
-#            f.write(','.join(out) + '\n')
+            f.write(','.join(out) + '\n')
 
         f.close()
 
