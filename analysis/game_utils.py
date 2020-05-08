@@ -207,7 +207,7 @@ def get_group_data(in_dir, games):
     return df
 
 
-def get_state_scores(in_dir, subset):
+def get_state_scores(in_dir, subset, group_size = None):
 
     scores = []
     states = []
@@ -223,6 +223,8 @@ def get_state_scores(in_dir, subset):
         players = set(data['pid'])
         n = len(players)
         if n < 2 or n > 5:
+            continue
+        if group_size is not None and group_size != n:
             continue
         for p in players:
             sub = data[data['pid'] == p]
