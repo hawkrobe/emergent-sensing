@@ -1,0 +1,146 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(ggthemes)
+library(broom.mixed)
+library(lme4)
+player_list <- read_csv('./master_list.csv') %>%
+  rename(noise_condition = `Noise Level`)
+```
+
+# Scores
+
+Compute coarse score plot
+
+```{r}
+scores.toplot <- player_list %>%
+  group_by(game, final_n_players, noise_condition) %>%
+  summarize(first_half = mean(first_half_score),
+            second_half = mean(second_half_score)) %>%
+  gather(half, avg_score, first_half, second_half) %>%
+  group_by(final_n_players, noise_condition, half) %>%
+  tidyboot::tidyboot_mean(avg_score)
+  
+scores.toplot %>%
+  ungroup() %>%
+  mutate(noise_condition = ifelse(noise_condition == "High", "High noise", "Low noise")) %>%
+  ggplot(aes(x = final_n_players, y = empirical_stat, color = half)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0)+
+    geom_smooth(method = 'lm', se = F, linetype = 'dashed') +
+    facet_wrap(~ noise_condition) +
+    theme_few() +
+    labs(x = "Number of players in group", y = "Mean score")
+```
+
+Statistics for scores
+
+```{r}
+lm.in <- player_list %>%
+  gather(half, score, first_half_score, second_half_score) %>%
+  mutate(n_players = final_n_players - 3) %>%
+  mutate(score = 100*score)
+
+# Interactions
+lm(score ~ n_players * noise_condition,
+   data = lm.in) %>%
+  summary()
+
+# Simple effect in high noise condition
+lm(score ~ n_players,
+   data = lm.in %>% filter(noise_condition == 'High')) %>%
+  summary()
+
+# Simple effect in low noise condition
+lm(score ~ n_players,
+   data = lm.in %>% filter(noise_condition == 'Low')) %>%
+  summary()
+```
+
+# States
+
+Read in processed data
+
+```{r message=F}
+files <- list.files(path = "../../data/experiment3/processed/", 
+                    pattern = "*.csv", 
+                    full.names = T)
+read_csv(files[1])
+d_raw <- files %>%
+  map(~ read_csv(.x) %>% 
+        select(pid, tick, bg_val, state, facing, going_straight, copying_exploiting, facing_spinning, copying_reward)) %>%
+  reduce(bind_rows)
+
+d <- d_raw %>%
+  left_join(player_list) %>%
+  filter(!is.na(noise_condition)) %>%
+  mutate(state = ifelse(facing & going_straight, 'copying', state)) %>%
+  mutate(copy = state == 'copying',
+       exploit = state == 'exploiting',
+       explore = state == 'exploring')
+
+
+```
+
+```{r}
+state_counts <- d %>%
+  group_by(bg_val) %>%
+  mutate(len = length(state)) %>%
+  group_by(bg_val, state) %>%
+  summarize(total = length(tick), prop = total/mean(len))
+
+state_proportions <- d %>%
+  gather(state_bin, val, copy, exploit, explore) %>%
+  group_by(bg_val, state_bin, noise_condition) %>%
+  summarise(m = mean(val))
+```
+
+Plot overall proportions
+
+```{r}
+ggplot(state_counts, aes(x= bg_val, y = prop, fill=state)) +
+  geom_bar(stat='identity') +
+  theme_few()
+         
+```
+
+Break out by noise condition
+
+```{r}
+state_proportions %>% 
+  filter(bg_val > 0) %>%
+  ggplot(aes(x = bg_val, y = m, color = noise_condition)) +
+    geom_line() +
+    facet_wrap(~ state_bin) +
+    theme_few()
+```
+
+```{r}
+d %>%
+  glmer(exploit ~ bg_val * noise_condition + (1 | pid),
+        family = 'binomial',
+       data = .) %>%
+  summary()
+```
+
+```{r}
+d %>%
+  filter(state == 'copying') %>%
+  filter(!is.na(copying_reward)) %>%
+  group_by(noise_condition) %>%
+  summarize(m = mean(copying_reward, na.rm=T))
+```
+
+```{r}
+library(lmerTest)
+d %>%
+  filter(state == 'copying') %>%
+  filter(!is.na(copying_reward)) %>%
+  lmer(copying_reward ~ noise_condition + (1 | pid),
+       data = .) %>%
+  summary()
+```
