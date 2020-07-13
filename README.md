@@ -5,7 +5,7 @@ Experiments
 
 *Experiment 2:* single-player micro-experiments to directly test model with simulated bots 
 
-*Experiment 3:* direct replication of Berdahl et al (2013) reported in cogsci paper (note that large pre-rendered background file is needed to run this expt -- contact authors for details)
+*Experiment 3:* direct replication of Berdahl et al (2013) reported in cogsci paper (note that large pre-rendered background file is needed to run this expt -- see README in `experiments/experiment3/`)
 
 Note: This is an unofficial fork of [MWERT](https://github.com/hawkrobe/MWERT), adapted to allow arbitrary numbers of players to join a single room and participate in a collective behavior task. 
 
