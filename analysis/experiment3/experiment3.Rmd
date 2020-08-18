@@ -35,6 +35,8 @@ scores.toplot %>%
     facet_wrap(~ noise_condition) +
     theme_few() +
     labs(x = "Number of players in group", y = "Mean score")
+
+ggsave('../../../couzin_replication_tex/figures/performance-summary-raw.pdf')
 ```
 
 Statistics for scores
@@ -45,19 +47,17 @@ lm.in <- player_list %>%
   mutate(n_players = final_n_players - 3) %>%
   mutate(score = 100*score)
 
-# Interactions
-lm(score ~ n_players * noise_condition,
-   data = lm.in) %>%
+#lm model
+lm(score ~ n_players * noise_condition * half,
+   data = lm.in,
+   contrasts = list(half=contr.sum(2), noise_condition=contr.sum(2))) %>%
   summary()
 
-# Simple effect in high noise condition
-lm(score ~ n_players,
-   data = lm.in %>% filter(noise_condition == 'High')) %>%
-  summary()
-
-# Simple effect in low noise condition
-lm(score ~ n_players,
-   data = lm.in %>% filter(noise_condition == 'Low')) %>%
+# supplemental lmer model
+library(lmerTest)
+lmer(score ~ n_players * noise_condition * half + (1 | game) + (1 | noise),
+   data = lm.in,
+   contrasts = list(half=contr.sum(2), noise_condition=contr.sum(2))) %>%
   summary()
 ```
 
@@ -102,10 +102,16 @@ state_proportions <- d %>%
 Plot overall proportions
 
 ```{r}
-ggplot(state_counts, aes(x= bg_val, y = prop, fill=state)) +
-  geom_bar(stat='identity') +
-  theme_few()
-         
+state_counts %>%
+  mutate(state = fct_relevel(state, 'copying', 'exploring', 'exploiting')) %>%
+  ggplot(aes(x= bg_val, y = prop, fill=state)) +
+    geom_area(stat='identity', alpha = 0.5) +
+    scale_fill_brewer(palette = "Set1") +
+    theme_few() +
+    theme(aspect.ratio = 3) +
+    labs(x="background value", y="proportion in state")
+
+ggsave('../../../couzin_replication_tex/figures/states.pdf')
 ```
 
 Break out by noise condition
@@ -113,17 +119,42 @@ Break out by noise condition
 ```{r}
 state_proportions %>% 
   filter(bg_val > 0) %>%
-  ggplot(aes(x = bg_val, y = m, color = noise_condition)) +
+  ggplot(aes(x = bg_val, y = m, color = state_bin, alpha = noise_condition)) +
     geom_line() +
     facet_wrap(~ state_bin) +
-    theme_few()
+    theme_few() +
+    theme(aspect.ratio = 1) +
+    scale_color_brewer(palette = "Set1") +
+    scale_alpha_discrete(range = c(0.5,1)) +
+    labs(x="background value", y="proportion in state")
+
+ggsave('../../../couzin_replication_tex/figures/states-broken-out.pdf')
 ```
 
 ```{r}
 d %>%
-  glmer(exploit ~ bg_val * noise_condition + (1 | pid),
+  glmer(exploit ~ bg_val * noise_condition + (1 | pid) + (1 | noise),
         family = 'binomial',
-       data = .) %>%
+        contrasts = list(half=contr.sum(2), noise_condition=contr.sum(2)),
+        data = .) %>%
+  summary()
+```
+
+```{r}
+d %>%
+  glmer(copy ~ bg_val * noise_condition + (1 | pid) + (1 | noise),
+        family = 'binomial',
+        contrasts = list(noise_condition=contr.sum(2)),
+        data = .) %>%
+  summary()
+```
+
+```{r}
+d %>%
+  glmer(explore ~ bg_val * noise_condition + (1 | pid) + (1 | noise),
+        family = 'binomial',
+        contrasts = list(noise_condition=contr.sum(2)),
+        data = .) %>%
   summary()
 ```
 
