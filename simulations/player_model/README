@@ -1,0 +1,24 @@
+
+  python single-simulation 1 0.9 True
+  
+  main.py
+  test.py
+
+  get_parameters.py
+
+    # action model (observe, act, record loop):
+    #
+    # pos        speed      angle
+    # x_{t - 1}  s_{t - 1}  a_{t - 1}
+    # x_{t}      s_{t}      a_{t}
+    #
+    # s_{t}, a_{t} = action(x_{t - 1}, s_{t - 1} * a_{t - 1})
+    # x_{t} = x_{t - 1} * s_{t} * a_{t} 
+    # bg_{t} = f(x_{t-1}, t-1)
+    # 
+    # i.e.,
+    # at t, players observe position (t - 1), angle (t - 1), speed (t - 1)
+    # take new action s_{t},  a_{t}
+    # world executes action t - 1 -> t
+    # write to file: x_{t}, s_{t},  a_{t}
+    # 

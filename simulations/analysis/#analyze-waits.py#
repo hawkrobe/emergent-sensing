@@ -1,0 +1,457 @@
+import pandas as pd
+import numpy as np
+import os, sys
+from scipy import stats
+import matplotlib.pyplot as plt
+
+from parse import *
+
+sys.path.append("../utils/")
+from utils import *
+
+data_dir = '../../out/'
+games = []
+games += get_games(data_dir, 'experiment')
+#games += ['data']
+data = get_data(data_dir, games)
+
+x = data['wait']
+y = data['score']
+slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
+
+print
+print 'regression slope', slope, 'p', p_value
+
+\documentclass[10pt,letterpaper]{article}
+
+\usepackage{cogsci}
+\usepackage{pslatex}
+\usepackage{apacite}
+\usepackage{url}
+\usepackage{graphicx}
+
+\title{Emergent Collective Sensing in Human Groups}
+
+\author{{\large \bf Peter M. Krafft (pkrafft@mit.edu)*, Robert X.D. Hawkins (rxdh@stanford.edu)$\dagger$,}\\ {\large \bf Alex ``Sandy'' Pentland (pentland@mit.edu)$\ddagger$, Noah D. Goodman (ngoodman@stanford.edu)$\dagger$,}\\ {\large \bf Joshua B. Tenenbaum (jbt@mit.edu)*} \\
+          \phantom{a}*MIT Computer Science and Artificial Intelligence Laboratory, $\dagger$Stanford Department of Psychology, $\ddagger$MIT Media Lab
+        }
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+Despite its importance in human society, the nature of human
+collective intelligence remains largely a mystery.  Recent studies
+have begun to probe and enumerate the descriptive features that
+partially explain the presence of collective intelligence in certain
+human groups, but the mechanisms for the emergence of this distributed
+information processing ability, whether on small or large scales, are
+poorly understood.  On the other hand, there have recently been
+careful experiments that have exposed the mechanisms of collective
+intelligence in nonhuman animal species.  We leverage the experimental
+design of one such recent study of collective sensing in groups of
+fish to better understand the mechanisms for the emergence of
+collective intelligence in human groups, and to better understand how
+the human ability of theory of mind contributes to those mechanisms.
+We find that humans in our experiments act at a high level much like
+the fish from the original experiment but with two key differences.
+Firstly, humans appear to frequently disengage from other individuals
+present in the environment in phases of independent exploration.
+Secondly, effective humans appear to engage in targeted, as opposed to
+indiscriminate, mimicry behavior.  The specific behavioral mechanism
+we identify that benefits from these distinctively human activities
+leads to the emergence of collective sensing in our dynamic task
+environment at much smaller group sizes than were observed in fish.
+
+\textbf{Keywords:}
+  collective intelligence; distributed cognition;
+    social cognition; social computation; online experiments
+    \end{abstract}
+
+    \section{Introduction}
+
+    Some of the most well-known phenomena of collective behavior are
+    failures of collective intelligence.  Mobs, market panics, and mass
+    hysteria draw attention because of their apparent irrationality and
+    painful consequences.  However, the successes of collective
+    intelligence are as remarkable as the failures are devastating.  The
+    richness of human culture, the incredible pace of our technological
+    developments, and the gradual progression of our scientific
+    understanding of the universe stand out as both distinctively human
+    and heavily reliant on the emergent behavior of the interactions of
+    many individuals.  Even at a less grandiose level, humans regularly
+    agree to work together to accomplish tasks that no individual could
+    accomplish alone via a process of dynamic cooperative team behavior
+    that is hypothesized to be uniquely human
+    \cite{tomasello_natural_2014}. Yet little is known about the specific
+    mechanisms underlying this synergistic process of self-organization,
+    even for small groups.
+    %coordinated teams.  There are many studies of which attributes---say,
+    %hierarchical structure \cite{anicich_hierarchical_2015}, or more women
+    %\cite{woolley_evidence_2010}---make teams more effective, but there
+    %are few experiments or modeling efforts that have been able to
+    %identify specific mechanisms by which humans are able to coordinate
+    %and synergize with each other to allow for better team performance.
+
+    In general, because of the difficulties in conducting and collecting
+    data from real-time multi-subject experiments or studies, the
+    quantitative study of collective behavior %in humans, as well as other nonhuman animals,
+    has
+    %historically
+    been largely theoretical.  Many models of flocking behavior,
+    collective decision-making, and other simple collective behaviors have
+    been proposed based on observations, intuitions, and analogies.  More
+    recently, though researchers have begun conducting careful experiments
+    to test and refine these models \cite{goldstone_collective_2009}.
+    However, many of these experiments, with some notable exceptions
+    \cite{goldstone_collective_2008, kearns_experiments_2012}, have been
+    conducted using nonhuman animal subjects.  The logistical difficulties
+    of having multiple human participants simultaneously interacting in a
+    real-time environment are still widely regarded as prohibitive.  As a
+    result we are quickly developing a better understanding of the
+    collective behavior of ants \cite{pratt_tunable_2006}, bees
+    \cite{seeley_group_1999}, cockroaches \cite{ame_collegial_2006}, and
+    fish \cite{ward_quorum_2008}, but our empirically-grounded
+    quantitative understanding of human collective behavior remains
+    limited.
+
+    Furthermore, given the distinct capabilities of humans as compared to
+    other animals, there is little reason to believe that the models of
+    collective behavior that have been developed for other animals would
+    be appropriate for humans. In this work, we harness recent technical
+    advances in running real-time, collective behavior experiments on the
+    web \cite{hawkins_conducting_2014} to develop and test a behavioral
+    model of collective human behavior. Our goal is to understand in what
+    ways human performance differs from that of nonhuman animals.
+    %uniquely human attributes may lead to different outcomes
+
+    As a point of comparison, we consider a recent experiment designed to
+    study the collective behavior of a particular species of fish that is
+    one of the clearest illustrations of collective intelligence in a
+    nonhuman animal group \cite{berdahl_emergent_2013}.  In this
+    experiment, researchers studied a species of fish that prefers to
+    reside in darker areas of the water, presumably to avoid predators.
+    The researchers took advantage of this natural propensity of the fish
+    and projected time-varying spatially correlated light fields into a
+    fish tank.  The researchers then studied the effectiveness of the fish
+    at finding the darker areas of the tank as a function of the number of
+    fish participating in the task.  The researchers found that average
+    group performance increased significantly as a function of group size,
+    and they identified two simple behavioral mechanisms driving this
+    improvement:
+        %mechanism driving this improvement was a
+        %collective gradient-sensing ability that emerged from two simple
+        %behavioral mechanisms:
+        first, individual fish tended to move more slowly in darker areas and
+        second, individual fish also tended to turn towards conspecifics.  The
+        researchers argued that the combination of these mechanisms generated
+        an emergent collective gradient sensing ability in groups of fish that
+        had been absent in individual fish.
+
+        This experiment provides a beautiful example of highly effective,
+        intelligent behavior at the group level emerging from minimal
+        intelligence at the individual level.
+         %for studying the emergence of group-level properties
+         % collaborative distributed search in dynamic spatial environments,
+         %and the mechanism they identified in the fish is a beautiful example
+         %However, in this task collective sensing in fish yielded impressive group gains but seemed
+         % to be
+         However, while these simple mechanisms do give rise to surprisingly
+         effective group behavior, they only lead to substantial gains in
+         performance for groups of 50 to 100 fish.  In contrast, we expect
+         humans in a similar task to show significant group gains with much
+         smaller group sizes. Most notably, we expect that humans should be
+         able to make use of robust theory of mind, the ability to draw
+         inferences about the underlying mental states of other players, to
+         better utilize social information.  Humans are known to be highly
+         effective at learning from others, as well as balancing this so called
+         ``social learning'' with independent exploration and exploitation of
+         existing personal knowledge \cite<e.g.>{kameda_adaptability_2003,
+                                                   wisdom_social_2013}.  Yet while we have a good understanding of the
+         benefits of theory of mind and social learning to individuals, it is
+         not known what emergent collective behavior strong theory of mind
+         affords.
+         % and integrating global information across space and time.
+
+         To better ellucidate these potential differences between humans and
+         fish, we developed a version of the gradient-sensing task for human
+         participants.  Specifically, we recreated the environment used by
+         \citeA{berdahl_emergent_2013} as an online real-time multi-player game.
+         In our experiment, participants controlled avatars in a virtual world.
+         Every location in this world corresponded to a score value that
+         changed over time, and participants were rewarded proportionally to
+         their cumulative scores in the game. The score of a player at a
+         particular point in time was simply determined by the location of that
+         player in the virtual world. Our incentives for participants to
+         achieve high scores were designed to simulate the fishes' preferences
+for darker areas in their environment.
+%We used exactly the same generative procedure to create our score fields as the original researchers used to generate their light fields.  
+The players either played alone or in groups of varying size.  As
+parallels to the previous researchers' experiments with fish, we study
+         how the performance of human groups changes as group size increases,
+         and what behavioral mechanisms our human participants use.
+
+         \section{Methods}
+         \subsubsection{Participants}
+         We recruited 563 unique participants from Amazon Mechanical Turk to participate in our experiment.
+         All participants were from the U.S., and passed a comprehension test based on their understanding of our instructions.
+         After excluding 72 participants due to inactivity
+         or latency after the game had started, and 6 others for
+         disconnecting in the first half of the game, we collected usable data from 437 participants in 224 groups ranging in size from one to six individuals.
+         Since we
+         were only able to collect one group of size six, we ignore this group
+         for our analysis.
+
+         \subsubsection{Stimuli}
+
+         \begin{figure}
+           \centering
+             \includegraphics[width=0.2\textwidth]{./figures/easy-field}
+               \hspace{0.5cm}
+                 \includegraphics[width=0.2\textwidth]{./figures/medium-field}
+                   \caption{Example score fields in the easy (left) and medium (right)
+                                difficulties at particular points in time.  Red areas in this
+                                figure indicate higher scoring areas.}
+                   \label{fig:score}
+                   \end{figure}
+
+
+                   A $480 \times 285$ array of score values was pre-generated for each 125ms time interval using the method
+                   reported by Berdahl et al. \citeyear{berdahl_emergent_2013}. First, a
+                   `spotlight' of high value was created, which moved smoothly from one
+random location to another random location over time. This spotlight
+was then convolved with a uniform field of Gaussian noise to yield a
+complex landscape with many transient local maxima but a unique
+time-varying global maximum.
+
+We manipulated the weighting between the noise field and the spotlight to generate different task difficulties. We used two
+levels of noise, corresponding to the ``easy'' and ``medium'' noise
+levels reported by Berdahl et al. 324 individuals (161 groups) were
+assigned to the medium difficulty and 113 individuals (63 groups) were
+assigned to the easy difficulty.  To decrease variability and increase
+statistical power, we generated only four distinct score fields per
+difficulty, so multiple groups experienced the same fields.  To
+discourage inactivity, players were not awarded any points while
+running into a wall, regardless of the current score field.  Example
+of score fields are shown in Figure \ref{fig:score}.
+
+To model the capabilities that Berdahl et al. ascribed to fish in their environment, we severely restricted participants' information about the score field: they were shown the score at their avatar's location, displayed at the top of their screen, but could \emph{not} see the scores other players were obtaining. However, the positions, directions, and
+speeds of all other players.  This information was updated in
+real-time every eighth of a second.  A screenshot of the interface we used for the game is
+shown in Figure \ref{fig:interface}.
+%To model the capabilities that fish were presumed by Berdahl et al. to
+%have in their environment, we restricted participants to only being
+%able to observe the scores at the particular locations in the game
+%their avatars were occupying.  This score was displayed to the player
+%at the top of the screen.  The players were also able to see their own
+%positions in the environment as well as the positions, directions, and
+%speeds of all other players.  This information was updated in
+%real-time every eighth of a second.  Importantly, though, the
+%participants could not see the scores that other players were
+%obtaining.  A screenshot of the interface we used for the game is
+%shown in Figure \ref{fig:interface}.
+
+Players controlled their avatars using the `left' and `right' keys to
+turn (at a rate of $40^\circ$ per second) and could hold the
+`spacebar' to accelerate. Their avatars automatically moved forward at
+                   a constant velocity of 136 pixels per second whenever the spacebar was
+                   not depressed, and instantaneously increased to a constant velocity of
+                   456 pixels per second whenever the spacebar was depressed.  Each
+                   participant played in a single continuous game lasting for 6 minutes.
+                   We chose the speed values to match the bounds that Berdahl et
+                   al. reported for their fish, and we also matched the playing area
+                   dimensions and game length of those experiments.
+
+
+                   \begin{figure}
+                     \centering
+                       \includegraphics[width=0.4\textwidth]{./figures/interface}
+                         \caption{A screenshot of the interface that participants saw.  The
+                                      score displayed corresponds to the value of the score field at the
+                                      location that the player is occupying.}
+                         \label{fig:interface}
+                         \end{figure}
+
+
+                         \subsubsection{Procedure}
+
+                         After agreeing to participate in our experiment, reading our
+                         instructions, and successfully completing our comprehension test,
+                         individuals were redirected to a waiting room, where they stayed for
+                         up to 5 minutes or until a pre-assigned number of other players joined
+                         the game. While in the waiting room, participants could familiarize
+                         themselves with the controls of the game.  The player's score in the
+waiting room was displayed as ``---' unless the participant was
+                         against a wall in which case the score would change to a red ``0\%''.
+                         Wait times were shown to have no measurable effect on individual
+                         performance (linear regression slope 2.03e-06, p = 0.738).  As in the
+                         actual game, participants in the waiting room would be removed for
+                         inactivity (if the player's browser was active in another tab for more
+than 15 seconds or if the player's avatar unmoving against a wall for
+                                     30 seconds) or for unacceptably high latencies (if the player's ping
+                                     response latency was greater than 125ms for more than 36 seconds). Participants were paid 50 cents for reading the instructions, and could receive a bonus of up to \$1.25 during six minutes of
+gameplay. The bonus was computed to be the player's cumulative score
+                                                                                     divided by the total length of the game.
+                                                                                     %Following the current convention on Mechanical Turk, each participant was also paid U.S. minimum wage for any time in the waiting room minus any time that player spent against a wall.
+
+                                                                                     We implemented this experiment using the MWERT framework
+                                                                                     \cite{hawkins_conducting_2014}, which combines a set of recent web
+                                                                                     technologies capable of handling the challenges of real-time,
+                                                                                     multi-player web experiments, including Node.js, the Socket.io module,
+                                                                                     and HTML5 canvas. We extended the MWERT framework in several ways to
+                                                                                     handle the challenges posed by hosting larger groups of
+                                                                                     players; full source code and†a demo are available online.\footnote{
+                                                                                         \url{https://github.com/hawkrobe/couzin_replication}}
+
+                                                                                     \begin{figure}[t]
+                                                                                       \centering
+                                                                                       \includegraphics[width=0.4\textwidth]{./figures/performance-1en01}\\
+                                                                                       \vspace{0.5cm}
+                                                                                       \includegraphics[width=0.4\textwidth]{./figures/performance-2en01}
+                                                                                       \caption{Individual performance as a function of group size in the
+                                                                                                    easy (top) and medium (bottom) difficulties.  Colors within each
+                                                                                                    plot indicate which score field the player experienced.  Symbols
+                                                                                                    within each point identify groups of individual that played
+                                                                                                    together.  Lines indicate the means of each group for each score field.}
+                                                                                     \label{fig:performance}
+                                                                                     \end{figure}
+
+                                                                                     \section{Results}
+
+                                                                                     We find that the performance of human groups in this game
+                                                                                     significantly increases as a function of group size in the easy task
+                                                                                     difficulty but only marginally increases as a function of group size
+                                                                                     in the medium task difficulty.  Individual performance as a function
+                                                                                     of group size in each of these cases is shown in Figure
+                                                                                     \ref{fig:performance}.  A linear regression on the easy difficulty
+                                                                                     points produces a significant positive slope of 0.0238 and a 95\%
+                                                                                     confidence interval (95\% CI) of $[0.006,0.041]$.  A linear regression
+                                                                                     on the medium difficulty points produces a marginally significant
+                                                                                     positive slope of $0.0068$, 95\% CI $[-0.001,0.015]$.  However, even
+                                                                                     this marginally significant result is driven entirely by the effect of
+                                                                                     group size in one of score fields.  This particular score field (the
+                                                                                                                                                      red line in Figure \ref{fig:performance}) displays a significant
+                                                                                     effect of group size with a positive slope of 0.0306, 95\% CI:
+                                                                                     $[0.015,0.046]$, while none of the others do.  Qualitative inspection
+                                                                                     revealed that this particular score field seems to share spatial
+                                                                                     properties more similar to the easy score fields, which may explain
+                                                                                     the strength of the effect in that particular score field. To further investigate variability, a mixed-effects regression was conducted with group and score field included as random intercepts.  Overall
+                                                                                     these results indicate that larger groups do tend to perform
+                                                                                     systemically better on our task than those in smaller groups, at least
+                                                                                     in the easy game difficulty.
+                                                                                     \footnote{As has been previously noted \cite{hawkins_conducting_2014,
+                                                                                                                                      reips_standards_2002}, attempts to randomize group assignments in
+                                                                                                 online experiments are generically disrupted by participant drop-out
+                                                                                                 and removal.  Hence our assignments to group sizes are nonrandom,
+                                                                                                 which prevents strong causal inference. In our case, we are
+                                                                                                 primarily concerned that participants with slower Internet
+                                                                                                 connections are more likely to be removed from larger games than
+                                                                                                 smaller games due to game lag, leading to selection bias. However,
+                                                                                                 the individuals who remained in the groups did not experience
+                                                                                                 systematically less lag as group size increased (slope -0.0108, 95\%
+                                                                                                                                                  CI:$[-0.050,0.028]$), so any effect due to purely to artifacts from
+                                                                                                 lag will not be confounded with the effect of group size.}
+
+
+
+                                                                                     In order to understand the factors that may contribute to the increase
+                                                                                     in performance in the easy condition as a function of group size, we
+                                                                                     examine the behavior of the players in our games.  We assume a simple
+                                                                                     state-based representation of player behavior and examine.  We then
+                                                                                     look at the factors that determine the states each player occupies at
+                                                                                     any point in time, as well as the relationship between those decisions
+                                                                                     to occupy particular states and player performance.  Specifically, we
+                                                                                     assume that at any particular point in time a player is either
+                                                                                     \textit{exploring}, \textit{exploiting}, or \textit{copying}
+                                                                                     \cite<see>[for a similar classification]{rendell_why_2010}.
+                                                                                     Conceptually, a player is exploring if that player is looking for a
+                                                                                     good location to exploit, a player is exploiting if that player has
+                                                                                     found a location where they want to remain, and a player is copying if
+                                                                                     that player is intending to move to the location of another player.
+
+                                                                                     We empirically determine the state of each player at each point in
+                                                                                     time using a set of hand-tuned filters.  All of these filters depend
+                                                                                     only on information that is observable to any player in the game
+                                                                                     (i.e., the filters do not depend directly on the scores of any
+                                                                                      individuals), and hence we can use the inferred states of players as a
+                                                                                     proxy for what other players might infer as the states of those
+                                                                                     players.  Moreover, the states will not be by definition related to
+                                                                                     performance, allowing for us to observe the relationship between state
+                                                                                     and performance.
+
+                                                                                     Exploiting a particular location in this game is nontrivial for
+                                                                                     players since the players always move at least at a slow velocity.  In
+                                                                                     order to atettempt to stay put, a player can either meander around a
+                                                                                     particular location or can hold down one of the arrow keys while
+                                                                                     moving at a slow speed, which creates a tight circular motion around a
+                                                                                     particular location.  We call this second activity ``spinning''
+                                                                                     because of its distinctive appearance.  We then define a player as
+                                                                                     exploiting if the player is spinning for 500ms or if the player moves
+                                                                                     at the slow speed for 3 seconds and has not traveled more than two
+                                                                                     thirds of the possible distance that the player could have traveled in
+                                                                                     that time.  The second condition is supposed to capture the meandering
+                                                                                     behavior of individual who have not discovered how to spin.  Copying
+                                                                                     behavior is more difficult to identify, but is often characterized by
+                                                                                     fast directed movements towards other players.  We thus define a
+                                                                                     player as copying if the player is moving in a straight line at the
+                                                                                     fast speed towards any particular other player consistently for 500ms.
+                                                                                     We define a player as moving towards another player if the second
+                                                                                     player is within $60^\circ$ on either side of the first player's
+                                                                                     straight-line trajectory.  Finally, we define a player as exploring if
+the player is neither exploiting nor copying.  Thus a player will be
+classified as exploring if that player is either moving slowly but not
+                                                                                     staying in the same general location, if the player is moving quickly
+                                                                                     but not towards any particular person, or if the player is moving
+quickly and turning.
+
+We use these filters to analyze how players behave in our game.
+                                                                                     First, we compute the probability of a player being in a particular
+state conditional on the current score that the player is receiving by
+observing the fraction of players in each state at each score level.
+We find that the probability of a player occupying a particular is
+                                                                                     closely related to that player's score.  Specifically, players in
+                                                                                     higher scoring locations are more likely to be exploiting than
+                                                                                     exploring or copying, but the probability that a player is exploring
+                                                                                     or copying increases as the players' score decreases.  These results,
+                                                                                     which are visualized in Figure \ref{fig:states}, suggest that players
+are choosing their states relatively rationally.  Players will tend to
+remain in good areas and will leave bad areas quickly either by
+exploring independently or by copying other individuals.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.4\textwidth]{./figures/states}
+  \caption{The probability of an individual being in a particular
+    behavioral state as a function of the individual's score.}
+                         \label{fig:
+
+plt.rcParams.update(pd.tools.plotting.mpl_stylesheet)
+
+fig, ax = plt.subplots()
+ax.margins(0.05)
+shapes = [(4,0,0), (3,0,0), (4,0,45), (0,3,0), (3,0,180), (5,1,0)]
+i = 0
+for n in sorted(list(set(data['n_players']))):
+    sub = data[data['n_players'] == n]
+    ax.plot(sub['wait'], sub['score'], marker=shapes[i], linestyle='', ms = 10, label = n)
+    i += 1
+plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
+plt.xlabel('Wait Time', fontsize=24)
+plt.ylabel('Individual Score', fontsize=24)
+
+plt.show()
+
+plt.rcParams.update(pd.tools.plotting.mpl_stylesheet)
+
+fig, ax = plt.subplots()
+i = 0
+sub = data[data['n_players'] == 1]
+ax.plot(sub['wait'], sub['score'], marker=shapes[i], linestyle='', ms = 10, label = n)
+
+plt.xlabel('Wait Time', fontsize=24)
+plt.ylabel('Individual Score', fontsize=24)
+
+plt.show()
