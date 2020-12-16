@@ -50,7 +50,7 @@ d %>%
   summary()
 ```
 
-Analyze clicks
+## Experimental analysis of click data
 
 ```{r}
 # Original angle measured clock-wise from top
