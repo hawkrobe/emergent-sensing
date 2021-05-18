@@ -1,6 +1,5 @@
-
 import sys
-sys.path.append('../player_model/')
+sys.path.append('./player_model/')
 
 from multiprocessing import Pool
 
@@ -9,19 +8,20 @@ import sys
 
 import full_background_simulation as simulation
 import simulation_utils
-
 import config
 import exp_config
 
 from basic_bot import *
-
 from rectangular_world import RectangularWorld
 
 reps = exp_config.simulation_reps
-
 info, out_dir = exp_config.get_full_background_config(reps)
 
-def func(exp_ind):
+
+def get_environment():
+    return lambda x: RectangularWorld(x, 3.0, True, None, False)
+
+def run_simulation(exp_ind):
 
     experiment = info['experiments'][exp_ind]
     print(experiment)
@@ -30,8 +30,7 @@ def func(exp_ind):
     group = info['groups'][exp_ind]
     noise = info['noises'][exp_ind]
 
-    bg_file = exp_config.full_bg_dir + noise + '/'
-    
+    bg_file = exp_config.full_bg_dir + noise + '/'    
     
     environment = get_environment()
     
@@ -48,16 +47,6 @@ def func(exp_ind):
 
     log_f.close()
 
-
-def get_environment():
-
-    return lambda x: RectangularWorld(x,
-                                      3.0,
-                                      True,
-                                      None,
-                                      False)
-
-
-p = Pool(exp_config.num_procs)
-p.map(func, range(len(info['experiments'])))
-#print([x for x in map(func, range(len(info['experiments'])))])
+if __name__ == '__main__':
+    p = Pool(exp_config.num_procs)
+    p.map(run_simulation, range(len(info['experiments'])))
