@@ -1,82 +1,57 @@
-  
-import numpy as np
 import copy
-
 import sys
 sys.path.append('../player_model/')
 
 import utils
 import config
+import random
 
+import numpy as np
 import smart_particle as inference
 from spotlight_background_discrete_model import SpotlightBackgroundDiscrete
 
-class BasicBot():
-    
-    def __init__(self, environment, social_vector, social_rule, my_index, noise = 0, random_explore = False, log_file = None):
-                
-        assert social_rule in ['smart','naive','eager','asocial','lazy']
+class BasicBot():    
+    def __init__(self, environment, social_vector, strategy, my_index,
+                 noise = 0, prob_explore = 0.5, random_explore = False, log_file = None):
+        self.strategy = strategy                
+        assert strategy in ['asocial', 'smart', 'smart_but_lazy', 'naive_copy', 'move_to_center']
         
         self.noise = noise
         self.random_explore = random_explore
-        
+        self.prob_explore = prob_explore
         self.world = environment(None)
-        
         self.last_pos = None
+        self.total_score = 0
         self.time = -1
         
         self.state = 'exploring'
         self.last_state = 'exploring'
-
         self.explore_goal = None
         self.copy_goal = None
         self.exploit_goal = None
         
-        self.my_index = my_index
-        
+        self.my_index = my_index        
         social_vector[my_index] = False
-        self.social_vector = social_vector
+        self.social_vector = [False]*len(social_vector) if strategy == 'asocial' else social_vector 
 
         if not self.random_explore:
-            self.model = inference.Model(lambda: SpotlightBackgroundDiscrete(self.world.edge_goal), n_samples = 500)
-        
+            self.model = inference.Model(lambda: SpotlightBackgroundDiscrete(self.world.edge_goal),
+                                         n_samples = 500)
+            self.goal = self.model.resample(None, None, None)
+        else :
+            self.goal = self.world.get_random_position()
+    
         self.force_goal = None
         self.inside_force = False
-
         self.turn = np.random.choice(['left','right'])
-        
-        self.social_rule = social_rule
-        
-        if social_rule == 'eager':
-            self.copy_first = True
-            self.social_rule = 'smart'
-        else:
-            self.copy_first = False
-        
-        if social_rule == 'lazy':
-            self.social_rule = 'smart'
-            self.copy_close = True
-        else:
-            self.copy_close = False
-        
-        if social_rule == 'asocial':
-            self.social_vector = [False]*len(social_vector)
-        
-        self.inferred_center = None
 
-        if self.random_explore:
-            self.goal = self.world.get_random_position()
-        else:
-            self.goal = self.model.resample(None, None, None)
+        self.copy_targeted = self.strategy in ['smart', 'smart_but_lazy']
+        self.copy_close = self.strategy == 'smart_but_lazy'
         
-        # self.log_file = log_file
-        
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'noise', self.noise, '\n'])))
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'social_rule', self.social_rule, '\n'])))
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'social_vector', self.social_vector, '\n'])))
-
     def observe(self, pos, bg_val, time):
-        
+        """
+        determine current background value 
+        """
         if self.last_pos is not None:
             if self.random_explore:
                 self.goal = self.world.get_random_position()
@@ -87,58 +62,55 @@ class BasicBot():
         self.last_pos = pos
         self.last_bg = bg_val
         self.time = time
+        self.total_score += bg_val
         
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'observed', pos, bg_val, '\n'])))
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'goal', self.goal, '\n'])))
-    
     def act(self, p, others, force_exploit = False, exploit_pos = None):
-        
+        """
+        determine action for player p 
+        """
         self.last_state = copy.copy(self.state)
-
-        if self.inside_force:
-            
+        
+        if self.inside_force or force_exploit:
+            # In Exp. 2, we force bot to exploit
             g = self.force_exploit(p, exploit_pos)
             
-        elif (self.last_bg >= 0.8 and np.random.random() > self.noise) and (not self.copy_first or self.socially_consistent_center(p, others)):
-
+        elif ((self.last_bg >= 0.8 and np.random.random() > self.noise)): 
+            # All agents exploit at high background 
             self.force_goal = None
             g = self.exploit(p)
-        
-        elif force_exploit:
 
-            g = self.force_exploit(p, exploit_pos)
-            
-        else:
+        elif self.strategy == 'asocial' :
+            # asocial bot simply explores until finding good value then exploits
+            g = self.explore(p)
 
-            self.force_goal = None
-            self.exploit_goal = None
-            self.inferred_center = None
+        elif self.strategy == 'smart' :
+            # smart copy targets exploiting partner if available
+            g = self.copy(p, others)
 
-            if self.social_rule == 'naive':
-                if not self.inside_exploration_action(p):
-                    g = self.copy(p, others)
-            else:
+        elif self.strategy ==  'naive_copy' :
+            # naive_copy bot randomly chooses copy or explore goal
+            if self.inside_exploration_action(p):
+                g = self.explore(p)
+            elif self.inside_copying_action(p, others) :
                 g = self.copy(p, others)
-            
-            if self.state == 'copying':
-                
-                self.explore_goal = None
-                
-            else:
-                
-                if self.copy_first and (self.last_bg >= 1.0 and np.random.random() > self.noise):
-                    
-                    g = self.exploit(p)
-                
-                else:
-                    
-                    g = self.explore(p)                
-                
+            else :
+                g = (self.explore(p) if np.random.random() > self.prob_explore
+                     else self.copy(p, others))
+
+        elif self.strategy == 'move_to_center' :
+            if self.inside_exploration_action(p) :
+                g = self.explore(p)
+            else :
+                empty_pos = any([other.last_pos is None for other in others])
+                self.explore(p)
+                g = (self.get_explore_goal() if np.random.random() > self.prob_explore or empty_pos
+                     else self.get_center_goal(others))
+                self.explore_goal = g
+        if g is None :
+            g = self.explore(p)            
+
         assert g is not None
         assert sum([x is not None for x in [self.explore_goal, self.exploit_goal, self.copy_goal, self.force_goal]]) == 1
-        
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'state', self.state, '\n'])))
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'final_goal', g, '\n'])))
         
         p.go_towards(g)
         slow = self.state == 'exploiting' and p.speed > 0
@@ -147,87 +119,46 @@ class BasicBot():
                 
         return g, slow
 
-    def socially_consistent_center(self, p, others):
-        
-        for i,o in enumerate(others):
-            
-            if self.social_vector[i] and o.state == 'exploiting' and np.linalg.norm(p.pos - o.last_pos) < self.world.min_speed:#config.DISCRETE_BG_RADIUS:
-                return True
-        
-        return False
-
-    def inside_exploration_action(self, p):
-
-        if self.explore_goal is not None:
-            if np.linalg.norm(p.pos - self.explore_goal) > 2*self.world.min_speed:
-                return True
-        
-        return False
-
     def explore(self, p):
-        
+        """
+        sets an exploration goal if agent does not already have one
+        """
+        self.exploit_goal = None
+        self.copy_goal = None
         if self.inside_exploration_action(p):
             return self.explore_goal
-        
-        self.state = 'exploring'
-        self.explore_goal = self.get_explore_goal()
-
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'explore_goal', self.explore_goal, '\n'])))
-
-        return self.explore_goal
-
-    def force_exploit(self, p, center):
-        
-        if self.inside_force:
-
-            g = self.force_goal
-            
-            if np.linalg.norm(p.pos - self.force_goal) < 2*self.world.min_speed:
-                
-                self.inside_force = False
-                
-            return g
-
-        self.inside_force = True
-        
-        self.exploit_goal = None
+        else :
+            self.state = 'exploring'
+            self.explore_goal = self.get_explore_goal()
+            return self.explore_goal
+    
+    def exploit(self, p):        
         self.explore_goal = None
         self.copy_goal = None
-        
-        self.state = 'exploring'
-        return self.get_force_exploit_goal(center)
-
-    def exploit(self, p):
-        
-        self.explore_goal = None
-        self.copy_goal = None
-
-        self.turn = np.random.choice(['left','right'])
-        
+        self.exploit_goal = self.last_pos
+        self.turn = np.random.choice(['left','right'])        
         self.state = 'exploiting'
-        return self.get_exploit_goal(p)
+        return self.exploit_goal
     
     def copy(self, p, others):
+        # if currently copying, keep copying that same person as long as they're still exploiting
+        if self.copy_goal is not None :
+            copy_target = others[self.copy_goal]
+            if (np.linalg.norm(p.pos - copy_target.last_pos) > 4*self.world.min_speed
+                and (copy_target.state == 'exploiting' or not self.copy_targeted)):
+                return copy_target.last_pos
 
-        if self.copy_goal is not None:
-            if self.social_rule != 'smart' or others[self.copy_goal].state == 'exploiting':
-                if np.linalg.norm(p.pos - others[self.copy_goal].last_pos) > self.world.max_speed:
-                    return others[self.copy_goal].last_pos
-        
+        # otherwise determine whether to copy someone new
         self.copy_goal = None
-
         candidates = []
-
         for i in range(len(others)):
-
             if not self.social_vector[i]:
                 continue
 
             if others[i].last_pos is None:
                 continue
 
-            if self.social_rule == 'smart' and np.random.random() > self.noise:
-
+            if self.copy_targeted and np.random.random() > self.noise:
                 if (others[i].world.edge_goal != self.world.edge_goal) and not self.copy_close:
                     continue
 
@@ -235,70 +166,69 @@ class BasicBot():
                     continue
             else:
                 if others[i].state == 'copying':
-                    continue
-            
+                    continue            
             candidates += [i]
 
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'copy_candidates', candidates, '\n'])))
-        
-        if len(candidates) > 0 and np.random.random() > self.noise:
-            
+        # if there's anyone to copy, pick one
+        if len(candidates) > 0 and np.random.random() > self.noise:            
             self.state = 'copying'
+            self.force_goal = None
+            self.explore_goal = None
+            self.exploit_goal = None
+            self.copy_goal = (candidates[get_closest(p.pos, [others[i].last_pos for i in candidates])]
+                              if self.copy_close else np.random.choice(candidates))
+        return others[self.copy_goal].last_pos if self.copy_goal is not None else None
 
-            if self.copy_close:
-                ind = candidates[get_closest(p.pos, [others[i].last_pos for i in candidates])]
-            else:
-                ind = np.random.choice(candidates)
-            
-            # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'copy', ind, '\n'])))
+    def inside_exploration_action(self, p):
+        """
+        returns true when agent p has an exploration goal and has not yet reached it
+        """
+        return (self.explore_goal is not None and
+                np.linalg.norm(p.pos - self.explore_goal) > 4*self.world.min_speed)
 
-            self.copy_goal = ind #np.copy(others[ind].last_pos)
-
-        else:
-            
-            self.state = 'exploring'
-        
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'copy_goal', self.copy_goal, '\n'])))
-        
-        if self.copy_goal is not None:
-            return others[self.copy_goal].last_pos
-        else:
-            return None
-
-    def get_force_exploit_goal(self, center):
-        
-        self.force_goal = center
-        
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'exploit_goal', self.exploit_goal, '\n'])))
-        
-        return self.force_goal
-
-    def get_exploit_goal(self, p):
-
-        self.exploit_goal = self.last_pos
-
-        # self.log_file.write(' '.join(map(str, [self.time, self.my_index, 'exploit_goal', self.exploit_goal, '\n'])))
-        
-        return self.exploit_goal
+    def inside_copying_action(self, p, others):
+        """
+        returns true when agent p has an exploration goal and has not yet reached it
+        """
+        return (self.copy_goal is not None and
+                np.linalg.norm(p.pos - others[self.copy_goal].last_pos) > 4*self.world.min_speed)
 
     def get_explore_goal(self):
-        
-        goal_collision = utils.check_collision(self.goal, self.world.pos_limits, self.world.shape, update = False, extended = True)
-
+        """
+        Etermine next location to explore. 
+        If using edge goals, move to next corner when you hit the wall.
+        Otherwise use random legal position.
+        """
         if self.world.edge_goal and np.random.random() > self.noise:
-            collision, sides = utils.check_collision(self.last_pos, self.world.pos_limits, self.world.shape, update = False, extended = True, return_side = True)
-            if collision:
-                g = next_corner(sides, self.world.pos_limits, self.turn)
-            else:
-                g = closest_wall(self.last_pos, self.world.pos_limits)
+            collision, sides = utils.check_collision(self.last_pos, self.world.pos_limits, self.world.shape,
+                                                     update = False, extended = True, return_side = True)
+            return (next_corner(sides, self.world.pos_limits, self.turn) if collision
+                    else closest_wall(self.last_pos, self.world.pos_limits))
         else:
-            if goal_collision:
-                g = get_legal_position(self.goal, self.world.pos_limits, self.world)
-            else:
-                g = self.goal
-        
-        return g
-    
+            collision = utils.check_collision(self.goal, self.world.pos_limits, self.world.shape,
+                                              update = False, extended = True)
+            return (get_legal_position(self.goal, self.world.pos_limits, self.world) if collision 
+                    else self.goal)
+
+    def get_center_goal(self, others):
+        new_x = np.mean([other.last_pos[0] for other in others])
+        new_y = np.mean([other.last_pos[1] for other in others])
+        return np.array([new_x, new_y])
+
+    def force_exploit(self, p, center):        
+        if self.inside_force:
+            if np.linalg.norm(p.pos - self.force_goal) < 2*self.world.min_speed:                
+                self.inside_force = False
+            return self.force_goal
+        else :        
+            self.force_goal = center
+            self.inside_force = True        
+            self.exploit_goal = None
+            self.explore_goal = None
+            self.copy_goal = None
+            self.state = 'exploring'
+            return self.force_goal
+
 def next_corner(sides, pos_limits, turn):
     
     perturb = np.random.random(size = 2) * config.SIDE_WIDTH
@@ -330,6 +260,7 @@ def next_corner(sides, pos_limits, turn):
 
 def closest_wall(pos, pos_limits, index = False):
     """
+    determine nearest point lying on wall boundary
     >>> pos_limits = {'x_min':0,'x_max':200,'y_min':0,'y_max':100}
     >>> closest_wall(np.array([10,50]), pos_limits)
     array([ 0, 50])
