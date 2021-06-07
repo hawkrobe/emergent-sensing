@@ -1,4 +1,3 @@
-
 GAME_LENGTH = 3.0 # minutes
 #GAME_LENGTH = 1.0 # minutes
 
@@ -21,4 +20,4 @@ POS_LIMITS = {
 SPOT_START_PROB = 1.0 / (10*8)
 SPOT_SHIFT_PROB = 1.0 / (10*8)
 
-LOW_SCORE = 0.2
+LOW_SCORE = 0.001
