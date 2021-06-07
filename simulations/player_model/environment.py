@@ -192,7 +192,30 @@ class World():
         self.debug = debug
         
         self.stop_and_click = stop_and_click
+
+    def random_walk_centers(self, super_slow = False):
+        centers = []
+        self.world_model.centers = centers
+        p = self.players[0]
+        centers += [self.world_model.get_random_position()]
+        p.pos = np.copy(centers[0])
+        goal = self.world_model.get_random_position()
+        for t in range(1, self.game_length):
+            move = p.get_move_towards(goal, None)
+            if move['speed'] == 'stop':
+                goal = self.world_model.get_random_position()
         
+            p.go_towards(goal)
+            if super_slow:
+                p.go_super_slow()
+            else:
+                p.go_slow()
+        
+            self.advance()
+            centers += [np.copy(p.pos)]
+        self.world_model.centers = centers
+        return centers
+
     def advance(self):
 
         if not self.debug:

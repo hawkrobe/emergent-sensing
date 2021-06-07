@@ -19,9 +19,11 @@ from rectangular_world import RectangularWorld
 from environment import *
 from centroid_manager import *
 
-def write(pid, p, model, tick, out_file, goal, file_prefix):
-    out = [file_prefix, pid, tick, 'true', model.state, p.pos[0], p.pos[1],
-           p.speed, p.angle, p.curr_background, goal[0], goal[1]]
+def write(pid, p, model, tick, out_file, goal, experiment):
+    bg, nbots, strategy, rep = experiment.split('-')
+    out = [experiment, nbots, pid, tick, 'true', model.state, p.pos[0], p.pos[1],
+           p.speed, p.angle, p.curr_background, model.prob_explore, strategy,
+           goal[0], goal[1]]
     out = list(map(str, out))
     out_file.write(','.join(out) + '\n')
 
@@ -35,51 +37,56 @@ reps = exp_config.simulation_reps
 info, out_dir = exp_config.get_emergent_config(reps)
 
 def run_simulation(exp_ind):
+    print(exp_ind)
     experiment = info['experiments'][exp_ind]    
     bg = info['background_types'][exp_ind]
     nbots = info['nums_bots'][exp_ind]
     strategy = info['strategies'][exp_ind]
-    environment = RectangularWorld(bg, config.GAME_LENGTH, False, config.DISCRETE_BG_RADIUS, False)
+    probs = [None] if strategy in ['asocial', 'smart'] else [0.1,.25,.5,.75,.9]
+    environment = lambda bg: RectangularWorld(bg, config.GAME_LENGTH, False,
+                                              config.DISCRETE_BG_RADIUS, False)
     centers = {'player': simulation_utils.random_walk_centers(environment)}
-    models = [BasicBot(environment, [True]*nbots, strategy, i) for i in range(nbots)]
-    n_players = len(models)
-    pids = range(n_players)
-    goals = [['',''] for i in range(n_players)]
+    models = [BasicBot(environment, [True]*nbots, strategy, i, 
+                       prob_explore = np.random.choice(probs))
+              for i in range(nbots)]
 
     # write centers to file
-    write_centers(centers['player'], out_dir + file_prefix + '-bg.csv')
+    write_centers(centers['player'], out_dir + experiment + '-bg.csv')
 
     # Initialize world
-    world = World(environment, noise_location = None, n_players = n_players,
+    world = World(environment, noise_location = None, n_players = len(models),
                   stop_and_click = config.STOP_AND_CLICK)
     world.world_model.centers = centers['player']
     world.advance() 
     world.time = 0        
 
     with open(out_dir + experiment + '-simulation.csv', 'w') as out_f:
-        out_f.write('exp,pid,tick,active,state,x_pos,y_pos,velocity,angle,bg_val,goal_x,goal_y\n')
+        out_f.write('exp,nbots,pid,tick,active,state,x_pos,y_pos,velocity,angle,bg_val,\
+                     prob_explore,strategy,goal_x,goal_y\n')
 
         # Write initial states
-        for i in range(n_players):
+        for i in range(len(models)):
             p = world.players[i]
-            write(pids[i], p, models[i], 0, out_f, goals[i], experiment)
+            write(i, p, models[i], 0, out_f, ['', ''], experiment)
 
         # simulate ticks
         for tick in range(1, world.game_length):
-            simulate_tick(centers, models, environment, out_f, out_dir, experiment)
+            simulate_tick(tick, models, world, out_f, experiment)
 
-def simulate_tick(centers, models, environment_model, out_file, out_dir, file_prefix):    
-    models_copy = copy.deepcopy(models)        
-    for i in range(n_players):        
+def simulate_tick(tick, models, world, out_file, experiment):
+    models_copy = copy.deepcopy(models)
+    goals = [['',''] for i in range(len(models))]
+    for i in range(len(models)):        
         pos, bg_val, others, time = world.get_obs(i)
         models[i].observe(pos, bg_val, time)            
-        goals[i],slow = models[i].act(world.players[i], models_copy)
+        goals[i], slow = models[i].act(world.players[i], models_copy)
         
     world.advance()
-    for i in range(n_players):
-        write(pids[i], world.players[i], models[i], tick, out_file, goals[i], file_prefix)
+    for i in range(len(models)):
+        write(i, world.players[i], models[i], tick, out_file, goals[i], experiment)
     
 
 if __name__ == '__main__':
-   p = Pool(exp_config.num_procs)
-   p.map(run_simulation, range(len(info['experiments'])))
+  p = Pool(exp_config.num_procs)
+  p.map(run_simulation, range(len(info['experiments'])))
+#    run_simulation(10)
