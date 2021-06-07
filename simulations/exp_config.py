@@ -1,11 +1,12 @@
 
 import os
 import numpy as np
+import itertools
 
 DEBUG = True
 
 if DEBUG:
-    simulation_reps = 2
+    simulation_reps = 40
     noise_levels = [0]
 else:
     simulation_reps = 25
@@ -20,7 +21,7 @@ full_dir = './output/predictions-full-background/'
 
 full_bg_dir = os.path.expanduser("~") + '/light-fields/'
 
-strategies = ['asocial']
+strategies = ['asocial', 'naive_copy', 'move_to_center', 'smart']
 #strategies = ['smart', 'naive', 'asocial', 'eager', 'lazy']
 
 num_procs = 8
@@ -37,16 +38,25 @@ def get_emergent_config(reps):
     info = {}
     info['experiments'] = []
     info['background_types'] = []
-    info['nums_bots'] = []
+    info['bots'] = []
     info['strategies'] = []
-    for bg in ['spot']:
-        for nbots in np.array(range(5)) + 1:
-            for s in strategies:
-                for rep in range(reps):
-                    info['experiments'] += ['-'.join([bg, str(nbots), s, str(rep)])]
-                    info['background_types'] += [bg]
-                    info['nums_bots'] += [nbots]
-                    info['strategies'] += [s]
+    for n_asocial in range(7) :
+        for n_naive in range(7 - n_asocial) :
+            for rep in range(10, 10 + reps):
+                n_center = 0
+                n_smart = 6 - n_asocial - n_naive
+                composition = (n_asocial, n_naive, n_center, n_smart)
+                bots = ([{'strategy' : 'asocial', 'prob_explore' : 0.5}] * n_asocial +
+                        [{'strategy' : 'naive_copy', 'prob_explore' : 0.5}] * n_naive +
+                        [{'strategy' : 'move_to_center', 'prob_explore' : 0.5}] * n_center +
+                        [{'strategy' : 'smart', 'prob_explore' : 0.5}] * n_smart)
+                nbots = len(bots)
+                print(composition)
+                info['experiments'] += ['-'.join(
+                    [str(nbots), ''.join([str(i) for i in composition]), str(rep)]
+                )]
+                info['bots'] += [bots]
+                info['strategies'] += [composition]
                         
     return info, emergent_dir
 
