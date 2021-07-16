@@ -1,6 +1,6 @@
 import copy
 import sys
-sys.path.append('../player_model/')
+sys.path.append('./player_model/')
 
 import utils
 import config
@@ -41,8 +41,6 @@ class BasicBot():
         else :
             self.goal = self.world.get_random_position()
     
-        self.force_goal = None
-        self.inside_force = False
         self.turn = np.random.choice(['left','right'])
 
         self.copy_targeted = self.strategy in ['smart', 'smart_but_lazy']
@@ -64,19 +62,14 @@ class BasicBot():
         self.time = time
         self.total_score += bg_val
         
-    def act(self, p, others, force_exploit = False, exploit_pos = None):
+    def act(self, p, others):
         """
         determine action for player p 
         """
         self.last_state = copy.copy(self.state)
-        
-        if self.inside_force or force_exploit:
-            # In Exp. 2, we force bot to exploit
-            g = self.force_exploit(p, exploit_pos)
             
-        elif ((self.last_bg >= 0.8 and np.random.random() > self.noise)): 
+        if ((self.last_bg >= 0.8 and np.random.random() > self.noise)): 
             # All agents exploit at high background 
-            self.force_goal = None
             g = self.exploit(p)
 
         elif self.strategy == 'asocial' :
@@ -110,7 +103,7 @@ class BasicBot():
             g = self.explore(p)            
 
         assert g is not None
-        assert sum([x is not None for x in [self.explore_goal, self.exploit_goal, self.copy_goal, self.force_goal]]) == 1
+        assert sum([x is not None for x in [self.explore_goal, self.exploit_goal, self.copy_goal]]) == 1
         
         p.go_towards(g)
         slow = self.state == 'exploiting' and p.speed > 0
@@ -172,7 +165,6 @@ class BasicBot():
         # if there's anyone to copy, pick one
         if len(candidates) > 0 and np.random.random() > self.noise:            
             self.state = 'copying'
-            self.force_goal = None
             self.explore_goal = None
             self.exploit_goal = None
             self.copy_goal = (candidates[get_closest(p.pos, [others[i].last_pos for i in candidates])]
@@ -199,92 +191,16 @@ class BasicBot():
         If using edge goals, move to next corner when you hit the wall.
         Otherwise use random legal position.
         """
-        if self.world.edge_goal and np.random.random() > self.noise:
-            collision, sides = utils.check_collision(self.last_pos, self.world.pos_limits, self.world.shape,
-                                                     update = False, extended = True, return_side = True)
-            return (next_corner(sides, self.world.pos_limits, self.turn) if collision
-                    else closest_wall(self.last_pos, self.world.pos_limits))
-        else:
-            collision = utils.check_collision(self.goal, self.world.pos_limits, self.world.shape,
-                                              update = False, extended = True)
-            return (get_legal_position(self.goal, self.world.pos_limits, self.world) if collision 
-                    else self.goal)
+        collision = utils.check_collision(self.goal, self.world.pos_limits, self.world.shape,
+                                          update = False, extended = True)
+        return (get_legal_position(self.goal, self.world.pos_limits, self.world) if collision 
+                else self.goal)
 
     def get_center_goal(self, others):
         new_x = np.mean([other.last_pos[0] for other in others])
         new_y = np.mean([other.last_pos[1] for other in others])
         return np.array([new_x, new_y])
 
-    def force_exploit(self, p, center):        
-        if self.inside_force:
-            if np.linalg.norm(p.pos - self.force_goal) < 2*self.world.min_speed:                
-                self.inside_force = False
-            return self.force_goal
-        else :        
-            self.force_goal = center
-            self.inside_force = True        
-            self.exploit_goal = None
-            self.explore_goal = None
-            self.copy_goal = None
-            self.state = 'exploring'
-            return self.force_goal
-
-def next_corner(sides, pos_limits, turn):
-    
-    perturb = np.random.random(size = 2) * config.SIDE_WIDTH
-    
-    if turn == 'right':
-        if 'top' in sides and not 'right' in sides:
-            goal = np.array([pos_limits['x_max'] - perturb[0], pos_limits['y_max'] - perturb[1]])
-        elif 'left' in sides:
-            goal = np.array([pos_limits['x_min'] + perturb[0], pos_limits['y_max'] - perturb[1]]) 
-        elif 'bottom' in sides:
-            goal = np.array([pos_limits['x_min'] + perturb[0], pos_limits['y_min'] + perturb[1]]) 
-        elif 'right' in sides:
-            goal = np.array([pos_limits['x_max'] - perturb[0], pos_limits['y_min'] + perturb[1]]) 
-        else:
-            assert False
-    if turn == 'left':
-        if 'top' in sides and not 'left' in sides:
-            goal = np.array([pos_limits['x_min'] + perturb[0], pos_limits['y_max'] - perturb[1]])
-        elif 'right' in sides:
-            goal = np.array([pos_limits['x_max'] - perturb[0], pos_limits['y_max'] - perturb[1]])
-        elif 'bottom' in sides:
-            goal = np.array([pos_limits['x_max'] - perturb[0], pos_limits['y_min'] + perturb[1]])
-        elif 'left' in sides:
-            goal = np.array([pos_limits['x_min'] + perturb[0], pos_limits['y_min'] + perturb[1]])
-        else:
-            assert False
-
-    return goal
-
-def closest_wall(pos, pos_limits, index = False):
-    """
-    determine nearest point lying on wall boundary
-    >>> pos_limits = {'x_min':0,'x_max':200,'y_min':0,'y_max':100}
-    >>> closest_wall(np.array([10,50]), pos_limits)
-    array([ 0, 50])
-    >>> closest_wall(np.array([20,90]), pos_limits)
-    array([ 20, 100])
-    >>> closest_wall(np.array([190,80]), pos_limits)
-    array([200,  80])
-    >>> closest_wall(np.array([190,5]), pos_limits)
-    array([190,   0])
-    """
-    
-    pos = np.copy(pos)
-    
-    projections = np.array([[pos_limits['x_min'], pos[1]],
-                            [pos_limits['x_max'], pos[1]],
-                            [pos[0], pos_limits['y_min']],
-                            [pos[0], pos_limits['y_max']]])
-    
-    closest = np.argmin(np.sum(np.abs(pos - projections), axis = 1))
-    
-    if index:
-        return closest
-    else:
-        return projections[closest]
 
 def get_legal_position(pos, pos_limits, world):
     

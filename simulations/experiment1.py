@@ -3,10 +3,8 @@ import sys
 import copy
 
 sys.path.append('./player_model/')
-sys.path.append('./simulations/')
-sys.path.append('./utils/')
+sys.path.append('./utils')
 
-import simulation_utils
 import config
 import exp_config
 
@@ -14,10 +12,9 @@ import pandas as pd
 import numpy as np
 
 from multiprocessing import Pool
-from basic_bot import *
+from bots import BasicBot
 from rectangular_world import RectangularWorld
 from environment import *
-#from centroid_manager import *
 
 reps = exp_config.simulation_reps
 info, out_dir = exp_config.get_emergent_config(reps)
@@ -94,4 +91,3 @@ def simulate_tick(tick, models, world, out_file, experiment):
 if __name__ == '__main__':
   p = Pool(exp_config.num_procs)
   p.map(run_simulation, range(len(info['experiments'])))
-  #run_simulation(10)
