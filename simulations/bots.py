@@ -14,7 +14,7 @@ class BasicBot():
     def __init__(self, environment, social_vector, strategy, my_index,
                  noise = 0, prob_explore = 0.5, random_explore = False, log_file = None):
         self.strategy = strategy                
-        assert strategy in ['asocial', 'smart', 'smart_but_lazy', 'naive_copy', 'move_to_center']
+        assert strategy in ['asocial', 'smart',  'naive_copy', 'move_to_center', 'move_to_closest']
         
         self.noise = noise
         self.random_explore = random_explore
@@ -43,8 +43,7 @@ class BasicBot():
     
         self.turn = np.random.choice(['left','right'])
 
-        self.copy_targeted = self.strategy in ['smart', 'smart_but_lazy']
-        self.copy_close = self.strategy == 'smart_but_lazy'
+        self.copy_targeted = self.strategy in ['smart']
         
     def observe(self, pos, bg_val, time):
         """
@@ -82,23 +81,27 @@ class BasicBot():
 
         elif self.strategy ==  'naive_copy' :
             # naive_copy bot randomly chooses copy or explore goal
-            if self.inside_exploration_action(p):
+            if self.inside_movement(p, self.explore_goal) :
                 g = self.explore(p)
-            elif self.inside_copying_action(p, others) :
+            elif self.inside_movement(p, self.copy_goal) :
                 g = self.copy(p, others)
             else :
-                g = (self.explore(p) if np.random.random() > self.prob_explore
-                     else self.copy(p, others))
+                g = (self.copy(p, others) if np.random.random() > self.prob_explore
+                     else self.explore(p))
 
-        elif self.strategy == 'move_to_center' :
-            if self.inside_exploration_action(p) :
+        elif 'move_to' in self.strategy :
+            self.explore(p)
+            if self.inside_movement(p, self.explore_goal) :
                 g = self.explore(p)
             else :
                 empty_pos = any([other.last_pos is None for other in others])
-                self.explore(p)
-                g = (self.get_explore_goal() if np.random.random() > self.prob_explore or empty_pos
-                     else self.get_center_goal(others))
+                other_pos = [other.last_pos for other in others]
+                biased_goal = (self.get_center_goal(others) if self.strategy == 'move_to_center'
+                               else other_pos[get_closest(self.last_pos, other_pos)])
+                g = interpolate(self.get_explore_goal(), biased_goal, self.prob_explore)
+                print('setting midpoint goal')
                 self.explore_goal = g
+                
         if g is None :
             g = self.explore(p)            
 
@@ -118,7 +121,7 @@ class BasicBot():
         """
         self.exploit_goal = None
         self.copy_goal = None
-        if self.inside_exploration_action(p):
+        if self.inside_movement(p, self.explore_goal):
             return self.explore_goal
         else :
             self.state = 'exploring'
@@ -134,12 +137,11 @@ class BasicBot():
         return self.exploit_goal
     
     def copy(self, p, others):
-        # if currently copying, keep copying that same person as long as they're still exploiting
-        if self.copy_goal is not None :
-            copy_target = others[self.copy_goal]
-            if (np.linalg.norm(p.pos - copy_target.last_pos) > 4*self.world.min_speed
-                and (copy_target.state == 'exploiting' or not self.copy_targeted)):
-                return copy_target.last_pos
+        # if you haven't yet reached the agent you're copying,
+        # keep copying as long as they're still exploiting
+        if self.inside_movement(p, self.copy_goal) :
+            if not self.copy_targeted :
+                return self.copy_goal
 
         # otherwise determine whether to copy someone new
         self.copy_goal = None
@@ -152,7 +154,7 @@ class BasicBot():
                 continue
 
             if self.copy_targeted and np.random.random() > self.noise:
-                if (others[i].world.edge_goal != self.world.edge_goal) and not self.copy_close:
+                if (others[i].world.edge_goal != self.world.edge_goal) :
                     continue
 
                 if not others[i].state == 'exploiting':
@@ -162,28 +164,22 @@ class BasicBot():
                     continue            
             candidates += [i]
 
-        # if there's anyone to copy, pick one
+        # if there's anyone to copy, pick one of them
         if len(candidates) > 0 and np.random.random() > self.noise:            
             self.state = 'copying'
             self.explore_goal = None
             self.exploit_goal = None
-            self.copy_goal = (candidates[get_closest(p.pos, [others[i].last_pos for i in candidates])]
-                              if self.copy_close else np.random.choice(candidates))
-        return others[self.copy_goal].last_pos if self.copy_goal is not None else None
+            self.copy_goal = others[np.random.choice(candidates)].last_pos
+        return self.copy_goal if self.copy_goal is not None else None
 
-    def inside_exploration_action(self, p):
+    def inside_movement(self, p, goal):
         """
-        returns true when agent p has an exploration goal and has not yet reached it
+        returns true when agent p has a goal and has not yet reached it
         """
-        return (self.explore_goal is not None and
-                np.linalg.norm(p.pos - self.explore_goal) > 4*self.world.min_speed)
-
-    def inside_copying_action(self, p, others):
-        """
-        returns true when agent p has an exploration goal and has not yet reached it
-        """
-        return (self.copy_goal is not None and
-                np.linalg.norm(p.pos - others[self.copy_goal].last_pos) > 4*self.world.min_speed)
+        if goal is None :
+            return False
+        else :
+            return np.linalg.norm(p.pos - goal) > 2*self.world.min_speed
 
     def get_explore_goal(self):
         """
@@ -200,7 +196,6 @@ class BasicBot():
         new_x = np.mean([other.last_pos[0] for other in others])
         new_y = np.mean([other.last_pos[1] for other in others])
         return np.array([new_x, new_y])
-
 
 def get_legal_position(pos, pos_limits, world):
     
@@ -244,6 +239,9 @@ def angle_between(v1, v2):
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)
+
+def interpolate(v1, v2, w) :
+    return w*v1 + (1-w)*v2
 
 def get_closest(pos, cands):
     """
