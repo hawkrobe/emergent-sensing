@@ -20,9 +20,9 @@ reps = exp_config.simulation_reps
 info, out_dir = exp_config.get_emergent_config(reps)
 
 def write(pid, p, model, tick, out_file, goal, experiment):
-    nbots, composition, rep = experiment.split('-')
+    nbots, composition, rep, prob_explore = experiment.split('-')
     out = [experiment, nbots, composition, pid, tick, 'true', model.state, p.pos[0], p.pos[1],
-           p.speed, p.angle, p.curr_background, model.prob_explore, model.strategy,
+           p.speed, p.angle, p.curr_background, prob_explore, model.strategy,
            goal[0], goal[1]]
     out = list(map(str, out))
     out_file.write(','.join(out) + '\n')
