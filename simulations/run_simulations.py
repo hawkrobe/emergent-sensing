@@ -14,6 +14,30 @@ from bots import BasicBot
 from rectangular_world import RectangularWorld
 from environment import *
 
+reps = 1
+num_procs = 1
+out_dir = './output/predictions-emergent/'
+strategies = ['move_to_center'] # ['naive_copy', 'smart', 'asocial', ]
+info = {'experiments' : [], 'bots' : [], 'strategies' : [], 'prob_explore' : []}
+for strategy in strategies :
+    for group_size in [4]: # 16,32,64,128
+        for prob_explore in ([None] if strategy in ['asocial', 'smart'] else [0.25,0.5,0.75]) : #,.25,.5,.75]) :
+            composition = np.array([strategy == 'asocial', strategy == 'naive_copy',
+                                    strategy == 'move_to_center', strategy == 'move_to_closest',
+                                    strategy == 'smart']) * group_size
+            bots = ([{'strategy' : 'asocial', 'prob_explore' : prob_explore}] * composition[0] +
+                    [{'strategy' : 'naive_copy', 'prob_explore' : prob_explore}] * composition[1] +
+                    [{'strategy' : 'move_to_center', 'prob_explore' : prob_explore}] * composition[2] +
+                    [{'strategy' : 'move_to_closest', 'prob_explore' : prob_explore}] * composition[3] +
+                    [{'strategy' : 'smart', 'prob_explore' : prob_explore}] * composition[4])
+            info['experiments'] += ['-'.join(
+                [str(len(bots)), '+'.join([str(i) for i in composition]), str(rep), str(prob_explore)]
+            ) for rep in range(reps)]
+            info['prob_explore'] += [prob_explore for rep in range(reps)]
+            info['bots'] += [bots for rep in range(reps)]
+            info['strategies'] += [composition for rep in range(reps)]
+
+
 def write(pid, p, model, tick, out_file, goal, experiment):
     nbots, composition, rep, prob_explore = experiment.split('-')
     out = [experiment, nbots, composition, pid, tick, 'true', model.state, p.pos[0], p.pos[1],
@@ -34,9 +58,9 @@ def write_final(experiment, models):
             out_f.write(','.join([experiment, str(i), m.strategy, str(m.total_score)]) + '\n')
 
 def run_simulation(exp_ind):
-    print(exp_ind)
-    experiment = info['experiments'][exp_ind]    
+    experiment = info['experiments'][exp_ind]
     bots = info['bots'][exp_ind]
+    print(exp_ind, experiment)
     environment = lambda bg: RectangularWorld(bg, config.GAME_LENGTH, False,
                                               config.DISCRETE_BG_RADIUS, False)
     nbots = len(bots)
@@ -75,8 +99,8 @@ def simulate_tick(tick, models, world, out_file, experiment):
     goals = [['',''] for i in range(len(models))]
     for i in range(len(models)):        
         pos, bg_val, others, time = world.get_obs(i)
-        models[i].observe(pos, bg_val, time)            
-        goals[i], slow = models[i].act(world.players[i], models_copy)
+        models[i].observe(pos, bg_val, time)
+        goals[i], slow = models[i].act(world.players[i], models_copy[:i] + models_copy[i+1:])
         
     world.advance()
     for i in range(len(models)):
@@ -84,30 +108,7 @@ def simulate_tick(tick, models, world, out_file, experiment):
     
 
 if __name__ == '__main__':
-    reps = 50
-    out_dir = './output/predictions-emergent/'
-    strategies = ['naive_copy', 'smart', 'asocial', 'move_to_closest', 'move_to_center']
-    num_procs = 8
-    info = {'experiments' : [], 'bots' : [], 'strategies' : [], 'prob_explore' : []}
-    for strategy in strategies :
-        for group_size in [1,2,3,4,6,8,16,32]: # 16,32,64,128
-            for prob_explore in ([None] if strategy in ['asocial', 'smart'] else [0,.25,.5,.75]) :
-                composition = np.array([strategy == 'asocial', strategy == 'naive_copy',
-                                        strategy == 'move_to_center', strategy == 'move_to_closest',
-                                        strategy == 'smart']) * group_size
-                bots = ([{'strategy' : 'asocial', 'prob_explore' : prob_explore}] * composition[0] +
-                        [{'strategy' : 'naive_copy', 'prob_explore' : prob_explore}] * composition[1] +
-                        [{'strategy' : 'move_to_center', 'prob_explore' : prob_explore}] * composition[2] +
-                        [{'strategy' : 'move_to_closest', 'prob_explore' : prob_explore}] * composition[3] +
-                        [{'strategy' : 'smart', 'prob_explore' : prob_explore}] * composition[4])
-                info['experiments'] += ['-'.join(
-                    [str(len(bots)), '+'.join([str(i) for i in composition]), str(rep), str(prob_explore)]
-                ) for rep in range(reps)]
-                info['prob_explore'] += [prob_explore for rep in range(reps)]
-                info['bots'] += [bots for rep in range(reps)]
-                info['strategies'] += [composition for rep in range(reps)]
-
-    p = Pool(exp_config.num_procs)
+    p = Pool(num_procs)
     p.map(run_simulation, range(len(info['experiments'])))
 
     # for n_asocial in range(7) :

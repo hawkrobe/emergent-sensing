@@ -12,7 +12,7 @@ from spotlight_background_discrete_model import SpotlightBackgroundDiscrete
 
 class BasicBot():    
     def __init__(self, environment, social_vector, strategy, my_index,
-                 noise = 0, prob_explore = 0.5, random_explore = False, log_file = None):
+                 noise = 0, prob_explore = 0.5, random_explore = True, log_file = None):
         self.strategy = strategy                
         assert strategy in ['asocial', 'smart',  'naive_copy', 'move_to_center', 'move_to_closest']
         
@@ -89,19 +89,17 @@ class BasicBot():
                 g = (self.copy(p, others) if np.random.random() > self.prob_explore
                      else self.explore(p))
 
-        elif 'move_to' in self.strategy :
-            self.explore(p)
+        elif self.strategy == 'move_to_center' :
             if self.inside_movement(p, self.explore_goal) :
                 g = self.explore(p)
             else :
-                empty_pos = any([other.last_pos is None for other in others])
-                other_pos = [other.last_pos for other in others]
-                biased_goal = (self.get_center_goal(others) if self.strategy == 'move_to_center'
-                               else other_pos[get_closest(self.last_pos, other_pos)])
-                g = interpolate(self.get_explore_goal(), biased_goal, self.prob_explore)
-                print('setting midpoint goal')
+                empty_pos = len(others) == 0 or any([other.last_pos is None for other in others])
+                explore_goal = self.get_explore_goal()
+                center_goal = explore_goal if empty_pos else self.get_center_goal(others)
+                g = interpolate(explore_goal, center_goal, self.prob_explore)
+                self.explore(p)
                 self.explore_goal = g
-                
+
         if g is None :
             g = self.explore(p)            
 
