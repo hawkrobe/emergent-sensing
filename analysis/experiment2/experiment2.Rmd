@@ -9,44 +9,19 @@ output: html_notebook
 library(tidyverse)
 library(tidyboot)
 library(ggthemes)
+library(here)
 source('../helpers.R')
 ```
 
-# Qualitative coding
-
-```{r}
-codes <- read_csv('../../data/experiment2/coding.csv') %>%
-  mutate(independence = 1 - anti_exploratory) %>%
-  rename(selectivity = selective) %>%
-  select(-anti_exploratory, -ends_with('bin')) %>%
-  gather(property, value, -gameid) %>%
-  mutate(binary = value > 0.5)
-
-ggplot(codes, aes(x = property, y = value)) +
-  geom_boxplot() +
-  theme_few() +
-  xlab("") +
-  ylab("rating")
-
-ggsave("./coding.pdf", height = 3, width = 5, unit = "in")
-```
-
-```{r}
-codes %>% group_by(property) %>% tidyboot_mean(value)
-binom.test(table((codes %>% filter(property == 'selectivity'))$binary))
-binom.test(table((codes %>% filter(property == 'independence'))$binary))
-binom.test(table((codes %>% filter(property == 'eagerness'))$binary))
-```
-
-# Quantitative behavioral analysis
+# Behavioral analysis
 
 ## Combine player data with metadata on bot locations
 
 ```{r}
-d_raw <- read_csv('../../data/experiment2/all_games.csv') %>%
+d_raw <- read_csv(here('data/experiment2/all_games.csv')) %>%
   rowwise() %>%
   mutate(metadatafilestringpt1 = paste0(
-            c('../../data/experiment2/metadata/v2/v2', bg_cond, 'close_'), 
+            c(here('experiments/metadata/v2/v2'), bg_cond, 'close_'), 
             collapse = '-'), 
          metadatafilestringpt2 = paste0(
             c(close_cond, 'asocial-smart-0', sim_num,'social-simulation.csv'),
@@ -69,8 +44,8 @@ window_times = d_raw %>%
   filter(first_in_far_group | first_in_close_group | last_in_close_group | last_in_far_group) %>%
   select(pid, tick, first_in_far_group, first_in_close_group, last_in_close_group, last_in_far_group)
 
-early_window_times = c(65, 159)
-late_window_times = c(305, 399)
+early_window_times = c(65, 160)
+late_window_times = c(305, 400)
 ```
 
 ```{r}
@@ -129,34 +104,55 @@ Version with bootstrapped error bars
 
 ```{r}
 library(ggthemes)
-dodge <- position_dodge(width=0.9)
+dodge <- position_dodge(width=1)
 
-clicks.toplot <- clicks %>% 
+# clicks.lmer <- clicks %>%
+#   filter(goal_condition != 'none') %>%
+#   spread(botExploiting, minDistance) %>%
+#   mutate(diff = `FALSE` - `TRUE`) %>%
+#   filter(!is.na(diff)) %>%
+#   select(-`TRUE`, -`FALSE`)
+  
+clicks.toplot <- clicks %>%
   mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
-  # look at windows during goal manipulation
-  filter(goal_condition != 'none') %>% 
-
-  # remove events where there weren't any exploiting bots
-  # spread(botExploiting, minDistance) %>%
-  # filter(!is.na(exploiting) & !is.na(`not exploiting`)) %>%
-  # gather(botExploiting, minDistance, `exploiting`, `not exploiting`) %>%
-
+  mutate(goal_condition = ifelse(goal_condition == 'close', 'local condition', ifelse(goal_condition == 'far', 'distant condition', 'none'))) %>% 
+  # group_by(pid, goal_condition, botExploiting, round_type) %>%
+  # summarize(empirical_stat = mean(minDistance)) %>%
+  # only look at windows during goal manipulation
+  #filter(goal_condition != 'none') %>% 
   # bootstrap over participants, not individual click events
-  group_by(pid, goal_condition, botExploiting, round_type) %>%
-  summarize(minDistance = mean(minDistance)) %>% 
+  mutate(empirical_stat = minDistance) 
+
+clicks.toplot.means <- clicks.toplot %>%
+  filter(!(goal_condition == 'none' & botExploiting == 'exploiting')) %>%
   group_by(goal_condition, botExploiting, round_type) %>%
-  tidyboot_mean(minDistance) 
+  tidyboot_mean(empirical_stat)
+  #tidyboot(empirical_stat, median, list('ci_lower' = ci_lower, 'mean' = mean, 'ci_upper' = ci_upper))
+
+clicks.toplot.none <- clicks.toplot.means %>%
+  filter(goal_condition == 'none')  %>%   filter(round_type == 'social') 
+  
+clicks.toplot.goals <- clicks.toplot.means %>%
+  filter(goal_condition != 'none') %>%  filter(round_type == 'social') 
 
 clicks.toplot %>%
-  ungroup() %>%
+  filter(goal_condition != 'none') %>%
   filter(round_type == 'social') %>%
-  ggplot(aes(x = goal_condition, y = empirical_stat, fill = botExploiting)) +
-    geom_bar(stat = 'identity', position = dodge) +
-    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), position =dodge, width = 0) +
-    labs(x = "", y = "distance between bot and click") +
+  ungroup() %>%
+  ggplot(aes(x = goal_condition, y = empirical_stat, color = botExploiting)) +
+    geom_dotplot(alpha = 0.1, position = dodge, binaxis = 'y',
+                 stackdir = 'center', method = 'histodot', binwidth = 7) +
+    geom_boxplot(alpha = 0.5, position = dodge, outlier.shape = '', notch = T) +
+    geom_hline(aes(yintercept = empirical_stat), data = clicks.toplot.none) +
+    # geom_point(stat = 'identity', position = dodge, data = clicks.toplot.goals) +
+    # geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),
+    #               position = dodge, width = 0, data = clicks.toplot.goals) +
+    labs(x = "", y = "distance between bot and click", color = '') +
     theme_few() +
-    theme(aspect.ratio = 2/3) +
-    scale_fill_colorblind()
+    ylim(0, 400) +
+    #facet_wrap(~ round_type) +
+    scale_color_colorblind() +
+    theme(aspect.ratio = 1, legend.position = 'top') 
 
 ggsave('./proximity.pdf', height = 3, width = 5, units = 'in')
 ```
@@ -172,19 +168,17 @@ clicks %>%
   mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
   filter(goal_condition != 'none') %>%
   filter(round_type == 'social') %>%
-  lmer(minDistance ~ goal_condition * botExploiting + (1 + goal_condition * botExploiting| pid),
-       data = .,
-       control=lmerControl(optimizer = 'bobyqa')) %>%
+  lmer(minDistance ~ goal_condition * botExploiting + (1 + goal_condition * botExploiting | pid),
+       data = .) %>%
   summary()
 ```
 
 ```{r}
-# analysis of social condition
+# analysis of nonsocial condition
 clicks %>%
-  mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+  filter(round_type != 'social') %>%
   filter(goal_condition != 'none') %>%
-  filter(round_type == 'nonsocial') %>%
-  lmer(minDistance ~ goal_condition * botExploiting + (1 + goal_condition * botExploiting| pid),
+  lmer(minDistance ~ goal_condition * botExploiting + (1 + goal_condition * botExploiting | pid),
        data = .,
        control=lmerControl(optimizer = 'bobyqa')) %>%
   summary()
@@ -199,6 +193,14 @@ clicks %>%
             data = .,
        control = lmerControl(optimizer='bobyqa')) %>%
   summary()
+```
+
+```{r}
+clicks %>%
+  mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
+  filter(goal_condition != 'none') %>%
+  brms::brm(minDistance ~ round_type * botExploiting * goal_condition + (1 + round_type * botExploiting * goal_condition | pid),
+            data = .) 
 ```
 
 ```{r}

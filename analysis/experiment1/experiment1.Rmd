@@ -3,40 +3,112 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+# Imports
+
+## Libraries
+
 ```{r}
 library(tidyverse)
 library(lme4)
 library(ggthemes)
-source('./helpers.R')
-d <- read_csv('../data/experiment1/all_games.csv')
-inactive <- read_csv('../data/experiment1/inactive_games.csv',col_names = 'gameid')
+library(here)
+source('../helpers.R')
 ```
+
+## Empirical data
 
 ```{r}
-toplot <- d %>% 
-  gather(half, score, first_half_score, second_half_score) %>%
-  mutate(n_players = fn_players) %>%
-  filter(n_players > 0) %>%
-  group_by(n_players, half, game) %>%
-  summarize(m = mean(score)) %>%
-  group_by(n_players, half) %>%
-  tidyboot::tidyboot_mean(m) 
+inactive_f <- here('data/experiment1/inactive_games.csv')
+inactive <- read_csv(inactive_f, col_names = c('pid'), show_col_types = F) %>% 
+  pull(pid)
 
+d <- read_csv(here('data/experiment1/all_raw_games.csv'), show_col_types = F) %>%
+  #filter(!(pid %in% inactive)) %>%
+  group_by(gameid) %>%
+  mutate(n_players = length(unique(pid)),
+         half = ifelse(tick < max(tick)/2, 'first', 'second')) %>%
+  group_by(n_players, gameid, pid, half) %>%
+  summarize(cum_score = mean(bg_val))
+```
+
+## Simulation data 
+
+```{r}
+sim_path = here('simulations/output/predictions-emergent/finals.csv')
+d.simulations <- read_csv(sim_path, show_col_types = F,
+                          col_names = c('expid', 'pid', 'strategy', 'total_score')) %>%
+  separate(expid, into = c('n_players', 'composition', 'rep', 'prob_explore'), sep = '-') %>%
+  filter(strategy != 'smart' | as.numeric(prob_explore) <= 0.3) 
+```
+
+# Compare group size effects
+
+## Pull out best-fitting model params
+
+```{r}
+d.aggregated <- d %>% 
+  filter(half == 'second') %>%
+  group_by(n_players, gameid) %>% 
+  summarize(cum_score = mean(cum_score)) %>%
+  group_by(n_players) %>%
+  tidyboot::tidyboot_mean(cum_score) %>%
+  mutate(src = 'empirical') %>%
+  select(-n, -mean) 
+
+end_point_mean = d.aggregated %>%
+  filter(n_players == 6) %>%
+  pull(empirical_stat)
+
+d.modelerror <- d.simulations %>%
+  filter(n_players == 6) %>%
+  group_by(strategy, prob_explore) %>%
+  tidyboot_mean(total_score/2400, nboot = 10) %>%
+  mutate(error = abs(empirical_stat - end_point_mean))
+```
+
+## Make figure
+
+```{r}
+toplot <- d.simulations %>%
+  group_by(n_players, strategy, prob_explore) %>%
+  summarize(empirical_stat = mean(total_score)/2400) %>%
+  left_join(d.modelerror %>% select(strategy, prob_explore, error), 
+            by = c('strategy', 'prob_explore')) %>%
+  group_by(strategy) %>%
+  filter(error == min(error, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(src = paste0('model-', fct_relevel(strategy, 'smart','naive_copy')),
+         n_players = as.numeric(n_players)) %>%
+  select(n_players, src, empirical_stat) %>%
+  bind_rows(d.aggregated)  %>%
+  separate(src, sep = '-', into = c('src', 'type')) 
+  
+```
+
+## broken out over time
+
+```{r} 
 toplot %>%
-  mutate(half = ifelse(half == 'first_half_score', 'first', 'second')) %>%
-  ggplot(aes(x = n_players, y = empirical_stat, color=half)) +
-    geom_point() +
-    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0) +
-    geom_smooth(method = 'lm', formula = y ~ poly(x, 2), se = F) +
+  filter(n_players < 10) %>%
+  mutate(type = ifelse(is.na(type), 'empirical', type)) %>%
+  ggplot(aes(x = n_players, y = empirical_stat, color=type)) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0, data = ) +
+    geom_smooth(method = 'lm', formula = y ~ poly(x, 1), se = F) +
+    #geom_smooth(method = 'loess', span = 1.5) +
     theme_few() +
-    ylab("mean score") +
-    xlab("number of players") +
+    labs(x = 'number of players', y = 'mean score') +
+    ylim(0, 0.3) +
+    xlim(0, 7) +
     scale_x_continuous(breaks = c(1, 2, 3, 4, 5, 6)) +
-    theme(aspect.ratio = 2/3) +
+    facet_wrap(~ src) +
+    theme(aspect.ratio = 1) +
     ggthemes::scale_color_colorblind()
 
-ggsave('./performance-summary-exp1.pdf', width = 5, height = 3, units = 'in', useDingbats = F)
+ggsave('./performance-summary-exp1.pdf', width = 6, height = 3, units = 'in', useDingbats = F)
 ```
+
+statistics to report
 
 ```{r}
 library(lmerTest)
@@ -49,6 +121,42 @@ d %>%
        contrasts = list(half=contr.sum(2))) %>%
   summary()
 ```
+
+# Supplemental figs
+
+with raw (tick-level) data
+
+```{r}
+read_csv(here('data/experiment1/all_raw_games.csv'), show_col_types = F) %>%
+  group_by(gameid) %>%
+  mutate(n_players = length(unique(pid)),
+         half = ifelse(tick < max(tick)/2, 'first', 'second'),
+         quartile = floor(4 * (tick-1) / max(tick) )) %>%
+  group_by(n_players, tick) %>%
+  summarize(m = mean(bg_val)) %>%
+  ungroup() %>%
+  ggplot(aes(x = tick, y = m, color = n_players, group = n_players)) +
+    geom_point(alpha = 0.02) +
+    geom_hline(yintercept = 0.15) +
+    geom_smooth(method = 'loess', span = .8) +
+    theme_few()
+```
+
+boxplot style
+
+```{r}
+d %>%
+  ggplot(aes(x = factor(n_players), y = cum_score, color = half)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(alpha = 0.15, position = position_jitterdodge(jitter.width = 0.2)) +
+    theme_few() +
+    ylab("mean score") +
+    xlab("number of players") +
+    ylim(0, 0.5) +
+    theme(aspect.ratio = 2/3) +
+    ggthemes::scale_color_colorblind()
+```
+
 
 ## Experimental analysis of click data
 

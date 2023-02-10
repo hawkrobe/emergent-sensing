@@ -15,7 +15,7 @@ def get_inactive(data_dir, game_id):
     inactive_line = 'Player .* will be disconnected for inactivity.'
     lag_line = 'Player .* will be disconnected because of latency.'
     
-    log = open(data_dir + game_id + '/log')
+    log = open(data_dir  + '/log')
     
     inactive = {}
     for line in log:
@@ -52,10 +52,10 @@ def get_data(in_dir, games):
     ignore_count = 0
     for game_id in games:
 
-        data_dir = in_dir + game_id + '/games/'
-        latency_dir = in_dir + game_id + '/latencies/'
-        waiting_dir = in_dir + game_id + '/waiting_games/'
-
+        data_dir = in_dir +  '/games/'
+        latency_dir = in_dir +  '/latencies/'
+        waiting_dir = in_dir +  '/waiting_games/'
+        print(game_id)
         inactive = get_inactive(in_dir, game_id)
         
         wait_locs = {}
