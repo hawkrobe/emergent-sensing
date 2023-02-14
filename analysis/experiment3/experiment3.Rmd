@@ -8,8 +8,6 @@ library(tidyverse)
 library(ggthemes)
 library(broom.mixed)
 library(lme4)
-player_list <- read_csv('./master_list.csv') %>%
-  rename(noise_condition = `Noise Level`)
 ```
 
 # Scores
@@ -17,47 +15,102 @@ player_list <- read_csv('./master_list.csv') %>%
 Compute coarse score plot
 
 ```{r}
-scores.toplot <- player_list %>%
-  group_by(game, final_n_players, noise_condition) %>%
-  summarize(first_half = mean(first_half_score),
-            second_half = mean(second_half_score)) %>%
-  gather(half, avg_score, first_half, second_half) %>%
-  group_by(final_n_players, noise_condition, half) %>%
+inactive_pids <- read_csv(here('data/experiment3/inactive_games.csv'), col_names = c('pid')) %>% pull(pid)
+d.exp3.raw <- dir('../../data/experiment3/', pattern = "experiment*", include.dirs = T,
+                          recursive = F, full.names = T) %>%
+  dir(pattern = '^games$', include.dirs = T, full.names = T, recursive = F) %>%
+  dir(pattern = '*.csv', full.names = T, recursive = F) %>%
+  map_df(~ suppressMessages(read_csv(., col_types = 'cicdddidd') %>% mutate(filename = .x))) %>%
+  group_by(filename) %>%
+  mutate(half = ifelse(tick < max(tick)/2, 'first', 'second')) 
+
+#d.exp3.raw.alt <- read_csv(here('analysis/experiment3/data_raw.csv'))
+  
+d.exp3 <- d.exp3.raw %>%
+  group_by(filename, pid, half) %>%
+  summarize(avg_score = mean(bg_val)) %>%
+  separate(filename, into = c('date', 'n_players_planned', 'noise-difficulty', 'gameid'), sep = '_') %>%
+  separate(`noise-difficulty`, into = c('noise', 'difficulty'), sep = '-') %>%
+  group_by(gameid) %>%
+  mutate(n_players = length(unique(pid))) %>%
+  mutate(difficulty = ifelse(difficulty == '2en01', 'high', 'low')) %>%
+  filter(n_players < 6) 
+
+scores.toplot <- d.exp3 %>%
+  group_by(half, n_players, difficulty) %>%
   tidyboot::tidyboot_mean(avg_score)
   
 scores.toplot %>%
   ungroup() %>%
-  mutate(noise_condition = ifelse(noise_condition == "High", "High noise", "Low noise")) %>%
-  ggplot(aes(x = final_n_players, y = empirical_stat, color = half)) +
+  filter(half == 'second') %>%
+  mutate(difficulty = ifelse(difficulty == "high", "high noise", "low noise")) %>%
+  ggplot(aes(x = n_players, y = empirical_stat)) +
     geom_point() +
     geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0)+
-    geom_smooth(method = 'lm', se = F, linetype = 'dashed') +
-    facet_wrap(~ noise_condition) +
+    geom_smooth(method = 'lm', se = F) +
+    facet_wrap(~ difficulty) +
     theme_few() +
-    labs(x = "Number of players in group", y = "Mean score")
+    labs(x = "group size", y = "mean score") +
+    theme(aspect.ratio = 1)
 
-ggsave('../../../couzin_replication_tex/figures/performance-summary-raw.pdf')
+ggsave('performance-summary-raw.pdf')
+```
+
+```{r}
+d.exp3.raw %>%
+  left_join(d.exp3 %>% filter(half == 'second'), by = c('pid')) %>% 
+  filter(n_players < 6) %>%
+  mutate(difficulty = ifelse(difficulty == "high", "high noise", "low noise")) %>%
+  group_by(tick, difficulty, n_players) %>%
+  summarize(avg_score = mean(bg_val)) %>%
+  ggplot(aes(x = tick, y = avg_score)) +
+    geom_point() +
+    geom_smooth(method = 'lm', formula = y ~ poly(x, 2), se = F) +
+    facet_grid(difficulty ~ n_players) +
+    theme_few() +
+    labs(x = "group size", y = "mean score") +
+    theme(aspect.ratio = 1)
 ```
 
 Statistics for scores
 
 ```{r}
-lm.in <- player_list %>%
-  gather(half, score, first_half_score, second_half_score) %>%
-  mutate(n_players = final_n_players - 3) %>%
-  mutate(score = 100*score)
+d.exp3.raw %>%
+  left_join(d.exp3 %>% filter(half == 'second') %>% select(-half), by = c('pid')) %>% 
+  ungroup() %>%
+  filter(n_players < 6) %>%
+  lm(scale(bg_val, scale=F) ~ scale(n_players, scale=F) * difficulty * half,
+     data = .,
+     contrasts = list(difficulty = contr.sum(2),  half=contr.treatment(2, base = 2))) %>%
+  summary()
+
+
+d.exp3.raw %>%
+  left_join(d.exp3 %>% filter(half == 'second')  %>% select(-half), by = c('pid')) %>% 
+  ungroup() %>%
+  #filter(n_players < 6) %>%
+  lmer(scale(bg_val, scale=F) ~ scale(n_players, scale=F) * difficulty * half + (1 | gameid),
+     data = .,
+     contrasts = list(difficulty=contr.sum(2), half=contr.treatment(2, base = 2))) %>%
+  summary()
+```
+
+```{r}
+# lm.in <- d.exp3.raw.alt %>%
+#   mutate(n_players = final_n_players - 3) %>%
+#   gather(half, avg_score, first_half_score, second_half_score)
 
 #lm model
-lm(score ~ n_players * noise_condition * half,
+lm(avg_score ~ n_players * `Noise Level` * half,
    data = lm.in,
-   contrasts = list(half=contr.sum(2), noise_condition=contr.sum(2))) %>%
+   contrasts = list(`Noise Level`=contr.sum(2), half = contr.sum(2))) %>%
   summary()
 
 # supplemental lmer model
 library(lmerTest)
-lmer(score ~ n_players * noise_condition * half + (1 | game) + (1 | noise),
+lmer(avg_score ~ n_players * `Noise Level` * half + (1  | game),
    data = lm.in,
-   contrasts = list(half=contr.sum(2), noise_condition=contr.sum(2))) %>%
+   contrasts = list(`Noise Level`=contr.sum(2), half = contr.sum(2))) %>%
   summary()
 ```
 
