@@ -10,7 +10,6 @@ library(tidyverse)
 library(tidyboot)
 library(ggthemes)
 library(here)
-source('../helpers.R')
 ```
 
 # Behavioral analysis
@@ -18,7 +17,7 @@ source('../helpers.R')
 ## Combine player data with metadata on bot locations
 
 ```{r}
-d_raw <- read_csv(here('data/experiment2/all_games.csv')) %>%
+d.exp2.raw <- read_csv(here('data/experiment2/all_games.csv')) %>%
   rowwise() %>%
   mutate(metadatafilestringpt1 = paste0(
             c(here('experiments/metadata/v2/v2'), bg_cond, 'close_'), 
@@ -34,7 +33,7 @@ d_raw <- read_csv(here('data/experiment2/all_games.csv')) %>%
                                     in_far == 1 ~ 'far',
                                     TRUE ~ 'none'))
 
-window_times = d_raw %>%
+window_times = d.exp2.raw %>%
   group_by(pid, in_close, in_far) %>%
   mutate(count= row_number(), 
          first_in_close_group = in_close & count==1,
@@ -49,7 +48,7 @@ late_window_times = c(305, 400)
 ```
 
 ```{r}
-relevant_files = unique(d_raw$metadatafilestring)
+relevant_files = unique(d.exp2.raw$metadatafilestring)
 
 bot_locations <- relevant_files %>% 
   map( ~ suppressMessages(read_csv(.x)) %>% mutate(metadatafilestring = .x)) %>% 
@@ -64,14 +63,26 @@ bot_locations <- relevant_files %>%
   unite(key, pid, coord) %>% 
   select(-garbage) %>% 
   pivot_wider(names_from = key, values_from = value) 
-
-d <- left_join(d_raw, bot_locations, by= c('metadatafilestring', 'tick')) 
 ```
 
 ## Calculate measures of interest between player and bot
 
 ```{r}
-clicks = d %>% 
+dist <- function(p1.x, p1.y, p2.x, p2.y) {
+  return(sqrt((p1.x-p2.x)^2 + (p1.y-p2.y)^2))
+}
+rad2deg <- function(rad) {(rad * 180) / (pi)}
+deg2rad <- function(deg) {(deg * pi) / (180)}
+angle <- function(ref.x, ref.y, other.x, other.y){
+  return(rad2deg(
+    (atan2(other.y-ref.y, other.x - ref.x))
+    %% (2*pi) ))
+}
+```
+
+```{r}
+clicks <- d.exp2.raw %>%
+  left_join(bot_locations, by= c('metadatafilestring', 'tick')) %>% 
   select(-metadatafilestring, -in_close, -in_far) %>%
   group_by(pid) %>%
   mutate(click = lag(goal_x) != goal_x | lag(goal_y) != goal_y) %>%
@@ -106,28 +117,15 @@ Version with bootstrapped error bars
 library(ggthemes)
 dodge <- position_dodge(width=1)
 
-# clicks.lmer <- clicks %>%
-#   filter(goal_condition != 'none') %>%
-#   spread(botExploiting, minDistance) %>%
-#   mutate(diff = `FALSE` - `TRUE`) %>%
-#   filter(!is.na(diff)) %>%
-#   select(-`TRUE`, -`FALSE`)
-  
 clicks.toplot <- clicks %>%
   mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
   mutate(goal_condition = ifelse(goal_condition == 'close', 'local condition', ifelse(goal_condition == 'far', 'distant condition', 'none'))) %>% 
-  # group_by(pid, goal_condition, botExploiting, round_type) %>%
-  # summarize(empirical_stat = mean(minDistance)) %>%
-  # only look at windows during goal manipulation
-  #filter(goal_condition != 'none') %>% 
-  # bootstrap over participants, not individual click events
   mutate(empirical_stat = minDistance) 
 
 clicks.toplot.means <- clicks.toplot %>%
   filter(!(goal_condition == 'none' & botExploiting == 'exploiting')) %>%
   group_by(goal_condition, botExploiting, round_type) %>%
   tidyboot_mean(empirical_stat)
-  #tidyboot(empirical_stat, median, list('ci_lower' = ci_lower, 'mean' = mean, 'ci_upper' = ci_upper))
 
 clicks.toplot.none <- clicks.toplot.means %>%
   filter(goal_condition == 'none')  %>%   filter(round_type == 'social') 
@@ -144,13 +142,9 @@ clicks.toplot %>%
                  stackdir = 'center', method = 'histodot', binwidth = 7) +
     geom_boxplot(alpha = 0.5, position = dodge, outlier.shape = '', notch = T) +
     geom_hline(aes(yintercept = empirical_stat), data = clicks.toplot.none) +
-    # geom_point(stat = 'identity', position = dodge, data = clicks.toplot.goals) +
-    # geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),
-    #               position = dodge, width = 0, data = clicks.toplot.goals) +
     labs(x = "", y = "distance between bot and click", color = '') +
     theme_few() +
     ylim(0, 400) +
-    #facet_wrap(~ round_type) +
     scale_color_colorblind() +
     theme(aspect.ratio = 1, legend.position = 'top') 
 
@@ -195,29 +189,12 @@ clicks %>%
   summary()
 ```
 
+Double-check w/ Bayesian model
+
 ```{r}
 clicks %>%
   mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
   filter(goal_condition != 'none') %>%
   brms::brm(minDistance ~ round_type * botExploiting * goal_condition + (1 + round_type * botExploiting * goal_condition | pid),
             data = .) 
-```
-
-```{r}
-dodge <- position_dodge(width=0.9)
-
-clicks.toplot <- clicks %>% 
-   mutate(botExploiting = ifelse(botExploiting, 'exploiting', 'not exploiting')) %>%
-   filter(goal_condition != 'none') %>% 
-   group_by(pid, tick, goal_condition, botExploiting) %>%
-   summarize(gap_bw_current_angle_and_bot = min(gap_bw_current_angle_and_bot)) %>%
-   group_by(botExploiting, goal_condition) %>%
-   tidyboot_mean(gap_bw_current_angle_and_bot) 
-
-ggplot(clicks.toplot, aes(x = botExploiting, y = empirical_stat, fill = goal_condition)) +
-    geom_bar(stat = 'identity', position = dodge) +
-    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),, width = 0, position = dodge) +
-    theme_bw() +
-    xlab("") +
-    ylab("distance between bot and click") 
 ```
