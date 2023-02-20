@@ -1,15 +1,13 @@
-
-import sys,os
-
+import sys
+import os
 from multiprocessing import Pool
 
-sys.path.append("../")
-sys.path.append("./helpers/")
-import game_utils 
 import pandas as pd
 import numpy as np
 
+sys.path.append("./helpers/")
 import stats
+import game_utils
 
 slow_dist = 17/8.0
 fast_dist = 57/8.0
@@ -1048,11 +1046,12 @@ if __name__ == '__main__':
         os.makedirs(out_dir)
     except:
         pass
-
+    inactive_pids = []
     games = game_utils.get_games(in_dir, 'experiment')
     for game_group in games:
         if not all_players:
             inactive = game_utils.get_inactive(in_dir, game_group)
+            inactive_pids += [k for k in inactive.keys()]
         else:
             inactive = {}
         if waits:

@@ -5,112 +5,148 @@ output: html_notebook
 
 ```{r}
 library(tidyverse)
+library(here)
 library(ggthemes)
 library(broom.mixed)
 library(lme4)
 ```
 
-# Scores
-
-Compute coarse score plot
+# Imports
 
 ```{r}
-inactive_pids <- read_csv(here('data/experiment3/inactive_games.csv'), col_names = c('pid')) %>% pull(pid)
 d.exp3.raw <- dir('../../data/experiment3/', pattern = "experiment*", include.dirs = T,
                           recursive = F, full.names = T) %>%
   dir(pattern = '^games$', include.dirs = T, full.names = T, recursive = F) %>%
   dir(pattern = '*.csv', full.names = T, recursive = F) %>%
   map_df(~ suppressMessages(read_csv(., col_types = 'cicdddidd') %>% mutate(filename = .x))) %>%
   group_by(filename) %>%
-  mutate(half = ifelse(tick < max(tick)/2, 'first', 'second')) 
+  mutate(half = ifelse(tick < 1200, 'first', 'second'))  # use value from Exp. 1 since this was one minute longer
 
-#d.exp3.raw.alt <- read_csv(here('analysis/experiment3/data_raw.csv'))
-  
+inactive_pids_end <- read_csv(here('data/experiment3/inactive_games.csv'), col_names = c('pid')) %>% pull(pid)
+inactive_pids_firsthalf <- d.exp3.raw %>% group_by(pid) %>% summarize(t = max(tick)) %>% filter(t < 1200) %>% pull(pid)
+```
+
+```{r}
+incomplete_games <- d.exp3.raw %>% group_by(filename) %>% summarize(t = max(tick)) %>% filter(t < 2879) %>% pull(filename)
 d.exp3 <- d.exp3.raw %>%
+  filter(!(filename %in% incomplete_games)) %>%
   group_by(filename, pid, half) %>%
   summarize(avg_score = mean(bg_val)) %>%
   separate(filename, into = c('date', 'n_players_planned', 'noise-difficulty', 'gameid'), sep = '_') %>%
   separate(`noise-difficulty`, into = c('noise', 'difficulty'), sep = '-') %>%
+  filter(!(pid %in% inactive_pids_firsthalf)) %>%
   group_by(gameid) %>%
   mutate(n_players = length(unique(pid))) %>%
-  mutate(difficulty = ifelse(difficulty == '2en01', 'high', 'low')) %>%
-  filter(n_players < 6) 
+  mutate(difficulty = ifelse(difficulty == '2en01', 'high noise', 'low noise')) 
+  # uncomment to look at results excluding *all* PIDs that went inactive (even in the last few seconds)
+  #filter(!(pid %in% inactive_pids))  %>%
+  # uncomment to look at results re-coding for 'final' group sizes after these dropouts
+  #group_by(gameid) %>%
+  #mutate(n_players = length(unique(pid)))
 
+write_csv(d.exp3, here('data/experiment3/experiment3_preprocessed.csv'))
+```
+
+Coarse stats
+
+```{r}
+cat('before exclusions: ')
+cat(d.exp3.raw %>% pull(pid) %>% unique() %>% length(), 'participants in', 
+    d.exp3.raw %>% pull(filename) %>% unique() %>% length(), 'games\n')
+
+cat('after exclusions: ')
+cat(d.exp3 %>% pull(pid) %>% unique() %>% length(), 'participants in', 
+    d.exp3 %>% pull(gameid) %>% unique() %>% length(), 'games')
+
+d.exp3 %>% group_by(difficulty) %>% summarize(num_participants = length(unique(pid)), num_games = length(unique(gameid)))
+d.exp3 %>% group_by(difficulty, n_players) %>% summarize(num_participants = length(unique(pid)), num_games = length(unique(gameid)))
+```
+
+# Performance analyses 
+
+```{r}
+d.exp3 <- read_csv(here('data/experiment3/experiment3_preprocessed.csv'))
+```
+## Figure 5
+
+```{r}
 scores.toplot <- d.exp3 %>%
   group_by(half, n_players, difficulty) %>%
-  tidyboot::tidyboot_mean(avg_score)
+  tidyboot::tidyboot_mean(avg_score, nboot = 1000)
   
 scores.toplot %>%
   ungroup() %>%
   filter(half == 'second') %>%
-  mutate(difficulty = ifelse(difficulty == "high", "high noise", "low noise")) %>%
+  filter(n_players < 6)  %>%
   ggplot(aes(x = n_players, y = empirical_stat)) +
+    geom_jitter(aes(y = avg_score), alpha = 0.1, data = d.exp3 %>% filter(n_players < 6) %>% filter(half == 'second'), height = 0, width = 0.1) +
     geom_point() +
     geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0)+
-    geom_smooth(method = 'lm', se = F) +
+    geom_smooth(method = 'lm', se = F, formula = y ~ poly(x, 2), color = 'black') +
     facet_wrap(~ difficulty) +
+    ylim(0.5, 0.9) +
     theme_few() +
     labs(x = "group size", y = "mean score") +
     theme(aspect.ratio = 1)
 
-ggsave('performance-summary-raw.pdf')
+ggsave('performance-summary-raw.pdf', width = 5, height = 3, units = 'in')
 ```
+
+## Examine auto-correlations (Fig S6)
 
 ```{r}
 d.exp3.raw %>%
   left_join(d.exp3 %>% filter(half == 'second'), by = c('pid')) %>% 
   filter(n_players < 6) %>%
-  mutate(difficulty = ifelse(difficulty == "high", "high noise", "low noise")) %>%
-  group_by(tick, difficulty, n_players) %>%
+  group_by(filename, pid, n_players, difficulty) %>%
+  summarize(lag_1 = cor(bg_val, lag(bg_val, 1), use="complete.obs"),
+         lag_5 = cor(bg_val, lag(bg_val, 5), use="complete.obs"),
+         lag_10 = cor(bg_val, lag(bg_val, 10), use="complete.obs"),
+         lag_20 = cor(bg_val, lag(bg_val, 20), use="complete.obs"),
+         lag_30 = cor(bg_val, lag(bg_val, 30), use="complete.obs"),
+         lag_50 = cor(bg_val, lag(bg_val, 50), use="complete.obs"),
+         lag_75 = cor(bg_val, lag(bg_val, 75), use="complete.obs"),
+         lag_100 = cor(bg_val, lag(bg_val, 100), use="complete.obs")) %>%
+  gather(lag, value, starts_with('lag')) %>%
+  separate(lag, into = c('garbage', 'lag')) %>%
+  group_by(n_players, difficulty, lag) %>%
+  tidyboot::tidyboot_mean(value, nboot = 100) %>%
+  ggplot(aes(x = as.numeric(lag), y = empirical_stat, color = n_players, group = n_players)) +
+    geom_line() +
+    facet_wrap(~ difficulty) +
+    ggthemes::theme_few() +
+    labs(x = "distance in ticks", y = "mean correlation of scores") +
+    theme(aspect.ratio = 1, legend.position = 'top')
+  
+ggsave('exp3_lags.pdf', width = 5, height = 3, units = 'in')
+```
+
+## Full timeseries of performance (bins of 100)
+
+```{r}
+d.exp3.raw %>%
+  left_join(d.exp3 %>% filter(half == 'second'), by = c('pid')) %>% 
+  filter(n_players < 6) %>%
+  group_by(tick = floor(tick / 100), difficulty, n_players) %>%
   summarize(avg_score = mean(bg_val)) %>%
   ggplot(aes(x = tick, y = avg_score)) +
     geom_point() +
     geom_smooth(method = 'lm', formula = y ~ poly(x, 2), se = F) +
     facet_grid(difficulty ~ n_players) +
     theme_few() +
-    labs(x = "group size", y = "mean score") +
+    labs(x = "time (100 ticks)", y = "mean score") +
     theme(aspect.ratio = 1)
 ```
 
-Statistics for scores
+# Statistics for scores
+
+Computed on avg participant-level scores
 
 ```{r}
-d.exp3.raw %>%
-  left_join(d.exp3 %>% filter(half == 'second') %>% select(-half), by = c('pid')) %>% 
-  ungroup() %>%
-  filter(n_players < 6) %>%
-  lm(scale(bg_val, scale=F) ~ scale(n_players, scale=F) * difficulty * half,
-     data = .,
-     contrasts = list(difficulty = contr.sum(2),  half=contr.treatment(2, base = 2))) %>%
-  summary()
-
-
-d.exp3.raw %>%
-  left_join(d.exp3 %>% filter(half == 'second')  %>% select(-half), by = c('pid')) %>% 
-  ungroup() %>%
-  #filter(n_players < 6) %>%
-  lmer(scale(bg_val, scale=F) ~ scale(n_players, scale=F) * difficulty * half + (1 | gameid),
-     data = .,
-     contrasts = list(difficulty=contr.sum(2), half=contr.treatment(2, base = 2))) %>%
-  summary()
-```
-
-```{r}
-# lm.in <- d.exp3.raw.alt %>%
-#   mutate(n_players = final_n_players - 3) %>%
-#   gather(half, avg_score, first_half_score, second_half_score)
-
-#lm model
-lm(avg_score ~ n_players * `Noise Level` * half,
-   data = lm.in,
-   contrasts = list(`Noise Level`=contr.sum(2), half = contr.sum(2))) %>%
-  summary()
-
-# supplemental lmer model
 library(lmerTest)
-lmer(avg_score ~ n_players * `Noise Level` * half + (1  | game),
-   data = lm.in,
-   contrasts = list(`Noise Level`=contr.sum(2), half = contr.sum(2))) %>%
+lmer(avg_score ~ poly(n_players, 2) * difficulty + (1 | gameid) + (1 | noise:difficulty),
+   data = d.exp3 %>% filter(half == 'second'),
+   contrasts = list(difficulty = contr.sum(2))) %>%
   summary()
 ```
 
@@ -119,7 +155,7 @@ lmer(avg_score ~ n_players * `Noise Level` * half + (1  | game),
 Read in processed data
 
 ```{r message=F}
-files <- list.files(path = "../../data/experiment3/processed/", 
+files <- list.files(path = here("data/experiment3/processed/"), 
                     pattern = "*.csv", 
                     full.names = T)
 read_csv(files[1])
@@ -129,14 +165,12 @@ d_raw <- files %>%
   reduce(bind_rows)
 
 d <- d_raw %>%
-  left_join(player_list) %>%
-  filter(!is.na(noise_condition)) %>%
+  left_join(d.exp3 %>% filter(half == 'second'), by = c('pid')) %>% 
+  filter(!is.na(difficulty)) %>%
   mutate(state = ifelse(facing & going_straight, 'copying', state)) %>%
   mutate(copy = state == 'copying',
        exploit = state == 'exploiting',
        explore = state == 'exploring')
-
-
 ```
 
 ```{r}
@@ -148,7 +182,7 @@ state_counts <- d %>%
 
 state_proportions <- d %>%
   gather(state_bin, val, copy, exploit, explore) %>%
-  group_by(bg_val, state_bin, noise_condition) %>%
+  group_by(bg_val, state_bin, difficulty) %>%
   summarise(m = mean(val))
 ```
 
@@ -164,15 +198,18 @@ state_counts %>%
     theme(aspect.ratio = 3) +
     labs(x="background value", y="proportion in state")
 
-ggsave('../../../couzin_replication_tex/figures/states.pdf')
+ggsave(here('exp3_states.pdf'))
 ```
 
 Break out by noise condition
 
 ```{r}
 state_proportions %>% 
+  ungroup() %>%
   filter(bg_val > 0) %>%
-  ggplot(aes(x = bg_val, y = m, color = state_bin, alpha = noise_condition)) +
+  mutate(state_bin = fct_relevel(factor(state_bin), 'copy', 'explore', 'exploit')) %>%
+  mutate(difficulty = fct_relevel(difficulty, 'low noise', 'high noise')) %>%
+  ggplot(aes(x = bg_val, y = m, color = state_bin, alpha = difficulty)) +
     geom_line() +
     facet_wrap(~ state_bin) +
     theme_few() +
@@ -186,27 +223,27 @@ ggsave('../../../couzin_replication_tex/figures/states-broken-out.pdf')
 
 ```{r}
 d %>%
-  glmer(exploit ~ bg_val * noise_condition + (1 | pid) + (1 | noise),
+  glmer(exploit ~ bg_val * difficulty + (1 | pid) + (1 | noise),
         family = 'binomial',
-        contrasts = list(half=contr.sum(2), noise_condition=contr.sum(2)),
+        contrasts = list(difficulty=contr.sum(2)),
         data = .) %>%
   summary()
 ```
 
 ```{r}
 d %>%
-  glmer(copy ~ bg_val * noise_condition + (1 | pid) + (1 | noise),
+  glmer(copy ~ bg_val * difficulty + (1 | pid) + (1 | noise),
         family = 'binomial',
-        contrasts = list(noise_condition=contr.sum(2)),
+        contrasts = list(difficulty=contr.sum(2)),
         data = .) %>%
   summary()
 ```
 
 ```{r}
 d %>%
-  glmer(explore ~ bg_val * noise_condition + (1 | pid) + (1 | noise),
+  glmer(explore ~ bg_val * difficulty + (1 | pid) + (1 | noise),
         family = 'binomial',
-        contrasts = list(noise_condition=contr.sum(2)),
+        contrasts = list(difficulty=contr.sum(2)),
         data = .) %>%
   summary()
 ```

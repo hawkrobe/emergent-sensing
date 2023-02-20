@@ -9,26 +9,65 @@ output: html_notebook
 
 ```{r}
 library(tidyverse)
-library(lme4)
+library(tidyboot)
 library(ggthemes)
+
+library(lme4)
+library(lmerTest)
 library(here)
+
 source('../helpers.R')
 ```
 
-## Empirical data
+## Load in empirical data
 
 ```{r}
-inactive_f <- here('data/experiment1/inactive_games.csv')
-inactive <- read_csv(inactive_f, col_names = c('pid'), show_col_types = F) %>% 
-  pull(pid)
-
-d <- read_csv(here('data/experiment1/all_raw_games.csv'), show_col_types = F) %>%
-  #filter(!(pid %in% inactive)) %>%
+# import games and compute avg score for each player
+d.exp1.raw <- read_csv(here('data/experiment1/exp1_raw.csv'), show_col_types = F) %>%
   group_by(gameid) %>%
-  mutate(n_players = length(unique(pid)),
-         half = ifelse(tick < max(tick)/2, 'first', 'second')) %>%
-  group_by(n_players, gameid, pid, half) %>%
-  summarize(cum_score = mean(bg_val))
+  mutate(half = ifelse(tick < max(tick)/2, 'first', 'second')) 
+
+# get list of pids that were disconnected early
+inactive_pids <- read_csv(here('data/experiment1/inactive_games.csv'), col_names = c('pid')) %>% pull(pid)
+inactive_pids_firsthalf <- d.exp1.raw %>% group_by(pid) %>% summarize(t = max(tick)) %>% filter(t < 1200) %>% pull(pid)
+```
+
+```{r}
+incomplete_games <- d.exp1.raw %>% group_by(gameid) %>% summarize(t = max(tick)) %>% filter(t < 2399) %>% pull(gameid)
+
+d <- d.exp1.raw %>%
+  filter(!(gameid %in% incomplete_games)) %>%
+  group_by(gameid, pid, half) %>%
+  summarize(avg_score = mean(bg_val)) %>%
+  separate('gameid', into = c('date', 'n_players_planned', 'noise', 'gameid'), sep = '_') %>%
+  filter(!(pid %in% inactive_pids_firsthalf)) %>%
+  group_by(gameid) %>%
+  mutate(n_players = length(unique(pid))) 
+  # uncomment to look at results excluding all inactive PIDs 
+  #%>% filter(!(pid %in% inactive_pids))
+  # uncomment to look at results recoding to use 'final' group sizes after dropouts
+  #%>% group_by(gameid) 
+  #%>% mutate(n_players = length(unique(pid)))
+
+# bootstrap second-half scores 
+d.aggregated <- d %>% 
+  filter(half == 'second') %>%
+  group_by(n_players, gameid) %>% 
+  summarize(avg_score = mean(avg_score)) %>%
+  group_by(n_players) %>%
+  tidyboot::tidyboot_mean(avg_score) %>%
+  mutate(src = 'empirical') %>%
+  select(-n, -mean) 
+```
+
+```{r}
+cat('before exclusions:', 
+    d.exp1.raw %>% pull(pid) %>% unique() %>% length(), 'unique participants in', 
+    d.exp1.raw %>% pull(gameid) %>% unique() %>% length(), 'unique games')
+
+cat('after exclusions:', 
+    d %>% pull(pid) %>% unique() %>% length(), 'unique participants in', 
+    d %>% pull(gameid) %>% unique() %>% length(), 'unique games')
 ```
 
 ## Simulation data 
@@ -38,38 +77,31 @@ sim_path = here('simulations/output/predictions-emergent/finals.csv')
 d.simulations <- read_csv(sim_path, show_col_types = F,
                           col_names = c('expid', 'pid', 'strategy', 'total_score')) %>%
   separate(expid, into = c('n_players', 'composition', 'rep', 'prob_explore'), sep = '-') %>%
-  filter(strategy != 'smart' | as.numeric(prob_explore) <= 0.3) 
+  filter(strategy != 'smart' | as.numeric(prob_explore) <= 0.3) %>%
+  filter(as.numeric(n_players) <= 6) 
 ```
 
 # Compare group size effects
 
-## Pull out best-fitting model params
+## Compute mean error for each param value
 
 ```{r}
-d.aggregated <- d %>% 
-  filter(half == 'second') %>%
-  group_by(n_players, gameid) %>% 
-  summarize(cum_score = mean(cum_score)) %>%
-  group_by(n_players) %>%
-  tidyboot::tidyboot_mean(cum_score) %>%
-  mutate(src = 'empirical') %>%
-  select(-n, -mean) 
-
-end_point_mean = d.aggregated %>%
+# pull out mean score for 6 player group as reference point
+end_point_mean <- d.aggregated %>%
   filter(n_players == 6) %>%
   pull(empirical_stat)
 
 d.modelerror <- d.simulations %>%
   filter(n_players == 6) %>%
   group_by(strategy, prob_explore) %>%
-  tidyboot_mean(total_score/2400, nboot = 10) %>%
+  tidyboot_mean(total_score/2400, nboot = 1) %>%
   mutate(error = abs(empirical_stat - end_point_mean))
 ```
 
-## Make figure
+## Generate Figure 1
 
 ```{r}
-toplot <- d.simulations %>%
+d.simulations %>%
   group_by(n_players, strategy, prob_explore) %>%
   summarize(empirical_stat = mean(total_score)/2400) %>%
   left_join(d.modelerror %>% select(strategy, prob_explore, error), 
@@ -81,20 +113,13 @@ toplot <- d.simulations %>%
          n_players = as.numeric(n_players)) %>%
   select(n_players, src, empirical_stat) %>%
   bind_rows(d.aggregated)  %>%
-  separate(src, sep = '-', into = c('src', 'type')) 
-  
-```
-
-## broken out over time
-
-```{r} 
-toplot %>%
-  filter(n_players < 10) %>%
+  separate(src, sep = '-', into = c('src', 'type')) %>%
   mutate(type = ifelse(is.na(type), 'empirical', type)) %>%
   ggplot(aes(x = n_players, y = empirical_stat, color=type)) +
     geom_point(size = 2) +
     geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0, data = ) +
     geom_smooth(method = 'lm', formula = y ~ poly(x, 1), se = F) +
+    geom_hline(yintercept = 0.15, linetype = 'dashed') +
     #geom_smooth(method = 'loess', span = 1.5) +
     theme_few() +
     labs(x = 'number of players', y = 'mean score') +
@@ -108,18 +133,92 @@ toplot %>%
 ggsave('./performance-summary-exp1.pdf', width = 6, height = 3, units = 'in', useDingbats = F)
 ```
 
-statistics to report
+## Compute statistics
+
+First, we observe the simple effect of group size in the second half (b=0.99, t = 4.366, p = 1.56e-05).
+Second, we observe the main effect where groups of all sizes tend to perform better in the second half. 
+Third, we observe an interaction: the effect of group size is only present in the second half. 
 
 ```{r}
-library(lmerTest)
 d %>% 
-  gather(half, score, first_half_score, second_half_score) %>%
-  mutate(n_players = fn_players - 3.5) %>%
-  mutate(score = 100*score) %>%
-  lmer(score ~ n_players * half + (1 | game) + (1 | noise), 
+  ungroup() %>%
+  mutate(score = scale(100*avg_score, scale = F), 
+         n_players = scale(n_players, scale=F)) %>%
+  lmer(score ~ n_players * half + (1 | gameid) + (1 | noise), 
        data = .,
-       contrasts = list(half=contr.sum(2))) %>%
+       contrasts = list(half=contr.treatment(2, base = 2))) %>%
   summary()
+```
+
+## Validate exploitation
+
+We assume in the model that P(exploit | scoring) ~ 1 - $\epsilon$. 
+Here we analyze empirical 'exploitation' rates. 
+
+```{r}
+d.raw %>% 
+  filter(!(gameid %in% incomplete_games)) %>%
+  left_join(d, by = c('pid', 'half')) %>%
+  filter(half == 'second') %>% 
+  mutate(bg_val = factor(bg_val)) %>%
+  group_by(pid, bg_val) %>%
+  summarize(velocity = mean(velocity)) %>%
+  spread(bg_val, velocity) %>%
+  ungroup() %>%
+  summarize(t.test(`0`, `1`) %>% tidy())
+```
+
+The effect is similar for different group sizes. 
+
+```{r}
+d.raw %>% 
+  filter(!(gameid %in% incomplete_games)) %>%
+  left_join(d, by = c('pid', 'half')) %>%
+  filter(half == 'second') %>%
+  mutate(bg_val = factor(bg_val)) %>%
+  group_by(bg_val, pid, n_players) %>%
+  summarize(velocity = mean(velocity)) %>%
+  mutate(bg_val = ifelse(bg_val == 0, 'reward absent', 'reward present')) %>%
+  ggplot(aes(x = velocity, fill = bg_val, color = bg_val)) +
+    geom_vline(xintercept = c(0, 2.125, 7.125), linetype = 'dotted') +
+    geom_density(alpha = 0.5) +
+    labs(x = 'speed', y = 'density', fill = '', color = '') +
+    theme_few() +
+    facet_wrap(~ paste0('size = ', n_players)) +
+    theme(aspect.ratio = 1, legend.position = 'top')
+
+ggsave('./speed.pdf', width = 6, height = 4, units = 'in', useDingbats = F)
+```
+
+Another way of quantifying this effect is to look at discrete events where participants change their speed. When reward is present, 75% of speed changes involve slowing down. When reward is absent, the inverse is true: a slim majority of speed changes (56%) involve speeding up. 
+
+```{r}
+d.raw %>% 
+  group_by(pid) %>%
+  filter(half == 'second') %>%
+  mutate(bg_val = factor(bg_val), velocity = velocity,
+         prev_velocity = lag(velocity),
+         change = prev_velocity != velocity) %>%
+  filter(change) %>%
+  group_by(bg_val) %>%
+  mutate(total = n()) %>%
+  group_by(bg_val, velocity < prev_velocity) %>%
+  summarize(n = n(), prop = n/mean(total))
+```
+
+```{r}
+d.raw %>% 
+  filter(half == 'second') %>%
+  mutate(bg_val = factor(bg_val)) %>%
+  group_by(bg_val, pid) %>%
+  summarize(stopped = min(velocity)) %>%
+  mutate(bg_val = ifelse(bg_val == 0, 'reward absent', 'reward present'),
+         velocity = ifelse(velocity == 0, 'stopped', ifelse(velocity == '2.125', 'normal', 'fast'))) %>%
+  ggplot(aes(x = bg_val, y = prop * 100, fill = velocity)) +
+    geom_bar(stat = 'identity') +
+    scale_fill_colorblind() +
+    labs(x = '', y = '% time') +
+    theme_few()
 ```
 
 # Supplemental figs
@@ -146,7 +245,7 @@ boxplot style
 
 ```{r}
 d %>%
-  ggplot(aes(x = factor(n_players), y = cum_score, color = half)) +
+  ggplot(aes(x = factor(n_players), y = avg_score, color = half)) +
     geom_boxplot(outlier.shape = NA) +
     geom_jitter(alpha = 0.15, position = position_jitterdodge(jitter.width = 0.2)) +
     theme_few() +
