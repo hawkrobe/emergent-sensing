@@ -110,5 +110,11 @@ def simulate_tick(tick, models, world, out_file, experiment):
     
 
 if __name__ == '__main__':
+    
+    try:
+        os.makedirs(out_dir)
+    except OSError:
+        pass
+    
     p = Pool(num_procs)
     p.map(run_simulation, range(len(info['experiments'])))
