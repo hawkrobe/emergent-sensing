@@ -14,28 +14,29 @@ from bots import BasicBot
 from rectangular_world import RectangularWorld
 from environment import *
 
-reps = 1
-num_procs = 1
+reps = 50
+num_procs = 6
 out_dir = './output/predictions-emergent/'
-strategies = ['move_to_center'] # ['naive_copy', 'smart', 'asocial', ]
-info = {'experiments' : [], 'bots' : [], 'strategies' : [], 'prob_explore' : []}
+strategies = ['smart', 'move_to_center', 'naive_copy']
+info = {'experiments' : [], 'bots' : [], 'strategies' : [], 'prob_explore' : [], 'noise' : []}
 for strategy in strategies :
-    for group_size in [4]: # 16,32,64,128
-        for prob_explore in ([None] if strategy in ['asocial', 'smart'] else [0.25,0.5,0.75]) : #,.25,.5,.75]) :
+    for group_size in [1,2,3,4,5,6]: # 16,32,64,128
+        for prob_explore in ([None] if strategy in ['asocial'] else [0,.05,.1,.15,.2,.25] if strategy in ['smart'] else [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]) :
+            # This is confusing but 'noise' means something different for the smart model
+            noise = prob_explore if strategy == 'smart' else 0
             composition = np.array([strategy == 'asocial', strategy == 'naive_copy',
-                                    strategy == 'move_to_center', strategy == 'move_to_closest',
-                                    strategy == 'smart']) * group_size
-            bots = ([{'strategy' : 'asocial', 'prob_explore' : prob_explore}] * composition[0] +
-                    [{'strategy' : 'naive_copy', 'prob_explore' : prob_explore}] * composition[1] +
-                    [{'strategy' : 'move_to_center', 'prob_explore' : prob_explore}] * composition[2] +
-                    [{'strategy' : 'move_to_closest', 'prob_explore' : prob_explore}] * composition[3] +
-                    [{'strategy' : 'smart', 'prob_explore' : prob_explore}] * composition[4])
+                                    strategy == 'move_to_center', strategy == 'smart']) * group_size
+            bots = ([{'strategy' : 'asocial', 'prob_explore' : prob_explore, 'noise' : noise}] * composition[0] +
+                    [{'strategy' : 'naive_copy', 'prob_explore' : prob_explore, 'noise' : noise}] * composition[1] +
+                    [{'strategy' : 'move_to_center', 'prob_explore' : prob_explore, 'noise' : noise}] * composition[2] +
+                    [{'strategy' : 'smart', 'prob_explore' : prob_explore, 'noise' : noise}] * composition[3])
             info['experiments'] += ['-'.join(
                 [str(len(bots)), '+'.join([str(i) for i in composition]), str(rep), str(prob_explore)]
-            ) for rep in range(reps)]
-            info['prob_explore'] += [prob_explore for rep in range(reps)]
-            info['bots'] += [bots for rep in range(reps)]
-            info['strategies'] += [composition for rep in range(reps)]
+            ) for rep in range(400,400+reps)]
+            info['prob_explore'] += [prob_explore for rep in range(400, 400+reps)]
+            info['noise'] += [noise for rep in range(400, 400+reps)]
+            info['bots'] += [bots for rep in range(400,400+reps)]
+            info['strategies'] += [composition for rep in range(400,400+reps)]
 
 
 def write(pid, p, model, tick, out_file, goal, experiment):
@@ -65,7 +66,8 @@ def run_simulation(exp_ind):
                                               config.DISCRETE_BG_RADIUS, False)
     nbots = len(bots)
     models = [BasicBot(environment, [True]*nbots, bot['strategy'], i,
-                       prob_explore = bot['prob_explore'])
+                       prob_explore = bot['prob_explore'],
+                       noise = bot['noise'])
               for i, bot in enumerate(bots)]
 
     # Initialize world with random walk of spotlight

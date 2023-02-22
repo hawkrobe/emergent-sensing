@@ -1,4 +1,4 @@
-GAME_LENGTH = 3.0 # minutes
+GAME_LENGTH = 5.0 # minutes
 #GAME_LENGTH = 1.0 # minutes
 
 SIDE_WIDTH = 0
