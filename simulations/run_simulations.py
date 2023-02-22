@@ -17,7 +17,7 @@ from environment import *
 reps = 50
 num_procs = 6
 out_dir = './output/predictions-emergent/'
-strategies = ['smart', 'move_to_center', 'naive_copy']
+strategies = ['smart', 'move_to_center', 'naive_copy', 'asocial']
 info = {'experiments' : [], 'bots' : [], 'strategies' : [], 'prob_explore' : [], 'noise' : []}
 for strategy in strategies :
     for group_size in [1,2,3,4,5,6]: # 16,32,64,128
@@ -112,23 +112,3 @@ def simulate_tick(tick, models, world, out_file, experiment):
 if __name__ == '__main__':
     p = Pool(num_procs)
     p.map(run_simulation, range(len(info['experiments'])))
-
-    # for n_asocial in range(7) :
-    #     for n_naive in range(7 - n_asocial) :
-    #         for rep in range(reps):
-    #             n_center = 0
-    #             n_closest = 0
-    #             n_smart = 6 - n_asocial - n_naive
-    #             composition = (n_asocial, n_naive, n_center, n_closest, n_smart)
-    #             bots = ([{'strategy' : 'asocial', 'prob_explore' : 0.5}] * n_asocial +
-    #                     [{'strategy' : 'naive_copy', 'prob_explore' : 0.5}] * n_naive +
-    #                     [{'strategy' : 'move_to_center', 'prob_explore' : 0.5}] * n_center +
-    #                     [{'strategy' : 'move_to_closest', 'prob_explore' : 0.5}] * n_closest +
-    #                     [{'strategy' : 'smart', 'prob_explore' : 0.5}] * n_smart)
-    #             nbots = len(bots)
-    #             print(composition)
-    #             info['experiments'] += ['-'.join(
-    #                 [str(nbots), ''.join([str(i) for i in composition]), str(rep)]
-    #             )]
-    #             info['bots'] += [bots]
-    #             info['strategies'] += [composition]
