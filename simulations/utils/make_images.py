@@ -63,12 +63,6 @@ for i in range(0, len(ticks), 4):
     plt.axis('scaled')
     ax.set_xlim([0,480])
     ax.set_ylim([0,275])
-    #    if augmented:
-    #        for j in list(sub.index):
-    #            if sub['going_straight'][j]:
-    #                axes = pylab.axes()
-    #                circle = pylab.Circle((sub['x_pos'][j] - 2.5,sub['y_pos'][j] - 2.5), radius=40, alpha=0.5,color='black',fill=False)
-    #                axes.add_patch(circle)
 
     plt.xlabel('R: Exploring, I: Exploiting, C: Copying')
     plt.tick_params(which='both', bottom=False, top=False, left=False, right=False,

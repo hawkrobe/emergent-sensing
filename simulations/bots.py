@@ -1,17 +1,17 @@
 import copy
 import sys
-sys.path.append('./player_model/')
-
-import utils
-import config
-import random
 
 import numpy as np
+
+sys.path.append('./player_model/')
+import utils
+import config
+
 import smart_particle as inference
 from spotlight_background_discrete_model import SpotlightBackgroundDiscrete
 
 class BasicBot():    
-    def __init__(self, environment, social_vector, strategy, my_index,
+    def __init__(self, environment, strategy, my_index,
                  noise = 0, prob_explore = 0.5, random_explore = True, log_file = None):
         self.strategy = strategy                
         assert strategy in ['asocial', 'smart',  'naive_copy', 'move_to_center', 'move_to_closest']
@@ -31,9 +31,6 @@ class BasicBot():
         self.exploit_goal = None
         
         self.my_index = my_index        
-        social_vector[my_index] = False
-        self.social_vector = [False]*len(social_vector) if strategy == 'asocial' else social_vector 
-
         if not self.random_explore:
             self.model = inference.Model(lambda: SpotlightBackgroundDiscrete(self.world.edge_goal),
                                          n_samples = 500)
@@ -145,9 +142,6 @@ class BasicBot():
         self.copy_goal = None
         candidates = []
         for i in range(len(others)):
-            if not self.social_vector[i]:
-                continue
-
             if others[i].last_pos is None:
                 continue
 

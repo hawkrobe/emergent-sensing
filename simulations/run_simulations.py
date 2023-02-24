@@ -64,7 +64,7 @@ def run_simulation(exp_ind):
     environment = lambda bg: RectangularWorld(bg, config.GAME_LENGTH, False,
                                               config.DISCRETE_BG_RADIUS, False)
     nbots = len(bots)
-    models = [BasicBot(environment, [True]*nbots, bot['strategy'], i,
+    models = [BasicBot(environment, bot['strategy'], i,
                        prob_explore = bot['prob_explore'],
                        noise = bot['noise'])
               for i, bot in enumerate(bots)]

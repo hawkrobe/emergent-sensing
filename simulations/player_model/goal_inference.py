@@ -6,7 +6,6 @@ from scipy.misc import logsumexp
 import environment
 
 import sys
-sys.path.append("../utils/")
 import stats
 
 class Model():
