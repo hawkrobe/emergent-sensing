@@ -32,12 +32,11 @@ for strategy in strategies :
                     [{'strategy' : 'smart', 'prob_explore' : prob_explore, 'noise' : noise}] * composition[3])
             info['experiments'] += ['-'.join(
                 [str(len(bots)), '+'.join([str(i) for i in composition]), str(rep), str(prob_explore)]
-            ) for rep in range(400,400+reps)]
-            info['prob_explore'] += [prob_explore for rep in range(400, 400+reps)]
-            info['noise'] += [noise for rep in range(400, 400+reps)]
-            info['bots'] += [bots for rep in range(400,400+reps)]
-            info['strategies'] += [composition for rep in range(400,400+reps)]
-
+            ) for rep in range(reps)]
+            info['prob_explore'] += [prob_explore for rep in range(reps)]
+            info['noise'] += [noise for rep in range(reps)]
+            info['bots'] += [bots for rep in range(reps)]
+            info['strategies'] += [composition for rep in range(reps)]
 
 def write(pid, p, model, tick, out_file, goal, experiment):
     nbots, composition, rep, prob_explore = experiment.split('-')
@@ -110,7 +109,6 @@ def simulate_tick(tick, models, world, out_file, experiment):
     
 
 if __name__ == '__main__':
-    
     try:
         os.makedirs(out_dir)
     except OSError:
