@@ -28,6 +28,7 @@ inactive_pids_firsthalf <- d.exp3.raw %>% group_by(pid) %>% summarize(t = max(ti
 
 ```{r}
 incomplete_games <- d.exp3.raw %>% group_by(filename) %>% summarize(t = max(tick)) %>% filter(t < 2879) %>% pull(filename)
+
 d.exp3 <- d.exp3.raw %>%
   filter(!(filename %in% incomplete_games)) %>%
   group_by(filename, pid, half) %>%

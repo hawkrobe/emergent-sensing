@@ -25,19 +25,25 @@ d.exp1.raw <- read_csv(here('data/experiment1/exp1_raw.csv'), show_col_types = F
   group_by(gameid) %>%
   mutate(half = ifelse(tick < max(tick)/2, 'first', 'second')) 
 
-# get list of pids that were disconnected early
-inactive_pids <- read_csv(here('data/experiment1/inactive_games.csv'), col_names = c('pid')) %>% pull(pid)
+# get list of incomplete games
+incomplete_games <- d.exp1.raw %>% group_by(gameid) %>% summarize(t = max(tick)) %>% filter(t < 2399) %>% pull(gameid)
+
+# get list of pids that disconnected early (in first half)
 inactive_pids_firsthalf <- d.exp1.raw %>% group_by(pid) %>% summarize(t = max(tick)) %>% filter(t < 1200) %>% pull(pid)
+
+# get list of pids that went inactive at any point
+inactive_pids <- d.exp1.raw %>% group_by(pid) %>% summarize(t = max(tick)) %>% filter(t < 2399) %>% pull(pid)
 ```
 
 ```{r}
-incomplete_games <- d.exp1.raw %>% group_by(gameid) %>% summarize(t = max(tick)) %>% filter(t < 2399) %>% pull(gameid)
-
 d <- d.exp1.raw %>%
+  # entirely remove these 11 games that didn't finish
   filter(!(gameid %in% incomplete_games)) %>%
+  # get the average scores for each participant in each half
   group_by(gameid, pid, half) %>%
   summarize(avg_score = mean(bg_val)) %>%
   separate('gameid', into = c('date', 'n_players_planned', 'noise', 'gameid'), sep = '_') %>%
+  # remove participants who dropped out during the first half and compute resulting group size
   filter(!(pid %in% inactive_pids_firsthalf)) %>%
   group_by(gameid) %>%
   mutate(n_players = length(unique(pid))) 
@@ -46,16 +52,6 @@ d <- d.exp1.raw %>%
   # uncomment to look at results recoding to use 'final' group sizes after dropouts
   #%>% group_by(gameid) 
   #%>% mutate(n_players = length(unique(pid)))
-
-# bootstrap second-half scores 
-d.aggregated <- d %>% 
-  filter(half == 'second') %>%
-  group_by(n_players, gameid) %>% 
-  summarize(avg_score = mean(avg_score)) %>%
-  group_by(n_players) %>%
-  tidyboot::tidyboot_mean(avg_score) %>%
-  mutate(src = 'empirical') %>%
-  select(-n, -mean) 
 ```
 
 ```{r}
@@ -71,6 +67,7 @@ cat('after exclusions:',
 ## Simulation data 
 
 ```{r}
+# Import aggregated simulation data
 sim_path = here('simulations/output/predictions-emergent/finals.csv')
 d.simulations <- read_csv(sim_path, show_col_types = F,
                           col_names = c('expid', 'pid', 'strategy', 'total_score')) %>%
@@ -84,6 +81,16 @@ d.simulations <- read_csv(sim_path, show_col_types = F,
 ## Compute mean error for each param value
 
 ```{r}
+# bootstrap second-half scores at game-level (for figure)
+d.aggregated <- d %>% 
+  filter(half == 'second') %>%
+  group_by(n_players, gameid) %>% 
+  summarize(avg_score = mean(avg_score)) %>%
+  group_by(n_players) %>%
+  tidyboot_mean(avg_score) %>%
+  mutate(src = 'empirical') %>%
+  select(-n, -mean) 
+
 # pull out mean score for 6 player group as reference point
 end_point_mean <- d.aggregated %>%
   filter(n_players == 6) %>%
@@ -101,7 +108,7 @@ d.modelerror <- d.simulations %>%
 ```{r}
 d.simulations %>%
   group_by(n_players, strategy, prob_explore) %>%
-  summarize(empirical_stat = mean(total_score)/2400) %>%
+  summarize(empirical_stat = mean(total_score)/2400, n = length(total_score)) %>%
   left_join(d.modelerror %>% select(strategy, prob_explore, error), 
             by = c('strategy', 'prob_explore')) %>%
   group_by(strategy) %>%
