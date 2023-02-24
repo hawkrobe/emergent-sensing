@@ -7,8 +7,7 @@ sys.path.append("../utils/")
 from game_utils import *
 
 data_dirs = []
-data_dirs += get_games('./', 'experiment-exploratory-2016')
-data_dirs += get_games('./', 'experiment-confirmatory-2016')
+data_dirs += get_games('./', 'experiment-')
 
 # aggregate raw game data
 games = []
@@ -22,17 +21,10 @@ for data_dir in data_dirs :
         inactive += [get_inactive(data_dir, game)]
         raw_data.append(data.copy())
 
-pd.concat(raw_data).to_csv('./all_raw_games.csv')
+pd.concat(raw_data).to_csv('./exp1_raw.csv')
 
 # find inactive games
 inactive = {k: v for d in inactive for k, v in d.items()}
-print(inactive.keys())
 writer = csv.writer(open('./inactive_games.csv','w'))
 for pid in list(inactive.keys()):
     writer.writerow([pid])
-
-# # get 'cleaned' games
-# dfs = []
-# for data_dir in data_dirs :
-#     dfs += [get_data(data_dir, games)]
-# pd.concat(dfs).to_csv('./all_games_new.csv')
