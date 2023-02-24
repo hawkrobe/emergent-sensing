@@ -3,8 +3,6 @@ import sys
 import copy
 
 sys.path.append('./player_model/')
-sys.path.append('./utils')
-
 import config
 import pandas as pd
 import numpy as np
@@ -12,7 +10,7 @@ import numpy as np
 from multiprocessing import Pool
 from bots import BasicBot
 from rectangular_world import RectangularWorld
-from environment import *
+from environment import World
 
 reps = 50
 num_procs = 6
@@ -21,7 +19,7 @@ strategies = ['smart', 'move_to_center', 'naive_copy', 'asocial']
 info = {'experiments' : [], 'bots' : [], 'strategies' : [], 'prob_explore' : [], 'noise' : []}
 for strategy in strategies :
     for group_size in [1,2,3,4,5,6]: # 16,32,64,128
-        for prob_explore in ([None] if strategy in ['asocial'] else [0,.05,.1,.15,.2,.25] if strategy in ['smart'] else [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]) :
+        for prob_explore in ([None] if strategy in ['asocial'] else [0,.025, .05, .075, 0.1, .125] if strategy in ['smart'] else [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]) :
             # This is confusing but 'noise' means something different for the smart model
             noise = prob_explore if strategy == 'smart' else 0
             composition = np.array([strategy == 'asocial', strategy == 'naive_copy',
@@ -63,7 +61,6 @@ def run_simulation(exp_ind):
     print(exp_ind, experiment)
     environment = lambda bg: RectangularWorld(bg, config.GAME_LENGTH, False,
                                               config.DISCRETE_BG_RADIUS, False)
-    nbots = len(bots)
     models = [BasicBot(environment, bot['strategy'], i,
                        prob_explore = bot['prob_explore'],
                        noise = bot['noise'])

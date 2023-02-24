@@ -11,26 +11,23 @@ from smart_particle import Model
 from spotlight_background_discrete_model import SpotlightBackgroundDiscrete
 
 class BasicBot():    
-    def __init__(self, environment, strategy, my_index,
-                 noise = 0, prob_explore = 0.5, random_explore = True, log_file = None):
-        self.strategy = strategy                
+    def __init__(self, environment, strategy, my_index, noise = 0, prob_explore = 0.5):
+        self.strategy = strategy
         assert strategy in ['asocial', 'smart',  'naive_copy', 'move_to_center', 'move_to_closest']
-        
         self.noise = noise
-        self.random_explore = random_explore
+        self.random_explore = True
         self.prob_explore = prob_explore
         self.world = environment(None)
         self.last_pos = None
+        self.last_bg = None
         self.total_score = 0
         self.time = -1
-        
         self.state = 'exploring'
         self.last_state = 'exploring'
         self.explore_goal = None
         self.copy_goal = None
         self.exploit_goal = None
-        
-        self.my_index = my_index        
+        self.my_index = my_index
         if not self.random_explore:
             self.model = Model(lambda: SpotlightBackgroundDiscrete(self.world.edge_goal),
                                          n_samples = 500)
@@ -39,7 +36,6 @@ class BasicBot():
             self.goal = self.world.get_random_position()
     
         self.turn = np.random.choice(['left','right'])
-
         self.copy_targeted = self.strategy in ['smart']
         
     def observe(self, pos, bg_val, time):
@@ -64,8 +60,8 @@ class BasicBot():
         """
         self.last_state = copy.copy(self.state)
             
-        if ((self.last_bg >= 0.8 and np.random.random() > self.noise)): 
-            # All agents exploit at high background 
+        if self.last_bg >= 0.8 and np.random.random() > self.noise:
+            # All agents exploit at high background
             g = self.exploit(p)
 
         elif self.strategy == 'asocial' :
@@ -118,10 +114,10 @@ class BasicBot():
         self.copy_goal = None
         if self.inside_movement(p, self.explore_goal):
             return self.explore_goal
-        else :
-            self.state = 'exploring'
-            self.explore_goal = self.get_explore_goal()
-            return self.explore_goal
+
+        self.state = 'exploring'
+        self.explore_goal = self.get_explore_goal()
+        return self.explore_goal
     
     def exploit(self, p):        
         self.explore_goal = None
