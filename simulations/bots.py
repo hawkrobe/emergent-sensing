@@ -7,7 +7,7 @@ sys.path.append('./player_model/')
 import utils
 import config
 
-import smart_particle as inference
+from smart_particle import Model
 from spotlight_background_discrete_model import SpotlightBackgroundDiscrete
 
 class BasicBot():    
@@ -32,7 +32,7 @@ class BasicBot():
         
         self.my_index = my_index        
         if not self.random_explore:
-            self.model = inference.Model(lambda: SpotlightBackgroundDiscrete(self.world.edge_goal),
+            self.model = Model(lambda: SpotlightBackgroundDiscrete(self.world.edge_goal),
                                          n_samples = 500)
             self.goal = self.model.resample(None, None, None)
         else :

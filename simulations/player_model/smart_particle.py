@@ -1,18 +1,11 @@
-
 import numpy as np
-import utils
-import scipy.stats
 from scipy.special import logsumexp
 
-import sys
-sys.path.append("../utils/")
 import stats
-
-from spotlight_background_model import SpotlightBackground
 
 class Model():
 
-    def __init__(self, world_model = SpotlightBackground, n_samples = 1000):
+    def __init__(self, world_model, n_samples = 1000):
         
         self.world_model = world_model()
         self.n_samples = n_samples
