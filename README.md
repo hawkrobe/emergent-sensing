@@ -5,4 +5,9 @@
 * `analyses` contains R notebooks to produce all figures and statistics reported in the paper. run from the top level directory after installing necessary R libraries
 * `simulations` contains the code to reproduce the simulations with different computational models.
 
+# Supplementary videos
 
+Reconstructed videos in .mp4 format are available for:
+
+* [Experiment 1 (behavioral data)](https://emergent-sensing.s3.us-east-2.amazonaws.com/exp1.zip)
+* [Experiment 1 (model simulations)](https://emergent-sensing.s3.us-east-2.amazonaws.com/simulations.zip)
