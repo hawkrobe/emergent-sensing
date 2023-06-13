@@ -15,12 +15,14 @@ from environment import World
 reps = 50
 num_procs = 6
 out_dir = './output/predictions-emergent/'
-strategies = ['smart', 'move_to_center', 'naive_copy', 'asocial']
+strategies = ['smart']#, 'move_to_center', 'naive_copy', 'asocial']
 info = {'experiments' : [], 'bots' : [], 'strategies' : [], 'prob_explore' : [], 'noise' : []}
 for strategy in strategies :
-    for group_size in [1,2,3,4,5,6]: # 16,32,64,128
-        for prob_explore in ([None] if strategy in ['asocial'] else [0,.025, .05, .075, 0.1, .125] if strategy in ['smart'] else [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]) :
-            # This is confusing but 'noise' means something different for the smart model
+    for group_size in [1, 2, 3, 4, 5, 6] :
+        for prob_explore in ([0] if strategy in ['asocial']
+                             else [0,0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2] if strategy in ['smart']
+                             else [0,0.100,0.20,0.300,0.4,0.500,0.60,0.700,0.8,0.9,1]) :
+            # 'noise' means something different for the smart model
             noise = prob_explore if strategy == 'smart' else 0
             composition = np.array([strategy == 'asocial', strategy == 'naive_copy',
                                     strategy == 'move_to_center', strategy == 'smart']) * group_size

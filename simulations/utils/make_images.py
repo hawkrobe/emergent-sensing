@@ -1,16 +1,19 @@
 # python scripts/make_images.py output/predictions-emergent/spot-1-asocial-1-simulation.csv output/predictions-emergent/spot-1-asocial-1-bg.csv output/movies
+import os
+import sys
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import pylab
-import os
-import sys
 import matplotlib.patheffects as PathEffects
+import pylab
 
 moves_file = sys.argv[1]
-background_file = sys.argv[2] 
+print(moves_file)
+print(moves_file.split('.')[0])
+background_file = sys.argv[2]
 out_dir = sys.argv[3]
-this_out_dir = out_dir + '/images/'
+this_out_dir = out_dir + '/images/' + moves_file.split('/')[-1].split('.csv')[0] + '/'
 
 try:
     os.makedirs(this_out_dir)
@@ -36,26 +39,28 @@ for i in range(0, len(ticks), 4):
         background = np.transpose(np.array(pd.read_csv(background_file + 't' + str(i) + '.csv')))    
         plt.pcolormesh(background, alpha = 1, cmap = 'gray')
     for j in list(sub.index):
-        plt.scatter(sub['x_pos'][j] - 2.5,
-                    sub['y_pos'][j] - 2.5,
-                    s=155,
-                    c='black',
-                    marker = (3, 0, (180 + sub['angle'][j]) % 360 )
-                )        
-        plt.scatter(sub['x_pos'][j] - 2.5,
-                    sub['y_pos'][j] - 2.5,
-                    s=150,
-                    c=str(sub['bg_val'][j]),
-                    marker = (3, 0, (180 + sub['angle'][j]) % 360 )
-                    )
-        
+        plt.scatter(
+            sub['x_pos'][j] - 2.5,
+            sub['y_pos'][j] - 2.5,
+            s=155,
+            c='black',
+            marker = (3, 0, (180 + sub['angle'][j]) % 360 )
+        )
+        plt.scatter(
+            sub['x_pos'][j] - 2.5,
+            sub['y_pos'][j] - 2.5,
+            s=150,
+            c=str(sub['bg_val'][j]),
+            marker = (3, 0, (180 + sub['angle'][j]) % 360 )
+        )
         text = str(sub['pid'][j])[0:4]
-        if sub['state'][j] == 'exploring':
-            text += ': R'
-        if sub['state'][j] == 'exploiting':
-            text += ': I'
-        if sub['state'][j] == 'copying':
-            text += ': C'
+        if 'state' in sub.keys() :
+            if sub['state'][j] == 'exploring':
+                text += ': R'
+            if sub['state'][j] == 'exploiting':
+                text += ': I'
+            if sub['state'][j] == 'copying':
+                text += ': C'
         txt = plt.text(sub['x_pos'][j] - 2.5 - 12,
                  sub['y_pos'][j] - 2.5 + 8,
                  text, color = '#8EACE8')
@@ -64,7 +69,8 @@ for i in range(0, len(ticks), 4):
     ax.set_xlim([0,480])
     ax.set_ylim([0,275])
 
-    plt.xlabel('R: Exploring, I: Exploiting, C: Copying')
+    if 'state' in sub.keys() :
+        plt.xlabel('R: Exploring, I: Exploiting, C: Copying')
     plt.tick_params(which='both', bottom=False, top=False, left=False, right=False,
                     labelbottom=False, labelleft=False)
     plt.savefig(this_out_dir + 'pos' + "%04d" % i +  '.png')
