@@ -11,3 +11,4 @@ Reconstructed videos in .mp4 format are available for:
 
 * [Experiment 1 (behavioral data)](https://emergent-sensing.s3.us-east-2.amazonaws.com/exp1.zip)
 * [Experiment 1 (model simulations)](https://emergent-sensing.s3.us-east-2.amazonaws.com/simulations.zip)
+* [Experiment 2 (behavioral data)](https://emergent-sensing.s3.us-east-2.amazonaws.com/exp2.zip)
