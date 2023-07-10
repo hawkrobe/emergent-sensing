@@ -9,8 +9,6 @@ import matplotlib.patheffects as PathEffects
 import pylab
 
 moves_file = sys.argv[1]
-print(moves_file)
-print(moves_file.split('.')[0])
 background_file = sys.argv[2]
 out_dir = sys.argv[3]
 this_out_dir = out_dir + '/images/' + moves_file.split('/')[-1].split('.csv')[0] + '/'
@@ -35,9 +33,9 @@ for i in range(0, len(ticks), 4):
     if background_file[-3:] == 'csv' :
         background = pd.read_csv(background_file).iloc[i]
         plt.scatter(background['x_pos'], background['y_pos'], s = 2500, c='grey')
-    elif background_file != "None" :
-        background = np.transpose(np.array(pd.read_csv(background_file + 't' + str(i) + '.csv')))    
-        plt.pcolormesh(background, alpha = 1, cmap = 'gray')
+    #elif background_file != "None" :
+        #background = np.transpose(np.array(pd.read_csv(background_file + '/t' + str(i) + '.csv')))
+        #plt.pcolormesh(background, alpha = 1, cmap = 'gray')
     for j in list(sub.index):
         plt.scatter(
             sub['x_pos'][j] - 2.5,
