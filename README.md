@@ -1,9 +1,13 @@
 # Emergent collective sensing in human groups
 
 * `experiments` contains the code to reproduce all of the behavioral experiments. 
-* `data` contains the raw data from these experiments. follow instructions in data/README.md
+* `data` contains the raw data from these experiments. 
 * `analyses` contains R notebooks to produce all figures and statistics reported in the paper. run from the top level directory after installing necessary R libraries
 * `simulations` contains the code to reproduce the simulations with different computational models.
+
+# Raw data
+
+Raw data for Exp. 1 is too large to be checked into this repository. To reproduce full Exp. 1 preprocessing pipeline, download [zip](https://emergent-sensing.s3.us-east-2.amazonaws.com/exp1_raw_games.zip) of raw tick-by-tick data.
 
 # Supplementary videos
 
