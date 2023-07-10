@@ -7,7 +7,7 @@
 
 # Raw data
 
-Raw data for Exp. 1 is too large to be checked into this repository. To reproduce full Exp. 1 preprocessing pipeline, download [zip](https://emergent-sensing.s3.us-east-2.amazonaws.com/exp1_raw_games.zip) of raw tick-by-tick data.
+Raw data for Exp. 1 is too large to be checked into this repository. To reproduce full Exp. 1 preprocessing pipeline, unzip the raw tick-by-tick data [stored here](https://emergent-sensing.s3.us-east-2.amazonaws.com/exp1_raw_games.zip) and place it in `/data/experiment1/`.
 
 # Supplementary videos
 
