@@ -22,7 +22,6 @@ d.exp3.raw <- dir('../../data/experiment3/', pattern = "experiment*", include.di
   group_by(filename) %>%
   mutate(half = ifelse(tick < 1200, 'first', 'second'))  # use value from Exp. 1 since this was one minute longer
 
-inactive_pids_end <- read_csv(here('data/experiment3/inactive_games.csv'), col_names = c('pid')) %>% pull(pid)
 inactive_pids_firsthalf <- d.exp3.raw %>% group_by(pid) %>% summarize(t = max(tick)) %>% filter(t < 1200) %>% pull(pid)
 ```
 
@@ -39,11 +38,6 @@ d.exp3 <- d.exp3.raw %>%
   group_by(gameid) %>%
   mutate(n_players = length(unique(pid))) %>%
   mutate(difficulty = ifelse(difficulty == '2en01', 'high noise', 'low noise')) 
-  # uncomment to look at results excluding *all* PIDs that went inactive (even in the last few seconds)
-  #filter(!(pid %in% inactive_pids))  %>%
-  # uncomment to look at results re-coding for 'final' group sizes after these dropouts
-  #group_by(gameid) %>%
-  #mutate(n_players = length(unique(pid)))
 
 write_csv(d.exp3, here('data/experiment3/experiment3_preprocessed.csv'))
 ```
@@ -93,35 +87,6 @@ scores.toplot %>%
 ggsave('performance-summary-raw.pdf', width = 5, height = 3, units = 'in')
 ```
 
-## Examine auto-correlations (Fig S6)
-
-```{r}
-d.exp3.raw %>%
-  left_join(d.exp3 %>% filter(half == 'second'), by = c('pid')) %>% 
-  filter(n_players < 6) %>%
-  group_by(filename, pid, n_players, difficulty) %>%
-  summarize(lag_1 = cor(bg_val, lag(bg_val, 1), use="complete.obs"),
-         lag_5 = cor(bg_val, lag(bg_val, 5), use="complete.obs"),
-         lag_10 = cor(bg_val, lag(bg_val, 10), use="complete.obs"),
-         lag_20 = cor(bg_val, lag(bg_val, 20), use="complete.obs"),
-         lag_30 = cor(bg_val, lag(bg_val, 30), use="complete.obs"),
-         lag_50 = cor(bg_val, lag(bg_val, 50), use="complete.obs"),
-         lag_75 = cor(bg_val, lag(bg_val, 75), use="complete.obs"),
-         lag_100 = cor(bg_val, lag(bg_val, 100), use="complete.obs")) %>%
-  gather(lag, value, starts_with('lag')) %>%
-  separate(lag, into = c('garbage', 'lag')) %>%
-  group_by(n_players, difficulty, lag) %>%
-  tidyboot::tidyboot_mean(value, nboot = 100) %>%
-  ggplot(aes(x = as.numeric(lag), y = empirical_stat, color = n_players, group = n_players)) +
-    geom_line() +
-    facet_wrap(~ difficulty) +
-    ggthemes::theme_few() +
-    labs(x = "distance in ticks", y = "mean correlation of scores") +
-    theme(aspect.ratio = 1, legend.position = 'top')
-  
-ggsave('exp3_lags.pdf', width = 5, height = 3, units = 'in')
-```
-
 ## Full timeseries of performance (bins of 100)
 
 ```{r}
@@ -145,10 +110,12 @@ Computed on avg participant-level scores
 
 ```{r}
 library(lmerTest)
-lmer(avg_score ~ poly(n_players, 2) * difficulty + (1 | gameid) + (1 | noise:difficulty),
+exp3.reg <- lmer(avg_score ~ poly(n_players, 2) * difficulty + (1 | gameid) + (1 | noise:difficulty),
    data = d.exp3 %>% filter(half == 'second'),
-   contrasts = list(difficulty = contr.sum(2))) %>%
-  summary()
+   contrasts = list(difficulty = contr.sum(2))) 
+
+summary(exp3.reg)
+confint(exp3.reg)
 ```
 
 # States
@@ -223,30 +190,35 @@ ggsave('../../../couzin_replication_tex/figures/states-broken-out.pdf')
 ```
 
 ```{r}
-d %>%
-  glmer(exploit ~ bg_val * difficulty + (1 | pid) + (1 | noise),
+exp3.exploit <- d %>%
+  glmer(exploit ~ scale(bg_val, scale=F) * difficulty + (1 | pid) + (1 | noise:difficulty),
         family = 'binomial',
         contrasts = list(difficulty=contr.sum(2)),
-        data = .) %>%
-  summary()
+        data = .)
+
+summary(exp3.exploit)
+confint(exp3.exploit, parm = 'scale(bg_val, scale = F)', method = 'Wald')
+confint(exp3.exploit, parm = 'scale(bg_val, scale = F):difficulty1', method = 'Wald')
 ```
 
 ```{r}
-d %>%
-  glmer(copy ~ bg_val * difficulty + (1 | pid) + (1 | noise),
+exp3.copy <- d %>%
+  glmer(copy ~ scale(bg_val, scale=F) * difficulty + (1 | pid) + (1 | noise:difficulty),
         family = 'binomial',
         contrasts = list(difficulty=contr.sum(2)),
-        data = .) %>%
-  summary()
+        data = .) 
+summary(exp3.copy)
+confint(exp3.copy, parm = 'scale(bg_val, scale = F):difficulty1', method = 'Wald')
 ```
 
 ```{r}
-d %>%
-  glmer(explore ~ bg_val * difficulty + (1 | pid) + (1 | noise),
+exp3.explore <- d %>%
+  glmer(explore ~ scale(bg_val, scale=F) * difficulty + (1 | pid) + (1 | noise:difficulty),
         family = 'binomial',
         contrasts = list(difficulty=contr.sum(2)),
-        data = .) %>%
-  summary()
+        data = .) 
+summary(exp3.explore)
+confint(exp3.explore, parm = 'scale(bg_val, scale = F):difficulty1', method = 'Wald')
 ```
 
 ```{r}
@@ -265,4 +237,33 @@ d %>%
   lmer(copying_reward ~ noise_condition + (1 | pid),
        data = .) %>%
   summary()
+```
+
+## Examine auto-correlations
+
+```{r}
+d.exp3.raw %>%
+  left_join(d.exp3 %>% filter(half == 'second'), by = c('pid')) %>% 
+  filter(n_players < 6) %>%
+  group_by(filename, pid, n_players, difficulty) %>%
+  summarize(lag_1 = cor(bg_val, lag(bg_val, 1), use="complete.obs"),
+         lag_5 = cor(bg_val, lag(bg_val, 5), use="complete.obs"),
+         lag_10 = cor(bg_val, lag(bg_val, 10), use="complete.obs"),
+         lag_20 = cor(bg_val, lag(bg_val, 20), use="complete.obs"),
+         lag_30 = cor(bg_val, lag(bg_val, 30), use="complete.obs"),
+         lag_50 = cor(bg_val, lag(bg_val, 50), use="complete.obs"),
+         lag_75 = cor(bg_val, lag(bg_val, 75), use="complete.obs"),
+         lag_100 = cor(bg_val, lag(bg_val, 100), use="complete.obs")) %>%
+  gather(lag, value, starts_with('lag')) %>%
+  separate(lag, into = c('garbage', 'lag')) %>%
+  group_by(n_players, difficulty, lag) %>%
+  tidyboot::tidyboot_mean(value, nboot = 100) %>%
+  ggplot(aes(x = as.numeric(lag), y = empirical_stat, color = n_players, group = n_players)) +
+    geom_line() +
+    facet_wrap(~ difficulty) +
+    ggthemes::theme_few() +
+    labs(x = "distance in ticks", y = "mean correlation of scores") +
+    theme(aspect.ratio = 1, legend.position = 'top')
+  
+ggsave('exp3_lags.pdf', width = 5, height = 3, units = 'in')
 ```

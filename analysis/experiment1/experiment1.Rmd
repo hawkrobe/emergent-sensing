@@ -5,8 +5,6 @@ output: html_notebook
 
 # Imports
 
-## Libraries
-
 ```{r}
 library(tidyverse)
 library(tidyboot)
@@ -17,7 +15,11 @@ library(lmerTest)
 library(here)
 ```
 
-## Load in empirical data
+# Preprocess raw data
+
+Note: This section requires the raw data downloaded from [Amazon S3](https://emergent-sensing.s3.us-east-2.amazonaws.com/exp1_raw_games.zip) and unzipped into `data/experiment1/`. If you are working with the preprocessed data, skip to the next section.
+
+## Load in raw empirical data
 
 ```{r}
 # import games and compute avg score for each player
@@ -43,15 +45,13 @@ d <- d.exp1.raw %>%
   group_by(gameid, pid, half) %>%
   summarize(avg_score = mean(bg_val)) %>%
   separate('gameid', into = c('date', 'n_players_planned', 'noise', 'gameid'), sep = '_') %>%
-  # remove participants who dropped out during the first half and compute resulting group size
+  # remove participants who dropped out during the first half 
+  # and compute resulting group size for second half
   filter(!(pid %in% inactive_pids_firsthalf)) %>%
   group_by(gameid) %>%
   mutate(n_players = length(unique(pid))) 
-  # uncomment to look at results excluding all inactive PIDs 
-  #%>% filter(!(pid %in% inactive_pids))
-  # uncomment to look at results recoding to use 'final' group sizes after dropouts
-  #%>% group_by(gameid) 
-  #%>% mutate(n_players = length(unique(pid)))
+
+write_csv(d, here('data/experiment1/exp1_preprocessed.csv'))
 ```
 
 ```{r}
@@ -64,24 +64,14 @@ cat('after exclusions:',
     d %>% pull(gameid) %>% unique() %>% length(), 'unique games')
 ```
 
-## Simulation data 
+# Combine empirical with simulation data
+
+## Aggregate empirical data down to group sizes
 
 ```{r}
-# Import aggregated simulation data
-sim_path = here('simulations/output/predictions-emergent/finals.csv')
-d.simulations <- read_csv(sim_path, show_col_types = F,
-                          col_names = c('expid', 'pid', 'strategy', 'total_score')) %>%
-  separate(expid, into = c('n_players', 'composition', 'rep', 'prob_explore'), sep = '-') %>%
-  filter(strategy != 'smart' | as.numeric(prob_explore) <= 0.3) %>%
-  filter(as.numeric(n_players) <= 6) 
-```
+d <- read_csv(here('data/experiment1/exp1_preprocessed.csv'))
 
-# Compare group size effects
-
-## Compute mean error for each param value
-
-```{r}
-# bootstrap second-half scores at game-level (for figure)
+# bootstrap second-half scores (using game avg as bootstrap unit)
 d.aggregated <- d %>% 
   filter(half == 'second') %>%
   group_by(n_players, gameid) %>% 
@@ -90,23 +80,33 @@ d.aggregated <- d %>%
   tidyboot_mean(avg_score) %>%
   mutate(src = 'empirical') %>%
   select(-n, -mean) 
+```
+
+## Import raw simulation data 
+
+```{r}
+# Import aggregated simulation data
+d.simulations <- here('simulations/output/predictions-emergent/finals.csv') %>%
+  read_csv(show_col_types = F,
+           col_names = c('expid', 'pid', 'strategy', 'total_score')) %>%
+  separate(expid, into = c('n_players', 'composition', 'rep', 'prob_explore'), sep = '-') %>%
+  filter(strategy != 'smart' | as.numeric(prob_explore) <= 0.3) %>%
+  filter(as.numeric(n_players) <= 6) 
 
 # pull out mean score for 6 player group as reference point
-end_point_mean <- d.aggregated %>%
+end_point_means <- d.aggregated %>%
   filter(n_players == 6) %>%
   pull(empirical_stat)
 
+# Find a very informal parameter fit for each model (minimize prediction error at endpoint)
 d.modelerror <- d.simulations %>%
   filter(n_players == 6) %>%
   group_by(strategy, prob_explore) %>%
   tidyboot_mean(total_score/2400, nboot = 1) %>%
-  mutate(error = abs(empirical_stat - end_point_mean))
-```
+  mutate(error = abs(empirical_stat - end_point_means))
 
-## Generate Figure 1
-
-```{r}
-d.simulations %>%
+# Aggregate model predictions 
+sim.aggregated <- d.simulations %>%
   group_by(n_players, strategy, prob_explore) %>%
   summarize(empirical_stat = mean(total_score)/2400, n = length(total_score)) %>%
   left_join(d.modelerror %>% select(strategy, prob_explore, error), 
@@ -116,8 +116,14 @@ d.simulations %>%
   ungroup() %>%
   mutate(src = paste0('model-', fct_relevel(strategy, 'smart','naive_copy')),
          n_players = as.numeric(n_players)) %>%
-  select(n_players, src, empirical_stat) %>%
-  bind_rows(d.aggregated)  %>%
+  select(n_players, src, empirical_stat)
+```
+# Compare group size effects
+
+## Generate Figure 1
+
+```{r}
+bind_rows(sim.aggregated, d.aggregated)  %>%
   separate(src, sep = '-', into = c('src', 'type')) %>%
   mutate(type = ifelse(is.na(type), 'empirical', type)) %>%
   ggplot(aes(x = n_players, y = empirical_stat, color=type)) +
@@ -125,7 +131,6 @@ d.simulations %>%
     geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0, data = ) +
     geom_smooth(method = 'lm', formula = y ~ poly(x, 1), se = F) +
     geom_hline(yintercept = 0.15, linetype = 'dashed') +
-    #geom_smooth(method = 'loess', span = 1.5) +
     theme_few() +
     labs(x = 'number of players', y = 'mean score') +
     ylim(0, 0.3) +
@@ -145,14 +150,20 @@ Second, we observe the main effect where groups of all sizes tend to perform bet
 Third, we observe an interaction: the effect of group size is only present in the second half. 
 
 ```{r}
-d %>% 
+exp1.reg <- d %>% 
   ungroup() %>%
   mutate(score = scale(100*avg_score, scale = F), 
          n_players = scale(n_players, scale=F)) %>%
-  lmer(score ~ n_players * half + (1 | gameid) + (1 | noise), 
+  lmer(score ~ n_players * half + (1 + half | gameid) + (1 + n_players || noise), 
        data = .,
-       contrasts = list(half=contr.treatment(2, base = 2))) %>%
-  summary()
+       contrasts = list(half=contr.treatment(2, base = 2))) 
+
+summary(exp1.reg)
+confint(exp1.reg)
+```
+
+```{r}
+d %>% filter(half == 'second') %>% group_by(n_players) %>% tidyboot_mean(avg_score)
 ```
 
 ## Validate exploitation
@@ -161,7 +172,8 @@ We assume in the model that P(exploit | scoring) ~ 1 - $\epsilon$.
 Here we analyze empirical 'exploitation' rates. 
 
 ```{r}
-d.raw %>% 
+library(broom)
+d.exp1.raw %>% 
   filter(!(gameid %in% incomplete_games)) %>%
   left_join(d, by = c('pid', 'half')) %>%
   filter(half == 'second') %>% 
@@ -176,7 +188,7 @@ d.raw %>%
 The effect is similar for different group sizes. 
 
 ```{r}
-d.raw %>% 
+d.exp1.raw %>% 
   filter(!(gameid %in% incomplete_games)) %>%
   left_join(d, by = c('pid', 'half')) %>%
   filter(half == 'second') %>%
@@ -198,7 +210,7 @@ ggsave('./speed.pdf', width = 6, height = 4, units = 'in', useDingbats = F)
 Another way of quantifying this effect is to look at discrete events where participants change their speed. When reward is present, 75% of speed changes involve slowing down. When reward is absent, the inverse is true: a slim majority of speed changes (56%) involve speeding up. 
 
 ```{r}
-d.raw %>% 
+d.exp1.raw %>% 
   group_by(pid) %>%
   filter(half == 'second') %>%
   mutate(bg_val = factor(bg_val), velocity = velocity,
@@ -212,7 +224,11 @@ d.raw %>%
 ```
 
 ```{r}
-d.raw %>% 
+
+```
+
+```{r}
+d.exp1.raw %>% 
   filter(half == 'second') %>%
   mutate(bg_val = factor(bg_val)) %>%
   group_by(bg_val, pid) %>%
