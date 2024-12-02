@@ -5,7 +5,7 @@
   "private": true,
   "dependencies": {
     "babyparse": "0.4.5",
-    "csv-parse": "~0.0.6",
+    "csv-parse": "~4.4.6",
     "express": "~4.0.0",
     "node-uuid": "1.4.1",
     "socket.io": "^2.0.3",
