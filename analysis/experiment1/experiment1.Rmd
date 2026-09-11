@@ -128,7 +128,7 @@ bind_rows(sim.aggregated, d.aggregated)  %>%
   mutate(type = ifelse(is.na(type), 'empirical', type)) %>%
   ggplot(aes(x = n_players, y = empirical_stat, color=type)) +
     geom_point(size = 2) +
-    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0, data = ) +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0) +
     geom_smooth(method = 'lm', formula = y ~ poly(x, 1), se = F) +
     geom_hline(yintercept = 0.15, linetype = 'dashed') +
     theme_few() +
