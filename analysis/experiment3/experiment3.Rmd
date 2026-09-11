@@ -225,7 +225,7 @@ confint(exp3.explore, parm = 'scale(bg_val, scale = F):difficulty1', method = 'W
 d %>%
   filter(state == 'copying') %>%
   filter(!is.na(copying_reward)) %>%
-  group_by(noise_condition) %>%
+  group_by(difficulty) %>%
   summarize(m = mean(copying_reward, na.rm=T))
 ```
 
@@ -234,7 +234,7 @@ library(lmerTest)
 d %>%
   filter(state == 'copying') %>%
   filter(!is.na(copying_reward)) %>%
-  lmer(copying_reward ~ noise_condition + (1 | pid),
+  lmer(copying_reward ~ difficulty + (1 | pid),
        data = .) %>%
   summary()
 ```
